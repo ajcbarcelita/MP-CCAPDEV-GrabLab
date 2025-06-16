@@ -1,3 +1,36 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import users from '@/data/users.js'
+
+// This login mechanism will only serve to demonstrate how landing pages can differ depending if logged in or not.
+// This will be changed in the future to use a proper authentication system.
+
+const email = ref('')
+const password = ref('')
+const error = ref('')
+const router = useRouter()
+
+function handleLogin() {
+	const user = users.find((u) => u.email === email.value && u.password === password.value)
+	if (user) {
+		// Store user info (simple, not secure)
+		sessionStorage.setItem('user', JSON.stringify(user))
+		error.value = ''
+		// Redirect based on role
+		if (user.role === 'Technician') {
+			// router.push('/technician-dashboard')
+		} else if (user.role === 'Student') {
+			router.push('/student-landing')
+		} else {
+			router.push('/')
+		}
+	} else {
+		error.value = 'Invalid email or password'
+	}
+}
+</script>
+
 <template>
 	<div class="login-container">
 		<div class="login-form">
@@ -8,15 +41,19 @@
 				<router-link to="/signup">Sign Up.</router-link>
 			</p>
 
-			<form>
+			<div v-if="error" class="error-message">
+				{{ error }}
+			</div>
+
+			<form @submit.prevent="handleLogin">
 				<div>
 					<label>DLSU E-mail</label>
-					<input type="email" class="login-input" placeholder="name@dlsu.edu.ph" />
+					<input v-model="email" class="login-input" placeholder="name@dlsu.edu.ph" />
 				</div>
 
 				<div>
 					<label>Password</label>
-					<input type="password" class="login-input" placeholder="••••••••" />
+					<input v-model="password" class="login-input" placeholder="••••••••" />
 				</div>
 
 				<div class="login-checkbox">
@@ -36,8 +73,6 @@
 		</div>
 	</div>
 </template>
-
-<script setup></script>
 
 <style>
 @import '@/assets/login_styles.css';

@@ -1,12 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LandingPage from './components/LandingPage.vue'
-import StudentMain from './components/student_main.vue'
+import GuestLanding from './components/GuestLanding.vue'
+import StudentLanding from './components/StudentLanding.vue'
 import Profile_Page from './components/Profile_Page.vue'
 import Login from './components/Login.vue' // add this line
 
+// import the components you want to use in your routes
+// then list all the routes you want to use in your app, path and correspondng component
 const routes = [
-	{ path: '/', component: LandingPage },
-	{ path: '/student', component: StudentMain },
+	{ path: '/', component: GuestLanding },
+	{ path: '/student-landing', component: StudentLanding },
 	{ path: '/profile', component: Profile_Page },
 	{ path: '/login', component: Login }, // add this line
 ]
@@ -15,5 +17,9 @@ const router = createRouter({
 	history: createWebHistory(),
 	routes,
 })
+
+// Create a nav guard for RBAC redirection with router.beforeEach
+// For example, if user is not logged in, redirect to guest landing page
+// If user is logged in, redirect to either student or technician landing page, but cannot go back to guest landing page
 
 export default router

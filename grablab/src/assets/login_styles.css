@@ -80,3 +80,8 @@
 	font-family: var(--font-karma);
 	@apply text-2xl text-white text-center;
 }
+
+/* Error message */
+.error-message {
+	@apply mb-4 px-4 py-2 rounded bg-red-100 border border-red-400 text-red-700;
+}
