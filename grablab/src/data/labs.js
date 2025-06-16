@@ -4,10 +4,10 @@ export default [
         name: 'GK302',
         display_name: 'Gokongwei Room 302',
         operating_hours: {
-            open: '07:00',
-            close: '19:00',
+            open: '07:30',
+            close: '10:30',
         },
-        capacity: 20,
+        capacity: 35,
         status: 'Active',
     },
     {
@@ -15,10 +15,10 @@ export default [
         name: 'GK403',
         display_name: 'CNIS Laboratory',
         operating_hours: {
-            open: '07:00',
-            close: '19:00',
+            open: '07:30',
+            close: '10:30',
         },
-        capacity: 20,
+        capacity: 35,
         status: 'Active',
     },
     {
@@ -26,10 +26,10 @@ export default [
         name: 'AG1903',
         display_name: 'Andrew Gonzalez Room 1903',
         operating_hours: {
-            open: '07:00',
-            close: '19:00',
+            open: '13:00',
+            close: '16:00',
         },
-        capacity: 40,
+        capacity: 35,
         status: 'Active',
     },
     {
@@ -38,9 +38,9 @@ export default [
         display_name: 'Gokongwei Room 304B',
         operating_hours: {
             open: '07:00',
-            close: '19:00',
+            close: '10:00',
         },
-        capacity: 20,
+        capacity: 35,
         status: 'Active',
     },
     {
@@ -49,9 +49,9 @@ export default [
         display_name: 'Gokongwei Room 306A',
         operating_hours: {
             open: '07:00',
-            close: '19:00',
+            close: '10:00',
         },
-        capacity: 20,
+        capacity: 35,
         status: 'Active',
     },
 ]
