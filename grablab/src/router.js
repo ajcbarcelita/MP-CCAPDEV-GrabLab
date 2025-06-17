@@ -5,6 +5,7 @@ import Profile_Page from './components/Profile_Page.vue'
 import Login from './components/Login.vue'
 import Register from './components/Register.vue'
 import TechLanding from './components/TechLanding.vue'
+import Reservation from './components/Reservation.vue'
 
 // import the components you want to use in your routes
 // then list all the routes you want to use in your app, path and correspondng component
@@ -15,6 +16,7 @@ const routes = [
 	{ path: '/profile', component: Profile_Page },
 	{ path: '/login', component: Login },
 	{ path: '/register', component: Register },
+	{ path: '/reservation', component: Reservation },
 ]
 
 const router = createRouter({

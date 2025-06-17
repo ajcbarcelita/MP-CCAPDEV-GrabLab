@@ -19,6 +19,9 @@
 			<a href="#" id="hero-cta" class="view-slots" @click.prevent="scrollToSearchFilter">
 				View Slots
 			</a>
+			<router-link to="/reservation" class="view-slots">
+			View Slots
+			</router-link>
 		</section>
 
     <!-- Why Choose Section -->
