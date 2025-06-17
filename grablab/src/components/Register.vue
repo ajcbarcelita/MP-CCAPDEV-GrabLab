@@ -1,4 +1,8 @@
-<script setup></script>
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUsersStore } from '@/stores/users_store.js'
+</script>
 
 <template>
 	<div class="register-container">
