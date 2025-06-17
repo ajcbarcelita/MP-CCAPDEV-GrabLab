@@ -96,7 +96,6 @@
   padding-right: 10px;
   font-family: 'Jomhuria';
   font-size: 40px;
-  margin-left: 100px;
 }
 #search-btn:hover {
   background-color: #436850;
@@ -106,15 +105,18 @@
 .filter-row{
   font-family: 'Jomhuria';
   font-size: 40px;
-  margin-left: 20px;
   color: #12372A;
 }
-#time{
-  margin-left: 150px;
-}
+
 #lab{
-  margin-left: 100px;
+  margin-left: 70px;
 }
+#lab-input{
+  background-color: #FBFADA;
+  border: #436850 1px solid;
+  width: 500px;
+}
+
 #lab-slots{
   margin-top: 2rem;
   margin-left: 2.5%;
@@ -159,28 +161,20 @@
   padding: 1rem 1.2rem 0.5rem 1.2rem;
   flex: 1;
 }
-.lab-status {
+.lab-info {
   font-size: 1rem;
+  margin-top: 1rem;
   margin-bottom: 0.3rem;
-  display: flex;
   align-items: center;
+  color: #12372A;
+  font-family: "Karma";
+}
+.lab-info-label {
+  margin-right: 1rem;
   color: #436850;
-}
-.lab-status .dot {
-  display: inline-block;
-  width: 0.8em;
-  height: 0.8em;
-  border-radius: 50%;
-  margin-right: 0.5em;
-}
-.lab-status.available .dot {
-  background: #1ca21c;
-}
-.lab-status.occupied .dot {
-  background: #e53935;
-}
-.lab-status.maintenance .dot {
-  background: #ffe066;
+  margin-left: 1rem;
+  font-weight: bold;
+  margin-right: 0.5rem;
 }
 .lab-card-actions {
   display: flex;
@@ -201,4 +195,9 @@
 }
 .lab-btn:hover {
   background: #234c36;
+}
+#Lab {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
