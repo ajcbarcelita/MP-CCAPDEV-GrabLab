@@ -23,7 +23,9 @@
 
 /* Right: branding / tagline container */
 .branding-section {
-	background-color: var(--bg-forest-dark);
+	background:
+		linear-gradient(rgba(18, 55, 42, 0.87), rgba(18, 55, 42, 0.87)),
+		url('@/assets/gokongwei_hall.png') center center / cover no-repeat;
 	@apply w-2/3 flex flex-col justify-center items-center;
 }
 
@@ -73,7 +75,7 @@
 .branding-title {
 	font-family: var(--font-jersey);
 	color: var(--bg-sage);
-	@apply text-6xl font-bold mb-6;
+	@apply text-9xl font-bold mb-6;
 }
 
 .branding-tagline {

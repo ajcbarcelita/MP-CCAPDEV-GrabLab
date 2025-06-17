@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import GuestLanding from './components/GuestLanding.vue'
 import StudentLanding from './components/StudentLanding.vue'
 import Profile_Page from './components/Profile_Page.vue'
-import Login from './components/Login.vue' // add this line
+import Login from './components/Login.vue'
+import Register from './components/Register.vue'
 
 // import the components you want to use in your routes
 // then list all the routes you want to use in your app, path and correspondng component
@@ -10,7 +11,8 @@ const routes = [
 	{ path: '/', component: GuestLanding },
 	{ path: '/student-landing', component: StudentLanding },
 	{ path: '/profile', component: Profile_Page },
-	{ path: '/login', component: Login }, // add this line
+	{ path: '/login', component: Login },
+	{ path: '/register', component: Register },
 ]
 
 const router = createRouter({

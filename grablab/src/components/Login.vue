@@ -38,7 +38,7 @@ function handleLogin() {
 			<p class="login-subtitle">Welcome back.</p>
 			<p class="login-signup">
 				New to GrabLab?
-				<router-link to="/signup">Sign Up.</router-link>
+				<router-link to="/register">Register.</router-link>
 			</p>
 
 			<div v-if="error" class="error-message">
