@@ -17,7 +17,6 @@
 				from 7am on wards with real-time availability tracking.
 			</p>
 			<a href="#" id="hero-cta" class="view-slots" @click.prevent="scrollToSearchFilter">
-				<img src="/src/assets/search.png" alt="search" class="hero-arrow" />
 				View Slots
 			</a>
 		</section>
@@ -96,16 +95,11 @@
 		</section>
 
 		<!-- Footer -->
-		<footer id="footer">
-    <div class="footer-content">
-      <p>&copy; 2025 GrabLab. All rights reserved.</p>
-      <p>Contact us: <a href="mailto:support@grablab.com">support@grablab.com</a></p>
-      <p>Follow us on:
-        <a href="https://twitter.com/grablab" target="_blank">Twitter</a> |
-        <a href="https://facebook.com/grablab" target="_blank">Facebook</a>
-      </p>
+		<footer class="bg-[#12372A] text-[#FBFADA] text-center p-4 text-sm font-bold">
+    <div class="flex justify-center gap-2">
+      <p>&copy; 2025 GrabLab. All rights reserved.<br /></p>
     </div>
-  </footer>
+    </footer>
 	</div>
 </template>
 
@@ -125,22 +119,4 @@ export default {
 
 <style scoped>
 @import '../assets/student_main.css';
-
-#footer {
-    background-color: #12372A;
-    color: #FBFADA;
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.9rem;
-  }
-
-  .footer-content a {
-    color: #FBFADA;
-    text-decoration: none;
-    margin: 0 0.5rem;
-  }
-
-  .footer-content a:hover {
-    text-decoration: underline;
-  }
 </style>

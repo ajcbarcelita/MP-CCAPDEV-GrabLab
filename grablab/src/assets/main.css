@@ -106,7 +106,7 @@
 }
 @media (min-width: 768px) {
   #why-choose-cards {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .why-card {
@@ -158,7 +158,7 @@
 }
 @media (min-width: 768px) {
   #reviews-list {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .review-card {

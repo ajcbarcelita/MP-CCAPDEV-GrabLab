@@ -1,3 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Jomhuria&family=Karma:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 #logout {
   font-family: 'Jomhuria';
   font-size: 35px;
@@ -20,10 +25,12 @@
   text-decoration: underline;
 }
 
+
 #hero-cta{
-  padding-right: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
   padding-top: 1px;
-  padding-bottom: 1px;
+  padding-bottom: 0px;
 }
 
 #reservation-summary {
@@ -187,9 +194,10 @@
   color: #FBFADA;
   border: none;
   border-radius: 0.15rem;
-  padding: 0.4rem 1.1rem;
+  padding: 0.5rem 1rem;
   font-size: 1rem;
-  font-family: inherit;
+  font-family: "Karma";
+  font-weight: bold;
   cursor: pointer;
   transition: background 0.2s;
 }
