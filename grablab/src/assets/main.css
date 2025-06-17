@@ -1,9 +1,11 @@
-/* Import Jersey 25 and Jomhuria fonts from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Jersey+25&family=Jomhuria&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Import Jersey 25 and Jomhuria fonts from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Jersey+25&family=Jomhuria&display=swap');
+
+
 
 #app-bg {
   background-color: #f3f4f6;
