@@ -2,17 +2,19 @@
 @import '@/assets/profile_styles.css';
 </style>
 
-<script setup>
-import users from '@/data/users.js'
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 
+<script setup>
+import reservations from '@/data/reservations.js'
+import labs from '@/data/labs.js'
+import users from '@/data/users.js'
+import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 
 // To access router and go to other panels
 const router = useRouter()
 const route = useRoute()
 
-// User ID routed
+// Reactive variables
 const currentUser = ref('')
 const profileUser = ref('')
 const isEditing = ref(false)
@@ -23,38 +25,65 @@ const editForm = ref({
 })
 
 // Condition Checks
-const isOwnProfile = computed(() => {
-  // Check if exists, then compare user_id
-  return currentUser.value && profileUser.value && 
-         currentUser.value.user_id === profileUser.value.user_id
-})
 
-const showEditControls = computed(() => {
-  return isOwnProfile.value && isEditing.value
-})
+// Check if exists, then compare user_id
+const isOwnProfile = computed(() => { return currentUser.value && profileUser.value && currentUser.value.user_id === profileUser.value.user_id })
+const showEditButton = computed(() => { return isOwnProfile.value && !isEditing.value })
+const showSaveCancel = computed(() => { return isOwnProfile.value && isEditing.value })
+const showDeleteAccount = computed(() => { return isOwnProfile.value })
+const inputReadonly = computed(() => { return !isOwnProfile.value || !isEditing.value })
 
-const showEditButton = computed(() => {
-  return isOwnProfile.value && !isEditing.value
-})
+// Reservation properties -- Calculated from slot_id in reservations
+const getSeatFromSlotId = (slotId) => { return Math.floor((slotId - 1) / 22) + 1 }
+// Convert slot_id to time slot (1-22)
+const getTimeSlotFromSlotId = (slotId) => { return ((slotId - 1) % 22) + 1 }
 
-const showSaveCancel = computed(() => {
-  return isOwnProfile.value && isEditing.value
-})
+const userReservations = computed(() =>
+  // Filter reservations for the current user
+  currentUser.value ? reservations
+        .filter(r => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
+        // Sort by reservation date (ascending order)
+        .sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
+    : []
+)
 
-const showDeleteAccount = computed(() => {
-  return isOwnProfile.value
-})
+const getLabName = labId => labs.find(l => l.lab_id === labId)?.name
+const formatReservationDate = dateString =>
+  new Date(dateString).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
-// Readonly input when not editing
-const inputReadonly = computed(() => {
-  return !isOwnProfile.value || !isEditing.value
-})
-
-// NavBar Functions
-function handleLogout() {
-  sessionStorage.removeItem('user')
-  router.push('/login')
+// Convert array of slot objects to a time range string 
+const getTimeRangeForSlots = slots => {
+  if (!slots.length) return 'N/A'
+  // Extract time slots from the slot objects
+  const timeSlots = slots.map(slot => getTimeSlotFromSlotId(slot.slot_id))
+  const minSlot = Math.min(...timeSlots)
+  const maxSlot = Math.max(...timeSlots)
+  const startTime = getTimeSlotDisplay(minSlot)
+  const endTime = getTimeSlotDisplay(maxSlot + 1)
+  return `${startTime.split(' - ')[0]} - ${endTime.split(' - ')[0]}`
+  // Example Output: "7:00 AM - 8:30 AM"
 }
+
+// Reservation Display Function
+function getTimeSlotDisplay(timeSlot) {
+  // Each slot is 30 minutes, starting at 7:00 AM
+  const baseMinutes = 7 * 60 + (timeSlot - 1) * 30; // Convert time slot to minutes from 00:00
+  const endMinutes = baseMinutes + 30;
+
+  const format = mins => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayHour = h % 12 === 0 ? 12 : h % 12;
+    return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`;
+  };
+
+  return `${format(baseMinutes)} - ${format(endMinutes)}`;
+}
+
+
+// Navbar and profile actions
+const handleLogout = () => { sessionStorage.removeItem('user'); router.push('/login') }
 
 function handleHome() {
   if (currentUser.value.role === 'Technician') {
@@ -86,7 +115,6 @@ function handleEditProfile() {
 function handleSaveChanges() {
   // If not own profile, then can't proceed
   if (!isOwnProfile.value) return
-
   // Update the profile user data
   profileUser.value.first_name = editForm.value.first_name
   profileUser.value.last_name = editForm.value.last_name
@@ -103,7 +131,6 @@ function handleSaveChanges() {
 
   // Reset editing state
   isEditing.value = false
-  
   // Show success message 
   console.log('Profile updated successfully')
 }
@@ -115,10 +142,10 @@ function handleCancelEdit() {
 
 function handleDeleteAccount() {
   if (!isOwnProfile.value) return
-  
   if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
     // backend stuff here to delete account
     console.log('Account deleted successfully')
+
     // Clear session and redirect to login
     sessionStorage.removeItem('user')
     router.push('/login')
@@ -127,9 +154,7 @@ function handleDeleteAccount() {
 
 function handleChangePicture() {
   if (!isOwnProfile.value) return
-  
-  // Handle profile picture change
-  // This would typically open a file picker
+  // Handle profile picture in when backend is implemented
   console.log('Change picture functionality')
 }
 
@@ -151,15 +176,16 @@ function handleView() {
     console.error('User not found')
     return
   }
-
   // Initialize edit form with profile data
   handleEditForm()
 }
 
+// Once DOM is loaded/mounted, handle the view
 onMounted(() => {
   handleView()
 })
 </script>
+
 
 <!-- User Profile Panel -->
 <template>
@@ -288,11 +314,11 @@ onMounted(() => {
             <!-- Save / Edit Buttons -->
             <div v-if="showSaveCancel" class="flex space-x-4">
               <button @click="handleSaveChanges"
-                class="bg-forest-medium text-cream px-6 py-2 rounded-lg hover:bg-forest-dark transition-colors font-karma">
+                class="bg-forest-medium text-cream px-6 py-2.5 rounded-lg hover:bg-forest-dark transition-colors font-karma">
                 Save Changes
               </button>
               <button @click="handleCancelEdit"
-                class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors font-karma">
+                class="bg-gray-500 text-white px-6 py-2.5 rounded-lg hover:bg-gray-600 transition-colors font-karma">
                 Cancel Edit
               </button>
             </div>
@@ -300,32 +326,9 @@ onMounted(() => {
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-8">
-          <!-- Account Stats -->
-          <div class="bg-cream rounded-lg shadow-lg p-6">
-            <h3 class="text-xl font-bold text-forest-dark mb-4 font-karma">Account Stats</h3>
-            <div class="space-y-3">
-              <div class="flex justify-between">
-                <span class="text-forest-medium font-karma">Total Reservations:</span>
-                <span class="font-semibold text-forest-dark font-karma">2</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-forest-medium font-karma">Active Reservations:</span>
-                <span class="font-semibold text-forest-dark font-karma">2</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-forest-medium font-karma">Member Since:</span>
-                <span class="font-semibold text-forest-dark font-karma">June 2023</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-forest-medium font-karma">Status:</span>
-                <span class="font-semibold text-forest-dark font-karma">{{ profileUser.status }}</span>
-              </div>
-            </div>
-          </div>
-
+        <div class="align-middle space-y-12">
           <!-- Magic Button (Delete Account) - Only show for own profile not for other Users -->
-          <div v-if="showDeleteAccount" class="bg-pink-100 border-3 border-pink-200 rounded-lg p-6">
+          <div v-if="showDeleteAccount" class="bg-pink-100 border-3 border-pink-200 rounded-lg p-6 text-center">
             <h3 class="text-xl font-bold text-pink-600 mb-4 font-karma">Magic Button</h3>
             <p class="text-pink-600 text-sm mb-4 font-karma">Permanently delete your account and all associated data.
               This action cannot be undone.</p>
@@ -338,43 +341,45 @@ onMounted(() => {
       </div>
 
       <!-- Current Reservations Section - Only show for own profile -->
-       <!-- Check -->
       <div v-if="isOwnProfile" class="bg-cream rounded-lg shadow-lg p-6 mt-8">
         <h3 class="text-2xl font-bold text-forest-dark mb-6 font-karma">Current Reservations</h3>
 
         <!-- Horizontal Slider & Flexbox Cards -->
         <div class="overflow-x-auto">
-          <div class="flex gap-4 min-w-max pb-4">
-            <!-- Reservation Cards (same as before) -->
-            <div class="bg-sage rounded-lg p-4 min-w-[250px]">
+          <div v-if="userReservations.length > 0" class="flex gap-4 min-w-max pb-4">
+            <!-- Dynamic Reservation Cards -->
+            <div v-for="reservation in userReservations" 
+                 :key="reservation.reservation_id"
+                 class="bg-sage rounded-lg p-4 min-w-[280px]">
               <div class="mb-3">
-                <h4 class="font-bold text-forest-dark text-lg font-karma">AG402</h4>
+                <h4 class="font-bold text-forest-dark text-lg font-karma">
+                  {{ getLabName(reservation.lab_id) }}
+                </h4>
+                <span class="text-xs text-forest-medium font-karma">
+                  Reservation #{{ reservation.reservation_id }}
+                </span>
               </div>
               <div class="text-forest-dark text-sm space-y-1 font-karma">
-                <p><strong>Date:</strong> June 14, 2025</p>
-                <p><strong>Time:</strong> 2:00 - 4:00 PM</p>
-                <p><strong>Slot:</strong> 15</p>
+                <p><strong>Date:</strong> {{ formatReservationDate(reservation.reservation_date) }}</p>
+                <p><strong>Time:</strong> {{ getTimeRangeForSlots(reservation.slots) }}</p>
+                <p><strong>Seats:</strong> {{ reservation.slots.map(slot => getSeatFromSlotId(slot.slot_id)).join(', ') }}</p>
+                <p><strong>Status:</strong> 
+                  <!-- Display Status -->
+                  <span :class="reservation.status === 'confirmed' ? 'text-green-600' : 'text-yellow-600'">
+                    {{ ' ' + reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1) }}
+                  </span>
+                </p>
               </div>
-              <button
+              <button @click="cancelReservation(reservation.reservation_id)"
                 class="mt-3 w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma">
-                Cancel
+                Cancel Reservation
               </button>
             </div>
-
-            <div class="bg-sage rounded-lg p-4 min-w-[250px]">
-              <div class="mb-3">
-                <h4 class="font-bold text-forest-dark text-lg font-karma">AG403</h4>
-              </div>
-              <div class="text-forest-dark text-sm space-y-1 font-karma">
-                <p><strong>Date:</strong> June 16, 2025</p>
-                <p><strong>Time:</strong> 1:00 - 3:00 PM</p>
-                <p><strong>Slot:</strong> 12</p>
-              </div>
-              <button
-                class="mt-3 w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma">
-                Cancel
-              </button>
-            </div>
+          </div>
+          
+          <!-- No reservations message -->
+          <div v-else class="text-center py-8">
+            <p class="text-forest-medium font-karma">No current reservations found.</p>
           </div>
         </div>
       </div>

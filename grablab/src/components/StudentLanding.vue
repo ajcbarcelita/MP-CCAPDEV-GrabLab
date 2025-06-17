@@ -26,7 +26,7 @@
 
     <!-- Why Choose Section -->
     <section class="max-w-8xl mx-auto mt-5 text-[#12372A] ">
-      <h2 class="text-6xl font-light mb-1 font-['Jomhuria'] text-[#12372A]">Why Chose GrabLab?</h2>
+      <h2 class="text-6xl font-light mb-1 font-['Jomhuria'] text-[#12372A]">Why Choose GrabLab?</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Card 1 -->
         <div class="bg-[#FBFADA] p-6 rounded-xl shadow text-center">

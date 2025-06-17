@@ -18,7 +18,7 @@ export default [
         last_name: 'Mendoza',
         role: 'Student',
         status: 'Active',
-        profile_pic_path: '',
+        profile_pic_path: '/john_profile.png',
         description: '',
     },
     {
