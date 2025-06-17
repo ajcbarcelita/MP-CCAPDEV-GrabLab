@@ -11,7 +11,7 @@ import TechLanding from './components/TechLanding.vue'
 const routes = [
 	{ path: '/', component: GuestLanding },
 	{ path: '/student-landing', component: StudentLanding },
-  { path: '/technician-landing', component: TechLanding }, // Assuming the same component for technician landing
+  	{ path: '/technician-landing', component: TechLanding }, // Assuming the same component for technician landing
 	{ path: '/profile', component: Profile_Page },
 	{ path: '/login', component: Login },
 	{ path: '/register', component: Register },
