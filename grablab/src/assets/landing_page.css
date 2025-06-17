@@ -118,10 +118,11 @@
 #lab{
   margin-left: 70px;
 }
-#lab-input{
+.search-input {
   background-color: #FBFADA;
   border: #436850 1px solid;
-  width: 500px;
+  width: 450px;
+  height: 50px;
 }
 
 #lab-slots{

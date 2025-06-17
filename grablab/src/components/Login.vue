@@ -20,7 +20,7 @@ function handleLogin() {
 		sessionStorage.setItem('user', JSON.stringify(user))
 		error.value = ''
 		if (user.role === 'Technician') {
-			// router.push('/technician-dashboard')
+			router.push('/technician-landing')
 		} else if (user.role === 'Student') {
 			router.push('/student-landing')
 		} else {

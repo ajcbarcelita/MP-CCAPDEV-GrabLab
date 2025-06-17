@@ -11,7 +11,7 @@
 
 		<!-- Hero Section -->
 		<section id="hero-section">
-			<h1 id="hero-title">Hi, {name}! <br /> Welcome back to GrabLab!</h1>
+			<h1 id="hero-title">Hi, Technician {name}! <br />Welcome back to GrabLab!</h1>
 			<p id="hero-description">
 				Streamline your laboratory Reservations with our modern booking system. Available
 				from 7am on wards with real-time availability tracking.
@@ -58,14 +58,15 @@
 			<div id="Title">
 				<h1 id="search-title">Search</h1>
 				<div id="Lab" class="filter-row">
-					<label for="lab-input" id="lab">Building: </label>
-					<select id="lab-input">
+					<label for="lab-input" id="lab" class="search-label">Building: </label>
+					<select id="lab-input" class="search-input">
 						<option value="All">All</option>
 						<option value="Gokonwei Bldg.">John Gokongwei Sr. Hall</option>
 						<option value="Andrew Bldg.">Br. Andrew Gonzalez Hall</option>
             <option value="LS Bldg.">St. La Salle Hall</option>
 					</select>
-
+          <label for="number" id="ID" class="search-label">ID number: </label>
+          <input type="text" id="number" class="search-input" placeholder="Enter ID number"/>
 					<button id="search-btn">Search</button>
 				</div>
 			</div>
