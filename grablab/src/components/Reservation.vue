@@ -32,7 +32,7 @@
               class="w-full p-3 border border-gray-300 rounded-lg">
               <option value="">Select Lab</option>
               <option v-for="lab in allLabs" :key="lab.lab_id" :value="lab.lab_id">
-                {{ lab.name }} ({{ lab.building }})
+                {{ lab.display_name }}
               </option>
             </select>
           </div>
@@ -94,6 +94,13 @@
             </div>
 
             <div v-else>
+              <!-- Operating Hours Info -->
+              <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                  Operating Hours: {{ getLabOperatingHours(selectedLab) }}
+                </p>
+              </div>
+
               <!-- Time Slot Filter -->
               <div class="flex justify-center gap-4 mb-4 flex-wrap">
                 <button @click="setTimeFilter('All')"
@@ -114,7 +121,7 @@
                 <button @click="setTimeFilter('Evening')"
                   :class="{ 'bg-grablab-primary text-white': timeFilter === 'Evening', 'bg-gray-200 text-gray-700': timeFilter !== 'Evening' }"
                   class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
-                  Evening (6 PM - 10 PM)
+                  Evening (6 PM - 7 PM)
                 </button>
               </div>
 
@@ -229,6 +236,7 @@
   </div>
 </template>
 
+
 <script>
 import { ref, computed, reactive, onMounted } from 'vue';
 
@@ -243,32 +251,140 @@ export default {
       user_type: 'student'
     });
 
+    // Updated labs dataset
     const allLabs = ref([
-      { lab_id: 1, name: 'G402', building: 'Gokongwei', capacity: 35, status: 'Available' },
-      { lab_id: 2, name: 'G403', building: 'Gokongwei', capacity: 30, status: 'Available' },
-      { lab_id: 3, name: 'V201', building: 'Velasco', capacity: 25, status: 'Available' },
-      { lab_id: 4, name: 'A305', building: 'Andrew', capacity: 40, status: 'Available' },
-      { lab_id: 5, name: 'LS101', building: 'LS', capacity: 20, status: 'Available' },
-      { lab_id: 6, name: 'G501', building: 'Gokongwei', capacity: 32, status: 'Available' }
+      {
+        lab_id: 1,
+        name: 'GK302',
+        building: 'John Gokongwei Sr. Hall',
+        display_name: 'Gokongwei Room 302',
+        operating_hours: {
+          open: '07:00',
+          close: '18:30',
+        },
+        capacity: 7,
+        status: 'Active',
+      },
+      {
+        lab_id: 2,
+        name: 'GK403',
+        building: 'John Gokongwei Sr. Hall',
+        display_name: 'CNIS Laboratory',
+        operating_hours: {
+          open: '07:00',
+          close: '18:30',
+        },
+        capacity: 7,
+        status: 'Active',
+      },
+      {
+        lab_id: 3,
+        name: 'AG1903',
+        building: 'Andrew Gonzalez Hall',
+        display_name: 'Andrew Gonzalez Room 1903',
+        operating_hours: {
+          open: '07:00',
+          close: '18:30',
+        },
+        capacity: 7,
+        status: 'Active',
+      },
+      {
+        lab_id: 4,
+        name: 'G304B',
+        building: 'John Gokongwei Sr. Hall',
+        display_name: 'Gokongwei Room 304B',
+        operating_hours: {
+          open: '07:00',
+          close: '18:30',
+        },
+        capacity: 7,
+        status: 'Active',
+      },
+      {
+        lab_id: 5,
+        name: 'G306A',
+        building: 'John Gokongwei Sr. Hall',
+        display_name: 'Gokongwei Room 306A',
+        operating_hours: {
+          open: '07:00',
+          close: '18:30',
+        },
+        capacity: 7,
+        status: 'Active',
+      }
     ]);
 
-    const filteredLabs = ref([...allLabs.value]); // For the 'Lab Slots' section
+    const filteredLabs = ref([...allLabs.value]);
 
-    // Hardcoded reservations to mimic occupied slots
+    
     const hardcodedReservations = ref([
-      // For Lab G402 (ID 1), Current Date
-      { lab_id: 1, seat_number: 1, date: '2024-06-18', time: '09:00', status: 'Occupied' },
-      { lab_id: 1, seat_number: 1, date: '2024-06-18', time: '09:30', status: 'Occupied' },
-      { lab_id: 1, seat_number: 2, date: '2024-06-18', time: '10:00', status: 'Occupied' },
-      { lab_id: 1, seat_number: 3, date: '2024-06-18', time: '14:00', status: 'Occupied' },
-      { lab_id: 1, seat_number: 3, date: '2024-06-18', time: '14:30', status: 'Occupied' },
-      { lab_id: 1, seat_number: 4, date: '2024-06-18', time: '11:00', status: 'Occupied' },
+      {
+        reservation_id: 1,
+        user_id: 4,
+        lab_id: 1,
+        reservation_date: "2025-06-18",
+        status: "confirmed",
+        created_at: "2025-06-17T08:00:00",
+        slots: [
+          { slot_id: 1 },  // seat 1, time slot 1
+          { slot_id: 2 }   // seat 1, time slot 2
+        ]
+      },
+      {
+        reservation_id: 2,
+        user_id: 4,
+        lab_id: 1,
+        reservation_date: "2025-06-19",
+        status: "confirmed",
+        created_at: "2025-06-17T09:15:00",
+        slots: [
+          { slot_id: 67 },  // seat 4, time slot 1
+          { slot_id: 68 }   // seat 4, time slot 2
+        ]
+      },
+      {
+        reservation_id: 3,
+        user_id: 2,
+        lab_id: 1,
+        reservation_date: "2025-06-18",
+        status: "confirmed",
+        created_at: "2025-06-17T10:00:00",
+        slots: [
+          { slot_id: 133 }, // seat 7, time slot 1
+          { slot_id: 134 }  // seat 7, time slot 2
+        ]
+      },
+      {
+        reservation_id: 4,
+        user_id: 2,
+        lab_id: 1,
+        reservation_date: "2025-06-19",
+        status: "confirmed",
+        created_at: "2025-06-17T11:00:00",
+        slots: [
+          { slot_id: 200 }, // seat 10, time slot 2 (but we only have 7 seats, so this won't show)
+          { slot_id: 201 }  // seat 10, time slot 3
+        ]
+      },
+      {
+        reservation_id: 5,
+        user_id: 5,
+        lab_id: 1,
+        reservation_date: "2025-06-20",
+        status: "pending",
+        created_at: "2025-06-17T12:00:00",
+        slots: [
+          { slot_id: 275 }, // seat 13, time slot 1 (but we only have 7 seats, so this won't show)
+          { slot_id: 276 }  // seat 13, time slot 2
+        ]
+      }
     ]);
 
     const selectedBuilding = ref('All');
     const selectedLab = ref('');
-    const selectedDate = ref(new Date().toISOString().split('T')[0]); // Default to current date
-    const selectedSlots = ref([]); // Array for multiple selected slots
+    const selectedDate = ref(new Date().toISOString().split('T')[0]);
+    const selectedSlots = ref([]);
     const reserveAnonymously = ref(false);
     const studentIdForReservation = ref('');
 
@@ -282,7 +398,7 @@ export default {
     const currentPage = ref(1);
 
     // Time Slot Filtering
-    const timeFilter = ref('All'); // 'All', 'Morning', 'Afternoon', 'Evening'
+    const timeFilter = ref('All');
 
     const minDate = computed(() => {
       const today = new Date();
@@ -291,27 +407,51 @@ export default {
 
     const maxDate = computed(() => {
       const future = new Date();
-      future.setDate(new Date().getDate() + 6); // One week (current day + 6 more days)
+      future.setDate(new Date().getDate() + 6);
       return future.toISOString().split('T')[0];
     });
 
-    // All possible time slots from 7 AM to 10 PM in 30-minute intervals
-    const allTimeSlots = computed(() => {
+    // Helper function to calculate slot_id from seat and time slot index
+    const calculateSlotId = (seatNumber, timeSlotIndex) => {
+      return (seatNumber - 1) * 22 + timeSlotIndex;
+    };
+
+    // Helper function to get seat and time slot from slot_id
+    const getSlotDetails = (slotId) => {
+      const seatNumber = Math.floor((slotId - 1) / 22) + 1;
+      const timeSlotIndex = ((slotId - 1) % 22) + 1;
+      return { seatNumber, timeSlotIndex };
+    };
+
+    // Generate time slots based on lab operating hours
+    const getTimeSlots = (labId) => {
+      const lab = allLabs.value.find(l => l.lab_id === labId);
+      if (!lab) return [];
+
       const slots = [];
+      const [openHour, openMin] = lab.operating_hours.open.split(':').map(Number);
+      const [closeHour, closeMin] = lab.operating_hours.close.split(':').map(Number);
+
       const startTime = new Date();
-      startTime.setHours(7, 0, 0, 0); // 7:00 AM
+      startTime.setHours(openHour, openMin, 0, 0);
 
       const endTime = new Date();
-      endTime.setHours(22, 0, 0, 0); // 10:00 PM
+      endTime.setHours(closeHour, closeMin, 0, 0);
 
-      let currentTime = startTime;
-      while (currentTime <= endTime) {
+      let currentTime = new Date(startTime);
+      while (currentTime < endTime) {
         const hours = currentTime.getHours().toString().padStart(2, '0');
         const minutes = currentTime.getMinutes().toString().padStart(2, '0');
         slots.push(`${hours}:${minutes}`);
         currentTime.setMinutes(currentTime.getMinutes() + 30);
       }
       return slots;
+    };
+
+    // All possible time slots (will be filtered based on selected lab)
+    const allTimeSlots = computed(() => {
+      if (!selectedLab.value) return [];
+      return getTimeSlots(parseInt(selectedLab.value));
     });
 
     // Filtered time slots based on timeFilter
@@ -321,22 +461,21 @@ export default {
       } else if (timeFilter.value === 'Morning') {
         return allTimeSlots.value.filter(slot => {
           const [hours] = slot.split(':').map(Number);
-          return hours >= 7 && hours < 12; // 7 AM to 11:59 AM
+          return hours >= 7 && hours < 12;
         });
       } else if (timeFilter.value === 'Afternoon') {
         return allTimeSlots.value.filter(slot => {
           const [hours] = slot.split(':').map(Number);
-          return hours >= 12 && hours < 18; // 12 PM to 5:59 PM
+          return hours >= 12 && hours < 18;
         });
       } else if (timeFilter.value === 'Evening') {
         return allTimeSlots.value.filter(slot => {
           const [hours] = slot.split(':').map(Number);
-          return hours >= 18 && hours <= 22; // 6 PM to 10:00 PM
+          return hours >= 18 && hours <= 19;
         });
       }
-      return allTimeSlots.value; // Fallback
+      return allTimeSlots.value;
     });
-
 
     const scrollToSearchFilter = () => {
       const el = document.getElementById('search-filter');
@@ -355,9 +494,8 @@ export default {
 
     const viewSchedule = (labId) => {
       selectedLab.value = labId;
-      currentPage.value = 1; // Reset to first page when changing lab
-      selectedSlots.value = []; // Clear selected slots when changing lab
-      // Scroll to the schedule section
+      currentPage.value = 1;
+      selectedSlots.value = [];
       const el = document.querySelector('.container.mx-auto.px-4.py-6.max-w-7xl');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
@@ -365,9 +503,8 @@ export default {
     };
 
     const goBack = () => {
-      selectedLab.value = ''; // Reset selected lab to hide schedule view
-      selectedSlots.value = []; // Clear any selected slots
-      // Scroll back to the lab slots overview
+      selectedLab.value = '';
+      selectedSlots.value = [];
       const el = document.getElementById('lab-slots');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
@@ -376,7 +513,13 @@ export default {
 
     const getLabName = (labId) => {
       const lab = allLabs.value.find(l => l.lab_id === labId);
-      return lab ? lab.name : 'Unknown Lab';
+      return lab ? lab.display_name : 'Unknown Lab';
+    };
+
+    const getLabOperatingHours = (labId) => {
+      const lab = allLabs.value.find(l => l.lab_id === labId);
+      if (!lab) return 'N/A';
+      return `${lab.operating_hours.open} - ${lab.operating_hours.close}`;
     };
 
     const getSeatsForLab = (labId) => {
@@ -402,7 +545,7 @@ export default {
       if (currentPage.value < totalPages.value) {
         currentPage.value++;
       } else {
-        currentPage.value = 1; // Loop to first page
+        currentPage.value = 1;
       }
     };
 
@@ -410,26 +553,24 @@ export default {
       if (currentPage.value > 1) {
         currentPage.value--;
       } else {
-        currentPage.value = totalPages.value; // Loop to last page
+        currentPage.value = totalPages.value;
       }
     };
 
     const setTimeFilter = (filter) => {
       timeFilter.value = filter;
-      // Optionally, clear selected slots if they are no longer visible in the new filter
       selectedSlots.value = selectedSlots.value.filter(slot => {
-        // Re-check if the slot is still within the new filter's time range
         const [hours] = slot.time.split(':').map(Number);
         if (filter === 'All') return true;
         if (filter === 'Morning' && hours >= 7 && hours < 12) return true;
         if (filter === 'Afternoon' && hours >= 12 && hours < 18) return true;
-        if (filter === 'Evening' && hours >= 18 && hours <= 22) return true;
+        if (filter === 'Evening' && hours >= 18 && hours <= 19) return true;
         return false;
       });
     };
 
     const toggleSlotSelection = (seat, time) => {
-      if (isSlotOccupied(parseInt(selectedLab.value), seat, selectedDate.value, time)) return; // Disable if occupied
+      if (isSlotOccupied(parseInt(selectedLab.value), seat, selectedDate.value, time)) return;
 
       const index = selectedSlots.value.findIndex(
         s => s.seat === seat && s.time === time
@@ -474,30 +615,36 @@ export default {
       }
     };
 
-    // isSlotDisabled logic simplified as maintenance is removed
     const isSlotDisabled = (seat, time) => {
       return isSlotOccupied(parseInt(selectedLab.value), seat, selectedDate.value, time);
     };
 
-    const isSlotOccupied = (lab_id, seat_number, date, time) => {
-      return hardcodedReservations.value.some(r =>
-        r.lab_id === lab_id &&
-        r.seat_number === seat_number &&
-        r.date === date &&
-        r.time === time &&
-        r.status === 'Occupied'
+    const isSlotOccupied = (labId, seatNumber, date, time) => {
+      // Find the time slot index for the given time
+      const timeSlots = getTimeSlots(labId);
+      const timeSlotIndex = timeSlots.indexOf(time) + 1; // +1 because slot calculation is 1-based
+      
+      if (timeSlotIndex === 0) return false; // Time not found
+      
+      // Calculate the expected slot_id
+      const expectedSlotId = calculateSlotId(seatNumber, timeSlotIndex);
+      
+      // Check if any reservation has this slot_id for the given lab and date
+      return hardcodedReservations.value.some(reservation => 
+        reservation.lab_id === labId &&
+        reservation.reservation_date === date &&
+        reservation.status === 'confirmed' &&
+        reservation.slots.some(slot => slot.slot_id === expectedSlotId)
       );
     };
 
-    // Lab statistics and maintenance logic removed as per request - return 0 or empty values
     const getTotalFreeSeats = () => { return 0; };
     const getOccupiedSeats = () => { return 0; };
     const getMaintenanceSeats = () => { return 0; };
 
-
     const loadLabSchedule = () => {
       clearSelection();
-      currentPage.value = 1; // Reset pagination when lab or date changes
+      currentPage.value = 1;
     };
 
     const reserveSlot = () => {
@@ -506,7 +653,7 @@ export default {
       Object.assign(confirmData, {
         lab_id: parseInt(selectedLab.value),
         date: selectedDate.value,
-        slots: [...selectedSlots.value], // Copy selected slots
+        slots: [...selectedSlots.value],
         anonymous: reserveAnonymously.value,
         student_id: currentUser.user_type === 'technician' ? studentIdForReservation.value : currentUser.user_id
       });
@@ -514,23 +661,30 @@ export default {
     };
 
     const confirmReservation = () => {
-      // For Phase 1, just simulate reservation by adding to hardcoded list
-      confirmData.slots.forEach(slot => {
-        hardcodedReservations.value.push({
-          reservation_id: hardcodedReservations.value.length + 1, // Simple ID
-          user_id: confirmData.student_id,
-          lab_id: confirmData.lab_id,
-          seat_number: slot.seat,
-          date: confirmData.date,
-          time: slot.time,
-          status: 'Occupied',
-          anonymous: confirmData.anonymous
-        });
+      // Create slot_ids for the reservation
+      const timeSlots = getTimeSlots(parseInt(confirmData.lab_id));
+      const reservationSlots = confirmData.slots.map(slot => {
+        const timeSlotIndex = timeSlots.indexOf(slot.time) + 1;
+        const slotId = calculateSlotId(slot.seat, timeSlotIndex);
+        return { slot_id: slotId };
       });
+
+      // Add new reservation
+      hardcodedReservations.value.push({
+        reservation_id: hardcodedReservations.value.length + 1,
+        user_id: confirmData.student_id,
+        lab_id: confirmData.lab_id,
+        reservation_date: confirmData.date,
+        status: 'confirmed',
+        created_at: new Date().toISOString(),
+        slots: reservationSlots
+      });
+
       closeConfirmModal();
       clearSelection();
       showSuccessModal.value = true;
     };
+
 
     const closeConfirmModal = () => {
       showConfirmModal.value = false;
