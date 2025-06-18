@@ -29,7 +29,7 @@ export default [
 		last_name: 'Cariaga',
 		role: 'Technician',
 		status: 'Active',
-		profile_pic_path: '/john_profile.png',
+		profile_pic_path: '/catorang.png',
 		description: 'Testing',
 	},
 	{
