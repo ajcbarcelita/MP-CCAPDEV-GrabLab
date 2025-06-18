@@ -234,12 +234,11 @@
 
 <script>
 import { ref, computed, reactive, onMounted } from 'vue';
+import allLabsData from '@/data/labs.js';
 import { useRouter } from 'vue-router';
-
 export default {
   name: 'StudentMain',
   setup() {
-    const router = useRouter();
     // Hardcoded data for Phase 1 visual representation
     const currentUser = reactive({
       user_id: 1,
@@ -249,70 +248,53 @@ export default {
     });
 
     // Updated labs dataset
-    const allLabs = ref([
-      {
-        lab_id: 1,
-        name: 'GK302',
-        building: 'John Gokongwei Sr. Hall',
-        display_name: 'Gokongwei Room 302',
-        operating_hours: {
-          open: '07:00',
-          close: '18:30',
-        },
-        capacity: 7,
-        status: 'Active',
-      },
-      {
-        lab_id: 2,
-        name: 'GK403',
-        building: 'John Gokongwei Sr. Hall',
-        display_name: 'CNIS Laboratory',
-        operating_hours: {
-          open: '07:00',
-          close: '18:30',
-        },
-        capacity: 7,
-        status: 'Active',
-      },
-      {
-        lab_id: 3,
-        name: 'AG1903',
-        building: 'Andrew Gonzalez Hall',
-        display_name: 'Andrew Gonzalez Room 1903',
-        operating_hours: {
-          open: '07:00',
-          close: '18:30',
-        },
-        capacity: 7,
-        status: 'Active',
-      },
-      {
-        lab_id: 4,
-        name: 'G304B',
-        building: 'John Gokongwei Sr. Hall',
-        display_name: 'Gokongwei Room 304B',
-        operating_hours: {
-          open: '07:00',
-          close: '18:30',
-        },
-        capacity: 7,
-        status: 'Active',
-      },
-      {
-        lab_id: 5,
-        name: 'G306A',
-        building: 'John Gokongwei Sr. Hall',
-        display_name: 'Gokongwei Room 306A',
-        operating_hours: {
-          open: '07:00',
-          close: '18:30',
-        },
-        capacity: 7,
-        status: 'Active',
-      }
-    ]);
+    const allLabs = ref(allLabsData); // Use the imported labs dataset
+    const selectedLab = ref('');
+    const selectedDate = ref(new Date().toISOString().split('T')[0]);
+
+  const loadLabSchedule = () => {
+  console.log('loadLabSchedule called');
+  console.log('Selected Lab:', selectedLab.value);
+  console.log('Selected Date:', selectedDate.value);
+
+  if (!selectedLab.value) {
+    alert('Please select a lab.');
+    return;
+  }
+
+  const lab = allLabs.value.find(l => l.lab_id === parseInt(selectedLab.value));
+  console.log('Found Lab:', lab);
+
+  if (!lab) {
+    alert('Selected lab not found.');
+    return;
+  }
+
+  const selectedDay = new Date(selectedDate.value).getDay();
+  console.log('Selected Day:', selectedDay);
+
+  if (selectedDay === 0) {
+    alert('Reservations are not allowed on Sundays.');
+    selectedDate.value = minDate.value; // Reset to the minimum date
+    return;
+  }
+
+  // Clear previous selections
+  console.log('Clearing previous selections...');
+  clearSelection();
+  currentPage.value = 1; // Reset pagination
+
+
+  // Scroll to the schedule section
+  const el = document.querySelector('.container.mx-auto.px-4.py-6.max-w-7xl');
+  if (el) {
+    console.log('Scrolling to schedule section...');
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+};
 
     const filteredLabs = ref([...allLabs.value]);
+    const router = useRouter();
 
     
     const hardcodedReservations = ref([
@@ -379,8 +361,6 @@ export default {
     ]);
 
     const selectedBuilding = ref('All');
-    const selectedLab = ref('');
-    const selectedDate = ref(new Date().toISOString().split('T')[0]);
     const selectedSlots = ref([]);
     const reserveAnonymously = ref(false);
     const studentIdForReservation = ref('');
@@ -502,10 +482,9 @@ export default {
     };
 
     const goBack = () => {
-      selectedLab.value = ''; // Reset selected lab to hide schedule view
-      selectedSlots.value = []; // Clear any selected slots
+      selectedLab.value = '';
+      selectedSlots.value = [];
       router.push('/view');
-
     };
 
     const getLabName = (labId) => {
@@ -638,18 +617,6 @@ export default {
     const getOccupiedSeats = () => { return 0; };
     const getMaintenanceSeats = () => { return 0; };
 
-    const loadLabSchedule = () => {
-
-    const selectedDay = new Date(selectedDate.value).getDay();
-    if (selectedDay === 0) {
-      alert("Reservations are not allowed on Sundays.");
-      selectedDate.value = minDate.value; // Reset to the minimum date
-      return;
-    }
-    clearSelection();
-    currentPage.value = 1; // Reset pagination when lab or date changes
-
-    };
 
     const reserveSlot = () => {
       if (selectedSlots.value.length === 0 || !selectedLab.value) return;
@@ -712,8 +679,10 @@ export default {
     onMounted(() => {
       if (allLabs.value.length > 0) {
         selectedLab.value = allLabs.value[0].lab_id;
+        loadLabSchedule();
       }
       filterLabs(); // Initialize filtered labs
+      
     });
 
     return {
@@ -759,7 +728,8 @@ export default {
       confirmReservation,
       closeConfirmModal,
       closeSuccessModal,
-      formatDate
+      formatDate,
+      getLabOperatingHours,
     };
   }
 };

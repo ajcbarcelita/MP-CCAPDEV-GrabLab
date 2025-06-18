@@ -1,3 +1,8 @@
+<style scoped>
+@import '../assets/landing_page.css';
+</style>
+
+
 <template>
 	<div id="app-bg">
 		<!-- Navbar -->
@@ -88,6 +93,3 @@ export default {
 };
 </script>
 
-<style scoped>
-@import '../assets/landing_page.css';
-</style>
