@@ -89,7 +89,7 @@
 
 
 /* Styles inspired by landing_page.css / landing.txt */
-#reservation-page {
+#app-bg {
   background-color: #FBFADA;
   min-height: 100vh;
   display: flex;

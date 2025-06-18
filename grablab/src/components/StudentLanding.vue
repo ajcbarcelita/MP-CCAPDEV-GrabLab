@@ -37,7 +37,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <!-- Card 1 -->
             <div class="bg-[#FBFADA] p-6 rounded-xl shadow border-2 border-[#12372A]">
-              <div class="flex justify-center mb-3"> 
+              <div class="flex justify-center mb-3">
                 <router-link to="/view">
                   <img src="/src/assets/Calendar.png" alt="View Availability" class="w-48 h-36" />
                 </router-link>
@@ -97,7 +97,8 @@ export default {
   name: 'StudentMain',
   setup() {
     const currentUser = ref(JSON.parse(sessionStorage.getItem('user')));
-    return { currentUser };
+    const searchUserId = ref(''); 
+    return { currentUser, searchUserId };
   },
   methods: {
     scrollToSearchFilter() {
@@ -109,4 +110,3 @@ export default {
   },
 }
 </script>
-

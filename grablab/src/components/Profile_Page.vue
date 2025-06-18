@@ -7,15 +7,15 @@
   <div class="bg-sage min-h-screen">
     <!-- Header -->
     <div id="navbar">
-        <span id="navbar-brand">GrabLab</span>
-        <nav class="flex space-x-4 font-karma">
-          <button @click="handleHome" id='home'>
-            Home
-          </button>
-          <button @click="handleLogout" id='logout'>
-            Log Out
-          </button>
-        </nav>
+      <span id="navbar-brand">GrabLab</span>
+      <nav class="flex space-x-4 font-karma">
+        <button @click="handleHome" id='home'>
+          Home
+        </button>
+        <button @click="handleLogout" id='logout'>
+          Log Out
+        </button>
+      </nav>
     </div>
 
     <!-- Main Content -->
@@ -23,7 +23,7 @@
       <!-- Profile Header Section -->
       <div class="bg-forest-medium text-cream rounded-lg p-8 mb-8 text-center">
         <h2 class="text-3xl font-bold mb-3 font-jersey">
-          {{ isOwnProfile ? 'USER PROFILE' : `${profileUser.first_name}'S PROFILE` }}
+          {{ isOwnProfile ? 'USER PROFILE' : `${profileUser.first_name}'s Profile Page` }}
         </h2>
         <p class="text-lg font-karma">
           {{ isOwnProfile ? 'Manage your account information and view your reservations' : 'View user information and details' }}
@@ -31,9 +31,10 @@
       </div>
 
       <!-- Content Div -->
-      <div class="grid md:grid-cols-3 gap-8">
+      <!-- Conditional grid or flex layout based on own profile --> 
+      <div :class="isOwnProfile ? 'grid md:grid-cols-3 gap-8' : 'flex justify-center'">
         <!-- Profile Information Card -->
-        <div class="md:col-span-2 bg-cream rounded-lg shadow-lg p-6">
+        <div :class="isOwnProfile ? 'md:col-span-2 bg-cream rounded-lg shadow-lg p-6' : 'bg-cream rounded-lg shadow-lg p-6 w-full max-w-5xl'">
           <div class="flex justify-between items-center mb-6">
             <h3 class="text-2xl font-bold text-forest-dark font-karma">Profile Information</h3>
             <button v-if="showEditButton" @click="handleEditProfile"
@@ -45,8 +46,9 @@
           <!-- Profile Picture Section -->
           <div class="flex items-center mb-6">
             <div class="w-24 h-24 bg-sage rounded-full flex items-center justify-center mr-6 relative overflow-hidden">
-              <img v-if="profileUser.profile_pic_path" :src="profileUser.profile_pic_path" class="w-full h-full object-cover">
-                <!-- SVG Placeholder if no picture set yet -->
+              <img v-if="profileUser.profile_pic_path" :src="profileUser.profile_pic_path"
+                class="w-full h-full object-cover">
+              <!-- SVG Placeholder if no picture set yet -->
               <svg v-else class="w-16 h-16 text-forest-medium" fill="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
@@ -87,19 +89,13 @@
               <div>
                 <label class="block text-forest-dark font-semibold mb-2 font-karma">First Name</label>
                 <!-- Read-only when it is not your profile and when not in editing mode -->
-                <input type="text"
-                v-model="editForm.first_name"
-                :readonly="inputReadonly"
-                :class="[
+                <input type="text" v-model="editForm.first_name" :readonly="inputReadonly" :class="[
                   'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
                   inputReadonly ? 'bg-white' : 'bg-gray-50']">
               </div>
               <div>
                 <label class="block text-forest-dark font-semibold mb-2 font-karma">Last Name</label>
-                <input type="text"
-                v-model="editForm.last_name"
-                :readonly="inputReadonly"
-                :class="[
+                <input type="text" v-model="editForm.last_name" :readonly="inputReadonly" :class="[
                   'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
                   inputReadonly ? 'bg-white' : 'bg-gray-50']">
               </div>
@@ -115,13 +111,10 @@
             <!-- Description div -->
             <div>
               <label class="block text-forest-dark font-semibold mb-2 font-karma">Description</label>
-              <textarea rows="4"
-              v-model="editForm.description"
-              :readonly="inputReadonly"
-              :class="[
+              <textarea rows="4" v-model="editForm.description" :readonly="inputReadonly" :class="[
                 'w-full px-3 py-2 border border-gray-300 rounded-lg resize-none font-karma',
                 inputReadonly ? 'bg-white' : 'bg-gray-50']"
-              :placeholder="isOwnProfile ? 'Tell us about yourself...' : ''"></textarea>
+                :placeholder="isOwnProfile ? 'Tell us about yourself...' : ''"></textarea>
             </div>
 
             <!-- Save / Edit Buttons -->
@@ -138,8 +131,8 @@
           </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="align-middle space-y-12">
+        <!-- Sidebar - Only show for own profile -->
+        <div v-if="isOwnProfile" class="align-middle space-y-12">
           <!-- Magic Button (Delete Account) - Only show for own profile not for other Users -->
           <div v-if="showDeleteAccount" class="bg-pink-100 border-3 border-pink-200 rounded-lg p-6 text-center">
             <h3 class="text-xl font-bold text-pink-600 mb-4 font-karma">Magic Button</h3>
@@ -161,9 +154,8 @@
         <div class="overflow-x-auto">
           <div v-if="userReservations.length > 0" class="flex gap-4 min-w-max pb-4">
             <!-- Dynamic Reservation Cards -->
-            <div v-for="reservation in userReservations"
-                 :key="reservation.reservation_id"
-                 class="bg-sage rounded-lg p-4 min-w-[280px]">
+            <div v-for="reservation in userReservations" :key="reservation.reservation_id"
+              class="bg-sage rounded-lg p-4 min-w-[280px]">
               <div class="mb-3">
                 <h4 class="font-bold text-forest-dark text-lg font-karma">
                   {{ getLabName(reservation.lab_id) }}
@@ -175,7 +167,8 @@
               <div class="text-forest-dark text-sm space-y-1 font-karma">
                 <p><strong>Date:</strong> {{ formatReservationDate(reservation.reservation_date) }}</p>
                 <p><strong>Time:</strong> {{ getTimeRangeForSlots(reservation.slots) }}</p>
-                <p><strong>Seats:</strong> {{ reservation.slots.map(slot => getSeatFromSlotId(slot.slot_id)).join(', ') }}</p>
+                <p><strong>Seats:</strong> {{reservation.slots.map(slot => getSeatFromSlotId(slot.slot_id)).join(', ')
+                  }}</p>
                 <p><strong>Status:</strong>
                   <!-- Display Status -->
                   <span :class="reservation.status === 'confirmed' ? 'text-green-600' : 'text-yellow-600'">
@@ -200,11 +193,11 @@
   </div>
 
   <!-- Footer -->
-    <footer class="bg-forest-dark text-[#FBFADA] text-center p-4 font-bold">
-      <div class="flex justify-center gap-2">
+  <footer class="bg-forest-dark text-[#FBFADA] text-center p-4 font-bold">
+    <div class="flex justify-center gap-2">
       <p>&copy; 2025 GrabLab. All rights reserved.<br /></p>
     </div>
-    </footer>
+  </footer>
 </template>
 
 <script setup>
@@ -247,9 +240,9 @@ const getTimeSlotFromSlotId = (slotId) => { return ((slotId - 1) % 22) + 1 }
 const userReservations = computed(() =>
   // Filter reservations for the current user
   currentUser.value ? reservations
-        .filter(r => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
-        // Sort by reservation date (ascending order)
-        .sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
+    .filter(r => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
+    // Sort by reservation date (ascending order)
+    .sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
     : []
 )
 
@@ -349,7 +342,7 @@ function handleCancelEdit() {
 function handleDeleteAccount() {
   if (!isOwnProfile.value) return
   if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-    // backend stuff here to delete account
+    // backend stuff here to delete account AND ALSO THE RESERVATIONS PENDING
     console.log('Account deleted successfully')
 
     // Clear session and redirect to login
@@ -394,7 +387,7 @@ function handleView() {
   const userId = route.params.userId || currentUser.value.user_id
 
   // Find the user in the users list
-  profileUser.value = users.find(user => user.user_id === userId)
+  profileUser.value = users.find(user => user.user_id == userId)
 
   if (!profileUser.value) {
     // Handle where user is not found - show error or redirect
@@ -409,7 +402,7 @@ function handleView() {
     }
     return
   }
-  
+
   // Initialize edit form with profile data
   handleEditForm()
 }

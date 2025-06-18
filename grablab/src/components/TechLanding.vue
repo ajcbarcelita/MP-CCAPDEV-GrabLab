@@ -65,6 +65,19 @@
             </div>
           </div>
         </section>
+
+        <!-- Search User Section -->
+        <section class="max-w-4xl mx-auto mt-10 mb-16 text-[#12372A]">
+          <h2 class="text-2xl font-bold mb-4 text-center">Search User by ID</h2>
+          <div class="flex justify-center items-center gap-4">
+            <input v-model="searchUserId" type="text" placeholder="Enter User ID"
+              class="p-2 border border-[#12372A] rounded-md w-1/2" />
+            <router-link :to="`/profile/${searchUserId}`"
+              class="bg-[#12372A] text-[#FBFADA] px-4 py-2 rounded hover:bg-[#0f2d23]">
+              View Profile
+            </router-link>
+          </div>
+        </section>
       </div>
     </body>
 
@@ -78,10 +91,12 @@
 </template>
 
 <script>
+
 export default {
   data() {
     return {
       currentUser: JSON.parse(sessionStorage.getItem('user')) || {},
+      searchUserId: '',
     };
   },
   methods: {
