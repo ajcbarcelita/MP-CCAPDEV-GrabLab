@@ -96,11 +96,6 @@
             <div v-else>
               <!-- Time Slot Filter -->
               <div class="flex justify-center gap-4 mb-4 flex-wrap">
-                <button @click="setTimeFilter('All')"
-                  :class="{ 'bg-grablab-primary text-white': timeFilter === 'All', 'bg-gray-200 text-gray-700': timeFilter !== 'All' }"
-                  class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
-                  All Times
-                </button>
                 <button @click="setTimeFilter('Morning')"
                   :class="{ 'bg-grablab-primary text-white': timeFilter === 'Morning', 'bg-gray-200 text-gray-700': timeFilter !== 'Morning' }"
                   class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
@@ -284,7 +279,7 @@ export default {
     const currentPage = ref(1);
 
     // Time Slot Filtering
-    const timeFilter = ref('All'); // 'All', 'Morning', 'Afternoon', 'Evening'
+    const timeFilter = ref('Morning'); // 'Morning', 'Afternoon', 'Evening'
 
     const minDate = computed(() => {
       const today = new Date();
@@ -418,7 +413,6 @@ export default {
       selectedSlots.value = selectedSlots.value.filter(slot => {
         // Re-check if the slot is still within the new filter's time range
         const [hours] = slot.time.split(':').map(Number);
-        if (filter === 'All') return true;
         if (filter === 'Morning' && hours >= 7 && hours < 12) return true;
         if (filter === 'Afternoon' && hours >= 12 && hours < 18) return true;
         if (filter === 'Evening' && hours >= 18 && hours <= 22) return true;
