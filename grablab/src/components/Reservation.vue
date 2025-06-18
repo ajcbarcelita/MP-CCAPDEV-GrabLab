@@ -796,8 +796,9 @@ export default {
 		}
 
 		const isSlotOccupied = (labId, seatNumber, date, time) => {
+			// Find the time slot index for the given time
 			const timeSlots = getTimeSlots(labId)
-			const timeSlotIndex = timeSlots.indexOf(time) + 1 // slot calculation is 1-based
+			const timeSlotIndex = timeSlots.indexOf(time) + 1 // +1 because slot calculation is 1-based
 
 			if (timeSlotIndex === 0) return false // Time not found
 
@@ -813,6 +814,17 @@ export default {
 					reservation.slots.some((slot) => slot.slot_id === expectedSlotId),
 			)
 		}
+
+		const getTotalFreeSeats = () => {
+			return 0
+		}
+		const getOccupiedSeats = () => {
+			return 0
+		}
+		const getMaintenanceSeats = () => {
+			return 0
+		}
+
 		const reserveSlot = () => {
 			if (selectedSlots.value.length === 0 || !selectedLab.value) return
 
@@ -992,6 +1004,8 @@ export default {
 			getSlotClass,
 			getSlotText,
 			isSlotDisabled,
+			getTotalFreeSeats,
+			getOccupiedSeats,
 			getMaintenanceSeats,
 			loadLabSchedule,
 			reserveSlot,
@@ -1001,6 +1015,8 @@ export default {
 			formatDate,
 			getLabOperatingHours,
 			showReservationDetails,
+			getSlotClass,
+			getSlotText,
 			isSlotOccupied,
 			calculateSlotId,
 			getSlotDetails,
