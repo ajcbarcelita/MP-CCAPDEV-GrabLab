@@ -1,9 +1,9 @@
-<style>
+<style scoped>
 @import '@/assets/reservations.css';
 </style>
 
 <template>
-  <div id="app-bg">
+  <div id="reservation-page">
     <!-- Navbar -->
     <div id="navbar">
       <span id="navbar-brand">GrabLab</span>

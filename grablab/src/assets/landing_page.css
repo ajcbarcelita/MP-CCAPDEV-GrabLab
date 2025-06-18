@@ -3,6 +3,12 @@
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Jomhuria&family=Karma:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
+#app-bg {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 #logout {
   font-family: 'Jomhuria';
   font-size: 35px;
@@ -43,60 +49,31 @@
   padding-bottom: 0px;
 }
 
-#reservation-summary {
-  background: #FBFADA;
-  margin-top: 2rem;
-  margin-left: 2.5%;
-  max-width: 95%;
-  padding: 1.2rem 0.5rem 0.7rem 0.5rem;
-}
-.summary-grid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 3.5rem;
-}
-.summary-item {
-  text-align: center;
-  margin-right: 100px;
-  margin-left: 100px;
-
-}
-.summary-value {
-  font-size: 100px;
-  font-family: 'Jomhuria';
-  font-weight: bold;
-  color: #12372A;
-  margin-bottom: -43px;
-  margin-top: -40px
-}
-.summary-label {
-  font-size: 1rem;
-  color: #12372A;
-  font-family: 'Karma', serif;
-}
-
 #search-filter{
   background: #FBFADA;
   margin-top: 2rem;
-  margin-left: 2.5%;
+  margin-left: auto;
+  margin-right: auto;
   max-width: 95%;
+  width: 95%;
   padding: 1.2rem 0.5rem 0.7rem 0.5rem;
 }
 
-#search-title{
-  font-family: 'Jomhuria';
-  font-size: 50px;
-  color: #12372A;
-  margin-left: 20px;
-  margin-top: -20px;
+#Title {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
+
 
 #filter-row {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 2rem;
+  justify-content: center;
 }
 #date-time label,
 #Lab label {
@@ -113,6 +90,11 @@
   padding-right: 10px;
   font-family: 'Jomhuria';
   font-size: 40px;
+  align-self: center;
+  height: 50px;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
 }
 #search-btn:hover {
   background-color: #436850;
@@ -126,13 +108,31 @@
 }
 
 #lab{
-  margin-left: 70px;
+  color: #436850;
+}
+#ID {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 .search-input {
   background-color: #FBFADA;
   border: #436850 1px solid;
-  width: 450px;
+  width: 300px;
   height: 50px;
+}
+
+/* Hide number input arrows/spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* For Firefox and other browsers */
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield; /* Standard property */
 }
 
 #lab-slots{
@@ -218,5 +218,140 @@
 #Lab {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+.search-label{
+  color: #436850;
+}
+
+/* Reservation styles */
+.reservations-grid {
+  margin-left: 3%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  justify-items: center;
+}
+
+.reservation-card {
+  background: #FBFADA;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  width: 450px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.reservation-card-header {
+  background: #436850;
+  color: #FBFADA;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 0.7rem 1rem;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  text-align: center;
+}
+
+.reservation-info {
+  font-size: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+  align-items: center;
+  color: #12372A;
+  font-family: "Karma";
+  padding: 1rem 1.2rem 0.5rem 1.2rem;
+  flex: 1;
+}
+
+.reservation-info > div {
+  margin-bottom: 0.5rem;
+}
+
+.reservation-info-label {
+  margin-right: 1rem;
+  color: #436850;
+  margin-left: 1rem;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.slots-section {
+  margin-top: 0.5rem;
+}
+
+.slots-list {
+  margin: 0.5rem 0 0 2rem;
+  padding-left: 1.2rem;
+  list-style-type: disc;
+}
+
+.slots-list li {
+  margin-bottom: 0.3rem;
+}
+
+.reservation-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  padding: 0.7rem 1.2rem 1rem 1.2rem;
+}
+
+.reservation-btn {
+  border: none;
+  border-radius: 0.15rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-family: "Karma";
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.view-btn {
+  background: #436850;
+  color: #FBFADA;
+}
+
+.view-btn:hover {
+  background: #234c36;
+}
+
+.cancel-btn {
+  background: #F39C12;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #D68910;
+}
+
+.delete-btn {
+  background: #D32F2F;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #B71C1C;
+}
+
+.no-results-message {
+  font-size: 1.5rem;
+  color: #D32F2F;
+  font-family: "Karma";
+  font-weight: bold;
+  margin: 2rem 0;
+}
+
+#reservations-title {
+  font-family: 'Jomhuria';
+  font-size: 50px;
+  color: #12372A;
+  margin-left: 20px;
+  margin-top: -20px;
+  margin-bottom: 20px;
+  text-align: center;
 }
