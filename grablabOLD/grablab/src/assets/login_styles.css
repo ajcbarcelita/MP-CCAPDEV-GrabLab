@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables */
+:root {
+	--bg-forest-dark: #12372a;
+	--bg-forest-medium: #436850;
+	--bg-sage: #adbc9f;
+	--font-jersey: 'Jersey 25', sans-serif;
+	--font-karma: 'Karma', serif;
+}
+
+/* Layout for the overall container */
+.login-container {
+	@apply flex h-screen;
+}
+
+/* Left: login form container */
+.login-form {
+	@apply w-1/3 flex flex-col justify-center items-center bg-white px-12;
+}
+
+/* Right: branding / tagline container */
+.branding-section {
+	background:
+		linear-gradient(rgba(18, 55, 42, 0.87), rgba(18, 55, 42, 0.87)),
+		url('@/assets/gokongwei_hall.png') center center / cover no-repeat;
+	@apply w-2/3 flex flex-col justify-center items-center;
+}
+
+/* Title styles */
+.login-title {
+	font-family: var(--font-jersey);
+	color: var(--bg-forest-dark);
+	@apply text-4xl font-bold mb-2;
+}
+
+.login-subtitle {
+	font-family: var(--font-karma);
+	@apply text-2xl mb-6;
+}
+
+.login-signup {
+	font-family: var(--font-karma);
+	@apply text-base mb-6;
+}
+
+.login-signup a {
+	@apply underline text-green-800 font-semibold;
+}
+
+/* Form styles */
+.login-form form {
+	@apply w-full space-y-4;
+}
+
+.login-form label {
+	@apply block text-sm font-medium mb-1;
+}
+
+.login-input {
+	@apply w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-800;
+}
+
+.login-checkbox {
+	@apply flex items-center;
+}
+
+.login-button {
+	@apply flex items-center justify-center gap-2 bg-green-900 text-white px-4 py-2 rounded hover:bg-green-800 transition-all w-full;
+}
+
+/* Branding section content */
+.branding-title {
+	font-family: var(--font-jersey);
+	color: var(--bg-sage);
+	@apply text-9xl font-bold mb-6;
+}
+
+.branding-tagline {
+	font-family: var(--font-karma);
+	@apply text-2xl text-white text-center;
+}
+
+/* Error message */
+.error-message {
+	@apply mb-4 px-4 py-2 rounded bg-red-100 border border-red-400 text-red-700;
+}

@@ -231,10 +231,12 @@
 
 <script>
 import { ref, computed, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'StudentMain',
   setup() {
+    const router = useRouter();
     // Hardcoded data for Phase 1 visual representation
     const currentUser = reactive({
       user_id: 1,
@@ -367,11 +369,7 @@ export default {
     const goBack = () => {
       selectedLab.value = ''; // Reset selected lab to hide schedule view
       selectedSlots.value = []; // Clear any selected slots
-      // Scroll back to the lab slots overview
-      const el = document.getElementById('lab-slots');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+      router.push('/view');
     };
 
     const getLabName = (labId) => {
