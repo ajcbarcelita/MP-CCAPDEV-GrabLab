@@ -13,22 +13,22 @@
 			</div>
 		</div>
 
-		<div class="min-h-screen flex flex-col">
-			<div class="flex-1">
-				<!-- Hero Section -->
-				<section id="hero-section">
-					<h1 id="hero-title">
-						Hi, {{ currentUser.first_name }} {{ currentUser.last_name }} <br />
-						Welcome back to GrabLab!
-					</h1>
-					<p id="hero-description">
-						Streamline your laboratory Reservations with our modern booking system.
-						Available from 7am on wards with real-time availability tracking.
-					</p>
-					<router-link to="/view" class="view-slots">
-						<a href="#" id="hero-cta" class="view-slots"> View Slots </a>
-					</router-link>
-				</section>
+    <div class="min-h-screen flex flex-col">
+      <div class="flex-1">
+        <!-- Hero Section -->
+        <section id="hero-section">
+          <h1 id="hero-title">Hi, {{ currentUser.first_name }} {{ currentUser.last_name }} <br /> Welcome back to
+            GrabLab!</h1>
+          <p id="hero-description">
+            Streamline your laboratory Reservations with our modern booking system. Available
+            from 7am on wards with real-time availability tracking.
+          </p>
+          <router-link to="/view" class="view-slots">
+            <a href="#" id="hero-cta" class="view-slots">
+              View Slots
+            </a>
+          </router-link>
+        </section>
 
 				<!-- Why Choose Section -->
 				<section
@@ -87,26 +87,20 @@
 					</div>
 				</section>
 
-				<!-- Search User Section -->
-				<section class="max-w-4xl mx-auto mt-10 mb-16 text-[#12372A]">
-					<h2 class="text-2xl font-bold mb-4 text-center">Search User by ID</h2>
-					<div class="flex justify-center items-center gap-4">
-						<input
-							v-model="searchUserId"
-							type="text"
-							placeholder="Enter User ID"
-							class="p-2 border border-[#12372A] rounded-md w-1/2"
-						/>
-						<router-link
-							:to="`/profile/${searchUserId}`"
-							class="bg-[#12372A] text-[#FBFADA] px-4 py-2 rounded hover:bg-[#0f2d23]"
-						>
-							View Profile
-						</router-link>
-					</div>
-				</section>
-			</div>
-		</div>
+        <!-- Search User Section -->
+        <section class="max-w-4xl mx-auto mt-10 mb-16 text-[#12372A]">
+          <h2 class="text-2xl font-bold mb-4 text-center">Search User by ID</h2>
+          <div class="flex justify-center items-center gap-4">
+            <input v-model="searchUserId" type="text" placeholder="Enter User ID"
+              class="p-2 border border-[#12372A] rounded-md w-1/2" />
+            <router-link :to="`/profile/${searchUserId}`"
+              class="bg-[#12372A] text-[#FBFADA] px-4 py-2 rounded hover:bg-[#0f2d23]">
+              View Profile
+            </router-link>
+          </div>
+        </section>
+      </div>
+    </div>
 
 		<!-- Footer -->
 		<footer class="bg-[#12372A] text-[#FBFADA] text-center p-4 text-sm font-bold">
