@@ -1,14 +1,17 @@
+<style>
+@import '@/assets/reservations.css';
+</style>
+
 <template>
   <div id="app-bg">
     <!-- Navbar -->
     <div id="navbar">
       <span id="navbar-brand">GrabLab</span>
       <div id="links">
-        <a id="profile" href="#">Profile</a>
-        <a id="logout" href="#">Log Out</a>
+        <router-link id="profile" to="/profile">Profile</router-link>
+        <router-link id="logout" to="/login">Log Out</router-link>
       </div>
     </div>
-
 
     <!-- Main Content Container (Schedule View) -->
     <div class="container mx-auto px-4 py-6 max-w-7xl">
@@ -17,7 +20,8 @@
         <!-- Left Panel - Controls -->
         <div class="lg:col-span-1 space-y-4">
           <!-- Back Button - More prominent -->
-          <button @click="goBack" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-lg transition-colors duration-200">
+          <button @click="goBack"
+            class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-lg transition-colors duration-200">
             ← Go Back to Labs
           </button>
 
@@ -25,7 +29,7 @@
           <div class="bg-white rounded-lg shadow-sm p-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Lab Selector</label>
             <select v-model="selectedLab" @change="loadLabSchedule"
-                    class="w-full p-3 border border-gray-300 rounded-lg">
+              class="w-full p-3 border border-gray-300 rounded-lg">
               <option value="">Select Lab</option>
               <option v-for="lab in allLabs" :key="lab.lab_id" :value="lab.lab_id">
                 {{ lab.name }} ({{ lab.building }})
@@ -36,23 +40,22 @@
           <!-- Date Selector (One Week) -->
           <div class="bg-white rounded-lg shadow-sm p-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-            <input type="date" v-model="selectedDate" :min="minDate" :max="maxDate"
-                   @change="loadLabSchedule"
-                   class="w-full p-3 border border-gray-300 rounded-lg">
+            <input type="date" v-model="selectedDate" :min="minDate" :max="maxDate" @change="loadLabSchedule"
+              class="w-full p-3 border border-gray-300 rounded-lg">
           </div>
-          
+
           <!-- Quick Reserve Panel -->
           <div class="bg-white rounded-lg shadow-sm p-4" v-if="selectedSlots.length > 0">
             <h3 class="font-medium text-gray-800 mb-3">
               Reserve Selected Slots
             </h3>
             <p class="text-sm text-gray-600 mb-2">
-                Lab: {{ getLabName(selectedLab) }}, Date: {{ formatDate(selectedDate) }}
+              Lab: {{ getLabName(selectedLab) }}, Date: {{ formatDate(selectedDate) }}
             </p>
             <ul class="text-sm text-gray-600 mb-3 max-h-24 overflow-y-auto border p-2 rounded">
-                <li v-for="slot in selectedSlots" :key="`${slot.seat}-${slot.time}`">
-                    Seat {{ slot.seat }} at {{ slot.time }}
-                </li>
+              <li v-for="slot in selectedSlots" :key="`${slot.seat}-${slot.time}`">
+                Seat {{ slot.seat }} at {{ slot.time }}
+              </li>
             </ul>
 
             <div class="space-y-3">
@@ -63,18 +66,16 @@
 
               <div v-if="currentUser.user_type === 'technician'">
                 <label class="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
-                <input type="text" v-model="studentIdForReservation"
-                       placeholder="Student ID"
-                       class="w-full p-2 border rounded">
+                <input type="text" v-model="studentIdForReservation" placeholder="Student ID"
+                  class="w-full p-2 border rounded">
                 <p class="text-xs text-gray-500 mt-1">For technicians</p>
               </div>
 
               <button @click="reserveSlot"
-                      class="w-full grablab-primary text-white py-3 rounded-lg font-medium hover:opacity-90">
+                class="w-full grablab-primary text-white py-3 rounded-lg font-medium hover:opacity-90">
                 Reserve Slot
               </button>
-              <button @click="clearSelection"
-                      class="w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500">
+              <button @click="clearSelection" class="w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500">
                 Cancel
               </button>
             </div>
@@ -95,16 +96,24 @@
             <div v-else>
               <!-- Time Slot Filter -->
               <div class="flex justify-center gap-4 mb-4 flex-wrap">
-                <button @click="setTimeFilter('All')" :class="{'bg-grablab-primary text-white': timeFilter === 'All', 'bg-gray-200 text-gray-700': timeFilter !== 'All'}" class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
+                <button @click="setTimeFilter('All')"
+                  :class="{ 'bg-grablab-primary text-white': timeFilter === 'All', 'bg-gray-200 text-gray-700': timeFilter !== 'All' }"
+                  class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
                   All Times
                 </button>
-                <button @click="setTimeFilter('Morning')" :class="{'bg-grablab-primary text-white': timeFilter === 'Morning', 'bg-gray-200 text-gray-700': timeFilter !== 'Morning'}" class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
+                <button @click="setTimeFilter('Morning')"
+                  :class="{ 'bg-grablab-primary text-white': timeFilter === 'Morning', 'bg-gray-200 text-gray-700': timeFilter !== 'Morning' }"
+                  class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
                   Morning (7 AM - 12 PM)
                 </button>
-                <button @click="setTimeFilter('Afternoon')" :class="{'bg-grablab-primary text-white': timeFilter === 'Afternoon', 'bg-gray-200 text-gray-700': timeFilter !== 'Afternoon'}" class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
+                <button @click="setTimeFilter('Afternoon')"
+                  :class="{ 'bg-grablab-primary text-white': timeFilter === 'Afternoon', 'bg-gray-200 text-gray-700': timeFilter !== 'Afternoon' }"
+                  class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
                   Afternoon (12 PM - 6 PM)
                 </button>
-                <button @click="setTimeFilter('Evening')" :class="{'bg-grablab-primary text-white': timeFilter === 'Evening', 'bg-gray-200 text-gray-700': timeFilter !== 'Evening'}" class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
+                <button @click="setTimeFilter('Evening')"
+                  :class="{ 'bg-grablab-primary text-white': timeFilter === 'Evening', 'bg-gray-200 text-gray-700': timeFilter !== 'Evening' }"
+                  class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
                   Evening (6 PM - 10 PM)
                 </button>
               </div>
@@ -113,8 +122,7 @@
                 <!-- Time Header -->
                 <div class="schedule-grid mb-2 min-w-max">
                   <div class="font-medium text-center py-2"></div>
-                  <div v-for="time in filteredTimeSlots" :key="time"
-                       class="font-medium text-center py-2 text-sm">
+                  <div v-for="time in filteredTimeSlots" :key="time" class="font-medium text-center py-2 text-sm">
                     {{ time }}
                   </div>
                 </div>
@@ -125,9 +133,8 @@
                     Seat {{ seat }}
                   </div>
                   <button v-for="time in filteredTimeSlots" :key="`${seat}-${time}`"
-                          @click="toggleSlotSelection(seat, time)"
-                          :class="getSlotClass(seat, time)"
-                          class="seat-button rounded text-xs font-medium transition-all hover:scale-105">
+                    @click="toggleSlotSelection(seat, time)" :class="getSlotClass(seat, time)"
+                    class="seat-button rounded text-xs font-medium transition-all hover:scale-105">
                     {{ getSlotText(seat, time) }}
                   </button>
                 </div>
@@ -136,15 +143,21 @@
               <!-- Pagination Controls -->
               <div class="flex justify-between items-center mt-6 p-2 bg-gray-100 rounded-lg">
                 <button @click="prevPage"
-                        class="flex items-center gap-1 px-4 py-2 bg-grablab-secondary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                  class="flex items-center gap-1 px-4 py-2 bg-grablab-secondary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
                   Previous
                 </button>
                 <span class="text-base font-semibold text-gray-800">Page {{ currentPage }} of {{ totalPages }}</span>
                 <button @click="nextPage"
-                        class="flex items-center gap-1 px-4 py-2 bg-grablab-secondary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md">
+                  class="flex items-center gap-1 px-4 py-2 bg-grablab-secondary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md">
                   Next
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -183,11 +196,11 @@
 
         <div class="flex gap-3">
           <button @click="confirmReservation"
-                  class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
+            class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
             Confirm
           </button>
           <button @click="closeConfirmModal"
-                  class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
+            class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
             Cancel
           </button>
         </div>
@@ -201,7 +214,7 @@
         <h2 class="font-jersey text-2xl text-grablab-primary mb-4">Reservation Confirmed!</h2>
         <p class="text-gray-600 mb-6">Your seat has been successfully reserved.</p>
         <button @click="closeSuccessModal"
-                class="grablab-primary text-white py-3 px-6 rounded font-medium hover:opacity-90">
+          class="grablab-primary text-white py-3 px-6 rounded font-medium hover:opacity-90">
           Close
         </button>
       </div>
@@ -352,13 +365,13 @@ export default {
     };
 
     const goBack = () => {
-        selectedLab.value = ''; // Reset selected lab to hide schedule view
-        selectedSlots.value = []; // Clear any selected slots
-        // Scroll back to the lab slots overview
-        const el = document.getElementById('lab-slots');
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth' });
-        }
+      selectedLab.value = ''; // Reset selected lab to hide schedule view
+      selectedSlots.value = []; // Clear any selected slots
+      // Scroll back to the lab slots overview
+      const el = document.getElementById('lab-slots');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     };
 
     const getLabName = (labId) => {
@@ -501,22 +514,22 @@ export default {
     };
 
     const confirmReservation = () => {
-        // For Phase 1, just simulate reservation by adding to hardcoded list
-        confirmData.slots.forEach(slot => {
-            hardcodedReservations.value.push({
-                reservation_id: hardcodedReservations.value.length + 1, // Simple ID
-                user_id: confirmData.student_id,
-                lab_id: confirmData.lab_id,
-                seat_number: slot.seat,
-                date: confirmData.date,
-                time: slot.time,
-                status: 'Occupied',
-                anonymous: confirmData.anonymous
-            });
+      // For Phase 1, just simulate reservation by adding to hardcoded list
+      confirmData.slots.forEach(slot => {
+        hardcodedReservations.value.push({
+          reservation_id: hardcodedReservations.value.length + 1, // Simple ID
+          user_id: confirmData.student_id,
+          lab_id: confirmData.lab_id,
+          seat_number: slot.seat,
+          date: confirmData.date,
+          time: slot.time,
+          status: 'Occupied',
+          anonymous: confirmData.anonymous
         });
-        closeConfirmModal();
-        clearSelection();
-        showSuccessModal.value = true;
+      });
+      closeConfirmModal();
+      clearSelection();
+      showSuccessModal.value = true;
     };
 
     const closeConfirmModal = () => {
@@ -592,284 +605,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Base styles */
-.font-jersey {
-  font-family: 'Jersey 25', cursive;
-}
-
-.font-karma {
-  font-family: 'Karma', serif;
-}
-
-.grablab-primary {
-  background-color: #12372A;
-}
-
-.grablab-secondary {
-  background-color: #436850;
-}
-
-.grablab-accent {
-  background-color: #ADBC9F;
-}
-
-.grablab-light {
-  background-color: #FBFADA;
-}
-
-.text-grablab-primary {
-  color: #12372A;
-}
-
-.text-grablab-secondary {
-  color: #436850;
-}
-
-.border-grablab-primary {
-  border-color: #12372A;
-}
-
-.modal-overlay {
-  background: rgba(18, 55, 42, 0.8);
-  backdrop-filter: blur(4px);
-}
-
-/* Specific styles for the schedule grid */
-.schedule-grid {
-  display: grid;
-  grid-template-columns: 80px repeat(auto-fit, minmax(60px, 1fr)); /* Adjusted to auto-fit for smaller slots */
-  gap: 2px;
-}
-
-.seat-button {
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap; /* Prevent text wrapping inside buttons */
-  overflow: hidden; /* Hide overflow if content is too large */
-  text-overflow: ellipsis; /* Add ellipsis for overflowing text */
-}
-
-/* Custom Scrollbar for overflow-x-auto */
-.custom-scrollbar::-webkit-scrollbar {
-  height: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-
-/* Styles inspired by landing_page.css / landing.txt */
-#app-bg {
-  background-color: #FBFADA;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  font-family: 'Karma', serif;
-}
-
-#navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background-color: #12372A;
-  color: #FBFADA;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-#navbar-brand {
-  font-family: 'Jersey 25', cursive;
-  font-size: 2.5rem;
-}
-
-#links a {
-  margin-left: 1.5rem;
-  color: #FBFADA;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-#links a:hover {
-  color: #ADBC9F;
-}
-
-#hero-section {
-  background-color: #436850;
-  color: #FBFADA;
-  padding: 4rem 2rem;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-#hero-title {
-  font-family: 'Jersey 25', cursive;
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
-  line-height: 1.2;
-}
-
-#hero-description {
-  font-size: 1.1rem;
-  max-width: 700px;
-  margin: 0 auto 2rem;
-}
-
-#hero-cta {
-  display: inline-block;
-  background-color: #ADBC9F;
-  color: #12372A;
-  padding: 0.8rem 2rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
-
-#hero-cta:hover {
-  background-color: #8D9F88;
-}
-
-
-
-/* Search and Filter */
-#search-filter {
-  background-color: #FBFADA;
-  padding: 2rem;
-  margin: 2rem auto;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 7xl;
-  width: 90%;
-}
-
-#search-title {
-  font-family: 'Jersey 25', cursive;
-  font-size: 3rem;
-  color: #12372A;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-row label {
-  font-weight: bold;
-  color: #12372A;
-}
-
-.filter-row select,
-.filter-row input {
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  flex-grow: 1;
-  max-width: 300px;
-}
-
-#search-btn {
-  background-color: #436850;
-  color: #FBFADA;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#search-btn:hover {
-  background-color: #375344;
-}
-
-/* Lab Slots Grid */
-#lab-slots {
-  padding: 2rem 1rem;
-  max-width: 7xl;
-  margin: 0 auto;
-}
-
-.lab-slots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.lab-card {
-  background-color: #FBFADA;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #E0E0E0;
-}
-
-.lab-card-header {
-  background-color: #12372A;
-  color: #FBFADA;
-  font-family: 'Jersey 25', cursive;
-  font-size: 2rem;
-  padding: 0.75rem 1rem;
-  text-align: center;
-}
-
-.lab-info {
-  padding: 1rem;
-  font-size: 0.95rem;
-  color: #12372A;
-  flex-grow: 1;
-}
-
-.lab-info-label {
-  font-weight: bold;
-  color: #436850;
-}
-.lab-info-value {
-  margin-left: 0.5rem;
-  font-weight: 500;
-}
-
-.lab-card-actions {
-  padding: 1rem;
-  background-color: #ADBC9F;
-  text-align: center;
-}
-
-.lab-btn {
-  background-color: #12372A;
-  color: #FBFADA;
-  padding: 0.6rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  border: none;
-}
-
-.lab-btn:hover {
-  background-color: #0A1F18;
-}
-</style>
