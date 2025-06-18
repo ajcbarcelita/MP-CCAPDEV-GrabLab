@@ -21,7 +21,7 @@
 					<!-- Back Button - More prominent -->
 					<button
 						@click="goBack"
-						class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-lg transition-colors duration-200"
+						class="w-full grablab-primary text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-lg transition-colors duration-200"
 					>
 						← Go Back to Labs
 					</button>
@@ -129,7 +129,7 @@
 								<button
 									@click="setTimeFilter('Morning')"
 									:class="{
-										'bg-grablab-primary text-white': timeFilter === 'Morning',
+										'grablab-secondary text-white': timeFilter === 'Morning',
 										'bg-gray-200 text-gray-700': timeFilter !== 'Morning',
 									}"
 									class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200"
@@ -139,7 +139,7 @@
 								<button
 									@click="setTimeFilter('Afternoon')"
 									:class="{
-										'bg-grablab-primary text-white': timeFilter === 'Afternoon',
+										'grablab-secondary text-white': timeFilter === 'Afternoon',
 										'bg-gray-200 text-gray-700': timeFilter !== 'Afternoon',
 									}"
 									class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200"
@@ -149,7 +149,7 @@
 								<button
 									@click="setTimeFilter('Evening')"
 									:class="{
-										'bg-grablab-primary text-white': timeFilter === 'Evening',
+										'grablab-secondary text-white': timeFilter === 'Evening',
 										'bg-gray-200 text-gray-700': timeFilter !== 'Evening',
 									}"
 									class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200"
@@ -198,7 +198,7 @@
 							>
 								<button
 									@click="prevPage"
-									class="flex items-center gap-1 px-4 py-2 bg-grablab-secondary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md"
+									class="flex items-center gap-1 px-4 py-2 grablab-primary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md"
 								>
 									<svg
 										class="w-4 h-4"
@@ -221,7 +221,7 @@
 								>
 								<button
 									@click="nextPage"
-									class="flex items-center gap-1 px-4 py-2 bg-grablab-secondary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md"
+									class="flex items-center gap-1 px-4 py-2 grablab-primary text-white rounded-lg font-medium hover:bg-grablab-primary transition-colors duration-200 shadow-md"
 								>
 									Next
 									<svg
