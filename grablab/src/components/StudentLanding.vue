@@ -16,22 +16,23 @@
 				Streamline your laboratory Reservations with our modern booking system. Available
 				from 7am on wards with real-time availability tracking.
 			</p>
-			<a href="#" id="hero-cta" class="view-slots" @click.prevent="scrollToSearchFilter">
+			<router-link to="/view" class="view-slots">
+      <a href="#" id="hero-cta" class="view-slots" >
 				View Slots
 			</a>
-			<router-link to="/reservation" class="view-slots">
-			View Slots
 			</router-link>
 		</section>
 
     <!-- Why Choose Section -->
     <section class="max-w-8xl mx-auto mt-5 text-[#12372A] ">
       <h2 class="text-6xl font-light mb-1 font-['Jomhuria'] text-[#12372A]">Why Choose GrabLab?</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <!-- Card 1 -->
         <div class="bg-[#FBFADA] p-6 rounded-xl shadow text-center">
           <div class="flex justify-center mb-3">
-            <img src="/src/assets/Calendar.png" alt="View Availability" class="w-48 h-36" @click.prevent="scrollToSearchFilter"/>
+            <router-link to="/view">
+            <img src="/src/assets/Calendar.png" alt="View Availability" class="w-48 h-36"/>
+            </router-link>
           </div>
           <h3 class="font-bold text-xl mb-2">View Availability</h3>
           <p class="text-[#12372A]">View lab room availability with a single click</p>
@@ -56,46 +57,7 @@
         </div>
       </div>
     </section>
-		<!-- Search and Filter -->
-		<div id="search-filter">
-			<div id="Title">
-				<h1 id="search-title">Search</h1>
-				<div id="Lab" class="filter-row">
-					<label for="lab-input" id="lab">Building: </label>
-					<select id="lab-input">
-						<option value="All">All</option>
-						<option value="Gokonwei Bldg.">John Gokongwei Sr. Hall</option>
-						<option value="Andrew Bldg.">Br. Andrew Gonzalez Hall</option>
-            <option value="LS Bldg.">St. La Salle Hall</option>
-					</select>
 
-					<button id="search-btn">Search</button>
-				</div>
-			</div>
-		</div>
-
-		<!-- Lab Slots Section -->
-		<section id="lab-slots">
-			<div class="lab-slots-grid">
-				<div class="lab-card" v-for="n in 6" :key="n">
-					<div class="lab-card-header">G402</div>
-					<div class="lab-info">
-						<span id="buildingName" class="lab-info-label">Building: </span>
-            <span class="lab-info-value">John Gokongwei Sr. Hall <br /></span>
-            <span id="CapacityNum" class="lab-info-label">Capacity: </span>
-            <span class="lab-info-value">35<br /></span>
-            <span id="operatingHours" class="lab-info-label">Operating Hours: </span>
-            <span class="lab-info-value">7:00 AM - 10:00 PM<br /></span>
-            <span id="labStatus" class="lab-info-label">Status: </span>
-            <span class="lab-info-value">Available<br /></span>
-
-					</div>
-					<div class="lab-card-actions">
-						<button class="lab-btn">View</button>
-					</div>
-				</div>
-			</div>
-		</section>
 
 		<!-- Footer -->
 		<footer class="bg-[#12372A] text-[#FBFADA] text-center p-4 text-sm font-bold">

@@ -24,7 +24,17 @@
 #profile:hover {
   text-decoration: underline;
 }
-
+#home {
+  font-family: 'Jomhuria';
+  font-size: 35px;
+  color: #ADBC9F;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+  margin-right: 20px;
+}
+#home:hover {
+  text-decoration: underline;
+}
 
 #hero-cta{
   padding-left: 20px;

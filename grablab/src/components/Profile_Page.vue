@@ -51,7 +51,7 @@ const getLabName = labId => labs.find(l => l.lab_id === labId)?.name
 const formatReservationDate = dateString =>
   new Date(dateString).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
-// Convert array of slot objects to a time range string 
+// Convert array of slot objects to a time range string
 const getTimeRangeForSlots = slots => {
   if (!slots.length) return 'N/A'
   // Extract time slots from the slot objects
@@ -87,7 +87,7 @@ const handleLogout = () => { sessionStorage.removeItem('user'); router.push('/lo
 
 function handleHome() {
   if (currentUser.value.role === 'Technician') {
-    router.push('/technician-dashboard')
+    router.push('/technician-landing')
   } else if (currentUser.value.role === 'Student') {
     router.push('/student-landing')
   } else {
@@ -106,7 +106,7 @@ function handleEditForm() {
   }
 }
 
-// If not own profile, then can't edit 
+// If not own profile, then can't edit
 function handleEditProfile() {
   if (!isOwnProfile.value) return
   isEditing.value = true
@@ -131,7 +131,7 @@ function handleSaveChanges() {
 
   // Reset editing state
   isEditing.value = false
-  // Show success message 
+  // Show success message
   console.log('Profile updated successfully')
 }
 
@@ -161,7 +161,7 @@ function handleChangePicture() {
 function handleView() {
   // Gets current logged in user from session storage
   const user = sessionStorage.getItem('user')
-  if (user) 
+  if (user)
     currentUser.value = JSON.parse(user)
 
   // Get profile user ID from route (if viewing another profile)
@@ -169,7 +169,7 @@ function handleView() {
 
   // Find the user in the users list
   profileUser.value = users.find(user => user.user_id === userId)
-  
+
   if (!profileUser.value) {
     // Handle where user is not found
     // router.push('/404') -- once we make a 404 page
@@ -274,18 +274,18 @@ onMounted(() => {
               <div>
                 <label class="block text-forest-dark font-semibold mb-2 font-karma">First Name</label>
                 <!-- Read-only when it is not your profile and when not in editing mode -->
-                <input type="text" 
-                v-model="editForm.first_name" 
-                :readonly="inputReadonly" 
+                <input type="text"
+                v-model="editForm.first_name"
+                :readonly="inputReadonly"
                 :class="[
                   'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
                   inputReadonly ? 'bg-white' : 'bg-gray-50']">
               </div>
               <div>
                 <label class="block text-forest-dark font-semibold mb-2 font-karma">Last Name</label>
-                <input type="text" 
-                v-model="editForm.last_name" 
-                :readonly="inputReadonly" 
+                <input type="text"
+                v-model="editForm.last_name"
+                :readonly="inputReadonly"
                 :class="[
                   'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
                   inputReadonly ? 'bg-white' : 'bg-gray-50']">
@@ -302,12 +302,12 @@ onMounted(() => {
             <!-- Description div -->
             <div>
               <label class="block text-forest-dark font-semibold mb-2 font-karma">Description</label>
-              <textarea rows="4" 
-              v-model="editForm.description" 
-              :readonly="inputReadonly" 
+              <textarea rows="4"
+              v-model="editForm.description"
+              :readonly="inputReadonly"
               :class="[
                 'w-full px-3 py-2 border border-gray-300 rounded-lg resize-none font-karma',
-                inputReadonly ? 'bg-white' : 'bg-gray-50']" 
+                inputReadonly ? 'bg-white' : 'bg-gray-50']"
               :placeholder="isOwnProfile ? 'Tell us about yourself...' : ''"></textarea>
             </div>
 
@@ -348,7 +348,7 @@ onMounted(() => {
         <div class="overflow-x-auto">
           <div v-if="userReservations.length > 0" class="flex gap-4 min-w-max pb-4">
             <!-- Dynamic Reservation Cards -->
-            <div v-for="reservation in userReservations" 
+            <div v-for="reservation in userReservations"
                  :key="reservation.reservation_id"
                  class="bg-sage rounded-lg p-4 min-w-[280px]">
               <div class="mb-3">
@@ -363,7 +363,7 @@ onMounted(() => {
                 <p><strong>Date:</strong> {{ formatReservationDate(reservation.reservation_date) }}</p>
                 <p><strong>Time:</strong> {{ getTimeRangeForSlots(reservation.slots) }}</p>
                 <p><strong>Seats:</strong> {{ reservation.slots.map(slot => getSeatFromSlotId(slot.slot_id)).join(', ') }}</p>
-                <p><strong>Status:</strong> 
+                <p><strong>Status:</strong>
                   <!-- Display Status -->
                   <span :class="reservation.status === 'confirmed' ? 'text-green-600' : 'text-yellow-600'">
                     {{ ' ' + reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1) }}
@@ -376,7 +376,7 @@ onMounted(() => {
               </button>
             </div>
           </div>
-          
+
           <!-- No reservations message -->
           <div v-else class="text-center py-8">
             <p class="text-forest-medium font-karma">No current reservations found.</p>
