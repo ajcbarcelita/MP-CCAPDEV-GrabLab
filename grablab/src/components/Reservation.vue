@@ -677,8 +677,9 @@ export default {
     }
 
 		const isSlotOccupied = (labId, seatNumber, date, time) => {
+			// Find the time slot index for the given time
 			const timeSlots = getTimeSlots(labId)
-			const timeSlotIndex = timeSlots.indexOf(time) + 1 // slot calculation is 1-based
+			const timeSlotIndex = timeSlots.indexOf(time) + 1 // +1 because slot calculation is 1-based
 
       if (timeSlotIndex === 0) return false // Time not found
 
