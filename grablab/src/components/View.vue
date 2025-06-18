@@ -25,7 +25,7 @@
 					<label for="number" class="search-label">ID number: </label>
 					<input type="number" id="number" class="search-input" placeholder="Enter ID number" v-model="userIdFilter"/>
 				</div>
-				<button id="search-btn" @click="applyFilter">Search</button>
+				
 			</div>
 		</div>
 
