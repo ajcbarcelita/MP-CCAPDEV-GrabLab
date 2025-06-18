@@ -494,8 +494,14 @@ export default {
 
 
     const loadLabSchedule = () => {
-      clearSelection();
-      currentPage.value = 1; // Reset pagination when lab or date changes
+    const selectedDay = new Date(selectedDate.value).getDay();
+    if (selectedDay === 0) {
+      alert("Reservations are not allowed on Sundays.");
+      selectedDate.value = minDate.value; // Reset to the minimum date
+      return;
+    }
+    clearSelection();
+    currentPage.value = 1; // Reset pagination when lab or date changes
     };
 
     const reserveSlot = () => {
@@ -529,6 +535,7 @@ export default {
       clearSelection();
       showSuccessModal.value = true;
     };
+    
 
     const closeConfirmModal = () => {
       showConfirmModal.value = false;
