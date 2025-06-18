@@ -5,8 +5,8 @@ export default [
     building: 'John Gokongwei Sr. Hall',
 		display_name: 'Gokongwei Room 302',
 		operating_hours: {
-			open: '07:30',
-			close: '10:30',
+			open: '07:00',
+			close: '18:30',
 		},
 		capacity: 7,
 		status: 'Active',
@@ -17,8 +17,8 @@ export default [
     building: 'John Gokongwei Sr. Hall',
 		display_name: 'CNIS Laboratory',
 		operating_hours: {
-			open: '07:30',
-			close: '10:30',
+			open: '07:00',
+			close: '18:30',
 		},
 		capacity: 7,
 		status: 'Active',
@@ -29,8 +29,8 @@ export default [
     building: 'Andrew Gonzalez Hall',
 		display_name: 'Andrew Gonzalez Room 1903',
 		operating_hours: {
-			open: '13:00',
-			close: '16:00',
+			open: '7:00',
+			close: '18:30',
 		},
 		capacity: 7,
 		status: 'Active',
@@ -42,7 +42,7 @@ export default [
 		display_name: 'Gokongwei Room 304B',
 		operating_hours: {
 			open: '07:00',
-			close: '10:00',
+			close: '18:30',
 		},
 		capacity: 7,
 		status: 'Active',
@@ -54,7 +54,7 @@ export default [
 		display_name: 'Gokongwei Room 306A',
 		operating_hours: {
 			open: '07:00',
-			close: '10:00',
+			close: '18:30',
 		},
 		capacity: 7,
 		status: 'Active',

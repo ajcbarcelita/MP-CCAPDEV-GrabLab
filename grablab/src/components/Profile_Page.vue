@@ -158,6 +158,20 @@ function handleChangePicture() {
   console.log('Change picture functionality')
 }
 
+function cancelReservation(reservationId) {
+  if (!isOwnProfile.value) return
+  if (confirm('Are you sure you want to cancel this reservation?')) {
+    // Find the reservation to cancel
+    const reservation = userReservations.value.find(r => r.reservation_id === reservationId)
+    if (!reservation) {
+      console.error('Reservation not found')
+      return
+    } else
+      reservation.status = 'cancelled'
+    console.log(`Reservation ${reservationId} cancelled successfully`)
+  }
+}
+
 function handleView() {
   // Gets current logged in user from session storage
   const user = sessionStorage.getItem('user')
@@ -185,7 +199,6 @@ onMounted(() => {
   handleView()
 })
 </script>
-
 
 <!-- User Profile Panel -->
 <template>

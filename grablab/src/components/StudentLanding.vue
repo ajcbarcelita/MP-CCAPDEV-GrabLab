@@ -82,6 +82,4 @@ export default {
 }
 </script>
 
-<style scoped>
-@import '../assets/landing_page.css';
-</style>
+
