@@ -76,3 +76,8 @@
 .form-button {
 	@apply flex items-center justify-center gap-2 bg-green-900 text-white px-4 py-2 rounded hover:bg-green-800 transition-all w-full;
 }
+
+/* Error message */
+.error-message {
+	@apply mb-4 px-4 py-2 rounded bg-red-100 border border-red-400 text-red-700;
+}

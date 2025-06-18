@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUsersStore } from '@/stores/users_store.js'
 
 // This login mechanism will only serve to demonstrate how landing pages can differ depending if logged in or not.
@@ -9,8 +9,18 @@ import { useUsersStore } from '@/stores/users_store.js'
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const success = ref('')
+const route = useRoute()
 const router = useRouter()
 const usersStore = useUsersStore()
+
+onMounted(() => {
+	if (route.query.registered === 'true') {
+		success.value = 'Registration successful! You may now log in.'
+		// Optionally clear the query so it doesn't persist on refresh
+		router.replace({ query: {} })
+	}
+})
 
 function handleLogin() {
 	const user = usersStore.users.find(
@@ -44,6 +54,10 @@ function handleLogin() {
 
 			<div v-if="error" class="error-message">
 				{{ error }}
+			</div>
+
+			<div v-if="success" class="success-message">
+				{{ success }}
 			</div>
 
 			<form @submit.prevent="handleLogin">
