@@ -11,7 +11,7 @@
 
 		<!-- Hero Section -->
 		<section id="hero-section">
-			<h1 id="hero-title">Hi, Technician {name}! <br />Welcome back to GrabLab!</h1>
+			<h1 id="hero-title">Hi, Technician {{ currentUser.first_name }} {{ currentUser.last_name }}  <br />Welcome back to GrabLab!</h1>
 			<p id="hero-description">
 				Streamline your laboratory Reservations with our modern booking system. Available
 				from 7am on wards with real-time availability tracking.
@@ -72,16 +72,20 @@
 
 <script>
 export default {
-	name: 'StudentMain',
-	methods: {
-		scrollToSearchFilter() {
-			const el = document.getElementById('search-filter')
-			if (el) {
-				el.scrollIntoView({ behavior: 'smooth' })
-			}
-		},
-	},
-}
+  data() {
+    return {
+      currentUser: JSON.parse(sessionStorage.getItem('user')) || {},
+    };
+  },
+  methods: {
+    scrollToSearchFilter() {
+      const el = document.getElementById('search-filter');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>

@@ -2,7 +2,6 @@
 @import '@/assets/profile_styles.css';
 </style>
 
-
 <script setup>
 import reservations from '@/data/reservations.js'
 import labs from '@/data/labs.js'
@@ -31,6 +30,8 @@ const isOwnProfile = computed(() => { return currentUser.value && profileUser.va
 const showEditButton = computed(() => { return isOwnProfile.value && !isEditing.value })
 const showSaveCancel = computed(() => { return isOwnProfile.value && isEditing.value })
 const showDeleteAccount = computed(() => { return isOwnProfile.value })
+//Check if student and own profile to show reservations
+const showReservations = computed(() => { return isOwnProfile.value && currentUser.value && currentUser.value.role === 'Student' })
 const inputReadonly = computed(() => { return !isOwnProfile.value || !isEditing.value })
 
 // Reservation properties -- Calculated from slot_id in reservations
@@ -204,19 +205,17 @@ onMounted(() => {
 <template>
   <div class="bg-sage min-h-screen">
     <!-- Header -->
-    <header class="bg-forest-dark text-cream">
-      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <p class="text-3xl font-bold font-jersey">GrabLab</p>
+    <div id="navbar">
+        <span id="navbar-brand">GrabLab</span>
         <nav class="flex space-x-4 font-karma">
-          <button @click="handleHome" class="hover:bg-forest-medium px-3 py-2 rounded transition-colors">
+          <button @click="handleHome" id='home'>
             Home
           </button>
-          <button @click="handleLogout" class="hover:bg-forest-medium px-3 py-2 rounded transition-colors">
+          <button @click="handleLogout" id='logout'>
             Log Out
           </button>
         </nav>
-      </div>
-    </header>
+    </div>
 
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8 max-w-4xl" v-if="profileUser">
@@ -354,7 +353,7 @@ onMounted(() => {
       </div>
 
       <!-- Current Reservations Section - Only show for own profile -->
-      <div v-if="isOwnProfile" class="bg-cream rounded-lg shadow-lg p-6 mt-8">
+      <div v-if="showReservations" class="bg-cream rounded-lg shadow-lg p-6 mt-8">
         <h3 class="text-2xl font-bold text-forest-dark mb-6 font-karma">Current Reservations</h3>
 
         <!-- Horizontal Slider & Flexbox Cards -->
@@ -398,4 +397,11 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- Footer -->
+    <footer class="bg-forest-dark text-[#FBFADA] text-center p-4 font-bold">
+      <div class="flex justify-center gap-2">
+      <p>&copy; 2025 GrabLab. All rights reserved.<br /></p>
+    </div>
+    </footer>
 </template>
