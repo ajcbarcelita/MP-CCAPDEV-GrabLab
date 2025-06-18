@@ -342,7 +342,7 @@ export default {
         status: "confirmed",
         created_at: "2025-06-17T11:00:00",
         slots: [
-          { slot_id: 200 }, // seat 10, time slot 2 (but we only have 7 seats, so this won't show)
+          { slot_id: 200 }, // seat 10, time slot 2 
           { slot_id: 201 }  // seat 10, time slot 3
         ]
       },
