@@ -436,6 +436,7 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import allLabsData from '@/data/labs.js'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 export default {
 	name: 'StudentMain',
 	setup() {
@@ -945,14 +946,29 @@ export default {
 			})
 		}
 
+		const route = useRoute()
+
 		onMounted(() => {
-			if (allLabs.value.length > 0) {
-				selectedLab.value = allLabs.value[0].lab_id
-				loadLabSchedule()
+			const labId = parseInt(route.params.labId) // Get labId from route parameters
+
+			if (!labId) {
+				alert('Invalid lab ID!')
+				router.push('/view') // Redirect back to the view page if labId is invalid
+				return
 			}
+
+			const lab = allLabs.value.find((l) => l.lab_id === labId) // Find the lab by labId
+
+			if (!lab) {
+				alert('Lab not found!')
+				router.push('/view') // Redirect back to the view page if lab is not found
+				return
+			}
+
+			selectedLab.value = lab.lab_id // Set the selected lab
+			loadLabSchedule() // Load the schedule for the selected lab
 			filterLabs() // Initialize filtered labs
 		})
-
 		return {
 			currentUser,
 			allLabs,
