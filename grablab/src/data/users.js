@@ -29,8 +29,8 @@ export default [
         last_name: 'Cariaga',
         role: 'Technician',
         status: 'Active',
-        profile_pic_path: '',
-        description: '',
+        profile_pic_path: '/john_profile.png',
+        description: 'Testing',
     },
     {
         user_id: 4,

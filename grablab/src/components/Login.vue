@@ -54,7 +54,12 @@ function handleLogin() {
 
 				<div>
 					<label>Password</label>
-					<input v-model="password" class="login-input" placeholder="••••••••" />
+					<input
+						v-model="password"
+						type="password"
+						class="login-input"
+						placeholder="••••••••"
+					/>
 				</div>
 
 				<div class="login-checkbox">

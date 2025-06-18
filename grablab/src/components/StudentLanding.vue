@@ -1,3 +1,8 @@
+<style>
+@import '@/assets/landing_page.css';
+</style>
+
+
 <template>
 	<div id="app-bg">
 		<!-- Navbar -->
