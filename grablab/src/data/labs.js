@@ -1,5 +1,3 @@
-
-
 export default [
 	{
 		lab_id: 1,
