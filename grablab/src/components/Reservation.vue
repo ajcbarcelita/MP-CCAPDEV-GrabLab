@@ -134,11 +134,15 @@
                   <div class="font-medium text-center py-3 bg-gray-50 rounded">
                     Seat {{ seat }}
                   </div>
-                  <button v-for="time in filteredTimeSlots" :key="`${seat}-${time}`"
-                    @click="toggleSlotSelection(seat, time)" :class="getSlotClass(seat, time)"
-                    class="seat-button rounded text-xs font-medium transition-all hover:scale-105">
-                    {{ getSlotText(seat, time) }}
-                  </button>
+                  <button v-for="time in filteredTimeSlots"
+                  :key="`${seat}-${time}`"
+                  @click="handleSlotClick(seat, time)"
+                  :class="getSlotClass(seat, time)"
+                  class="seat-button rounded text-xs font-medium transition-all hover:scale-105"
+                >
+                  {{ getSlotText(seat, time) }}
+                </button>
+                
                 </div>
               </div>
 
@@ -167,6 +171,82 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showDetailsModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+      <h2 class="font-jersey text-2xl text-grablab-primary mb-6 text-center">Reservation Details</h2>
+
+      <div class="space-y-3 mb-6 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Lab:</span>
+          <span class="font-medium">{{ getLabName(confirmData.lab_id) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Date:</span>
+          <span class="font-medium">{{ formatDate(confirmData.date) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Reserved By:</span>
+          <span class="font-medium">{{ confirmData.user.name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Email:</span>
+          <span class="font-medium">{{ confirmData.user.email }}</span>
+        </div>
+        <div class="space-y-1 mt-2 border-t pt-2 max-h-48 overflow-y-auto">
+          <div class="flex justify-between" v-for="slot in confirmData.slots" :key="`${slot.seat}-${slot.time}`">
+            <span class="text-gray-600">Seat {{ slot.seat }}:</span>
+            <span class="font-medium">{{ slot.time }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <router-link :to="`/profile/${confirmData.user.user_id}`" class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90 text-center">
+          View Profile
+        </router-link>
+        <button @click="closeConfirmModal"
+          class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+   <div v-if="showReservationDetailsModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+      <h2 class="font-jersey text-2xl text-grablab-primary mb-6 text-center">Reservation Details</h2>
+
+      <div class="space-y-3 mb-6 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Reserved By:</span>
+          <span class="font-medium">{{ reservationDetails.user.name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Email:</span>
+          <span class="font-medium">{{ reservationDetails.user.email }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Lab:</span>
+          <span class="font-medium">{{ getLabName(reservationDetails.lab_id) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Date:</span>
+          <span class="font-medium">{{ formatDate(reservationDetails.date) }}</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <router-link :to="`/profile/${reservationDetails.user.user_id}`" class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90 text-center">
+          View Profile
+        </router-link>
+        <button @click="closeReservationDetailsModal"
+          class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 
     <!-- Confirmation Modal -->
     <div v-if="showConfirmModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
@@ -229,6 +309,8 @@
       </div>
     </footer>
   </div>
+
+
 </template>
 
 
@@ -252,46 +334,42 @@ export default {
     const selectedLab = ref('');
     const selectedDate = ref(new Date().toISOString().split('T')[0]);
 
-  const loadLabSchedule = () => {
-  console.log('loadLabSchedule called');
-  console.log('Selected Lab:', selectedLab.value);
-  console.log('Selected Date:', selectedDate.value);
 
-  if (!selectedLab.value) {
-    alert('Please select a lab.');
-    return;
-  }
+    const loadLabSchedule = () => {
+    if (!selectedLab.value) {
+      alert('Please select a lab.');
+      return;
+    }
 
-  const lab = allLabs.value.find(l => l.lab_id === parseInt(selectedLab.value));
-  console.log('Found Lab:', lab);
+    const lab = allLabs.value.find(l => l.lab_id === parseInt(selectedLab.value));
 
-  if (!lab) {
-    alert('Selected lab not found.');
-    return;
-  }
+    if (!lab) {
+      alert('Selected lab not found.');
+      return;
+    }
 
-  const selectedDay = new Date(selectedDate.value).getDay();
-  console.log('Selected Day:', selectedDay);
-
-  if (selectedDay === 0) {
-    alert('Reservations are not allowed on Sundays.');
-    selectedDate.value = minDate.value; // Reset to the minimum date
-    return;
-  }
-
-  // Clear previous selections
-  console.log('Clearing previous selections...');
-  clearSelection();
-  currentPage.value = 1; // Reset pagination
+    const selectedDay = new Date(selectedDate.value).getDay();
 
 
-  // Scroll to the schedule section
-  const el = document.querySelector('.container.mx-auto.px-4.py-6.max-w-7xl');
-  if (el) {
-    console.log('Scrolling to schedule section...');
-    el.scrollIntoView({ behavior: 'smooth' });
-  }
+    if (selectedDay === 0) {
+      alert('Reservations are not allowed on Sundays.');
+      selectedDate.value = minDate.value; // Reset to the minimum date
+      return;
+    }
+
+    // Clear previous selections
+
+    clearSelection();
+    currentPage.value = 1; // Reset pagination
+
+
+    // Scroll to the schedule section
+    const el = document.querySelector('.container.mx-auto.px-4.py-6.max-w-7xl');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
 };
+
 
     const filteredLabs = ref([...allLabs.value]);
     const router = useRouter();
@@ -401,6 +479,7 @@ export default {
       const timeSlotIndex = ((slotId - 1) % 22) + 1;
       return { seatNumber, timeSlotIndex };
     };
+
 
     // Generate time slots based on lab operating hours
     const getTimeSlots = (labId) => {
@@ -569,7 +648,7 @@ export default {
       const isOccupied = isSlotOccupied(parseInt(selectedLab.value), seat, selectedDate.value, time);
 
       if (isOccupied) {
-        return 'bg-gray-400 text-white cursor-not-allowed';
+        return 'bg-gray-400 text-white';
       } else if (isSelected) {
         return 'bg-green-500 text-white border-2 border-green-600';
       } else {
@@ -630,6 +709,58 @@ export default {
       });
       showConfirmModal.value = true;
     };
+ const showReservationDetails = (seat, time) => {
+  const labId = parseInt(selectedLab.value);
+  const date = selectedDate.value;
+
+  // Find the time slot index for the given time
+  const timeSlots = getTimeSlots(labId);
+  const timeSlotIndex = timeSlots.indexOf(time) + 1; // +1 because slot calculation is 1-based
+
+  if (timeSlotIndex === 0) return; // Time not found
+
+  // Calculate the expected slot_id
+  const expectedSlotId = calculateSlotId(seat, timeSlotIndex);
+
+  // Find the reservation
+  const reservation = hardcodedReservations.value.find(reservation =>
+    reservation.lab_id === labId &&
+    reservation.reservation_date === date &&
+    reservation.slots.some(slot => slot.slot_id === expectedSlotId)
+  );
+
+  if (reservation) {
+    // Fetch user details (mocked for now)
+    const user = {
+      user_id: reservation.user_id,
+      name: `User ${reservation.user_id}`,
+      email: `user${reservation.user_id}@example.com`,
+    };
+
+    // Populate modal data
+    reservationDetails.lab_id = labId;
+    reservationDetails.date = date;
+    reservationDetails.slots = reservation.slots;
+    reservationDetails.user = user;
+
+    // Show modal
+    showReservationDetailsModal.value = true;
+  } else {
+    alert('No reservation details found.');
+  }
+};
+
+const showReservationDetailsModal = ref(false);
+const reservationDetails = reactive({
+  lab_id: null,
+  date: null,
+  slots: [],
+  user: {},
+});
+
+const closeReservationDetailsModal = () => {
+  showReservationDetailsModal.value = false;
+};
 
     const confirmReservation = () => {
       // Create slot_ids for the reservation
@@ -655,6 +786,15 @@ export default {
       clearSelection();
       showSuccessModal.value = true;
     };
+
+    const showDetailsModal = ref(false);
+    const handleSlotClick = (seat, time) => {
+  if (isSlotOccupied(parseInt(selectedLab.value), seat, selectedDate.value, time)) {
+    showReservationDetails(seat, time);
+  } else {
+    toggleSlotSelection(seat, time);
+  }
+};
     
 
 
@@ -730,6 +870,19 @@ export default {
       closeSuccessModal,
       formatDate,
       getLabOperatingHours,
+      showReservationDetails,
+      getSlotClass,
+      getSlotText,
+      isSlotOccupied,
+      calculateSlotId,
+      getSlotDetails,
+      isSlotDisabled,
+      handleSlotClick,
+      showDetailsModal,
+      reservationDetails,
+      showReservationDetailsModal,
+      closeReservationDetailsModal
+      
     };
   }
 };
