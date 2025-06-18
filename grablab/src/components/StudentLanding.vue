@@ -11,7 +11,7 @@
 
 		<!-- Hero Section -->
 		<section id="hero-section">
-			<h1 id="hero-title">Hi, {name}! <br /> Welcome back to GrabLab!</h1>
+			<h1 id="hero-title">Hi, {{ currentUser.first_name }} {{ currentUser.last_name }} <br /> Welcome back to GrabLab!</h1>
 			<p id="hero-description">
 				Streamline your laboratory Reservations with our modern booking system. Available
 				from 7am on wards with real-time availability tracking.
@@ -69,8 +69,14 @@
 </template>
 
 <script>
+import { ref } from 'vue';
+
 export default {
 	name: 'StudentMain',
+	setup() {
+		const currentUser = ref(JSON.parse(sessionStorage.getItem('user')));
+		return { currentUser };
+	},
 	methods: {
 		scrollToSearchFilter() {
 			const el = document.getElementById('search-filter')

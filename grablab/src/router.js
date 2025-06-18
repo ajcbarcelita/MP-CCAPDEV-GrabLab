@@ -17,7 +17,7 @@ const routes = [
 	{ path: '/profile', component: Profile_Page },
 	{ path: '/login', component: Login },
 	{ path: '/register', component: Register },
-	{ path: '/reservation', component: Reservation },
+	{ path: '/reservation/:labId', component: Reservation },
   { path: '/view', component: View }, // Assuming this is for viewing reservations
 ]
 

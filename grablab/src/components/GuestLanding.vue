@@ -19,17 +19,6 @@
 				Streamline your laboratory Reservations with our modern booking system. Available
 				from 7am on wards with real-time availability tracking.
 			</p>
-			<a
-				href="#"
-				class="inline-block bg-[#FBFADA] text-[#436850] font-['Jomhuria'] text-2xl py-3 px-4 rounded-md shadow hover:bg-[#e6f2d8] transition no-underline"
-			>
-				Browse Lab Rooms
-				<img
-					src="/src/assets/right_arrow.png"
-					alt="arrow"
-					class="inline align-middle w-5 h-4 ml-2 mr-2 pb-1 rounded filter contrast-150 brightness-80 drop-shadow"
-				/>
-			</a>
 		</section>
 
 		<!-- Why Choose Section -->
