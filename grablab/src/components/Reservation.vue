@@ -696,27 +696,16 @@ export default {
       )
     }
 
-    const getTotalFreeSeats = () => {
-      return 0
-    }
-    const getOccupiedSeats = () => {
-      return 0
-    }
-    const getMaintenanceSeats = () => {
-      return 0
-    }
-
-    const reserveSlot = () => {
-      if (selectedSlots.value.length === 0 || !selectedLab.value) return
-			// Check if any reservation has this slot_id for the given lab and date
-			return hardcodedReservations.value.some(
-				(reservation) =>
-					reservation.lab_id === labId &&
-					reservation.reservation_date === date &&
-					reservation.status === 'confirmed' &&
-					reservation.slots.some((slot) => slot.slot_id === expectedSlotId),
-			)
+		const getTotalFreeSeats = () => {
+			return 0
 		}
+		const getOccupiedSeats = () => {
+			return 0
+		}
+		const getMaintenanceSeats = () => {
+			return 0
+		}
+
 		const reserveSlot = () => {
 			if (selectedSlots.value.length === 0 || !selectedLab.value) return
 
@@ -867,68 +856,68 @@ export default {
         return
       }
 
-      selectedLab.value = lab.lab_id // Set the selected lab
-      loadLabSchedule() // Load the schedule for the selected lab
-      filterLabs() // Initialize filtered labs
-    })
-    return {
-      currentUser,
-      allLabs,
-      filteredLabs,
-      selectedBuilding,
-      selectedLab,
-      selectedDate,
-      selectedSlots,
-      reserveAnonymously,
-      studentIdForReservation,
-      showConfirmModal,
-      showSuccessModal,
-      confirmData,
-      minDate,
-      maxDate,
-      allTimeSlots, // Expose all time slots
-      filteredTimeSlots, // Expose filtered time slots
-      timeFilter, // Expose time filter
-      scrollToSearchFilter,
-      filterLabs,
-      viewSchedule,
-      goBack,
-      getLabName,
-      getSeatsForLab,
-      currentSeatsPage,
-      currentPage,
-      totalPages,
-      nextPage,
-      prevPage,
-      setTimeFilter, // Expose setTimeFilter
-      toggleSlotSelection,
-      clearSelection,
-      getSlotClass,
-      getSlotText,
-      isSlotDisabled,
-      getTotalFreeSeats,
-      getOccupiedSeats,
-      getMaintenanceSeats,
-      loadLabSchedule,
-      reserveSlot,
-      confirmReservation,
-      closeConfirmModal,
-      closeSuccessModal,
-      formatDate,
-      getLabOperatingHours,
-      showReservationDetails,
-      getSlotClass,
-      getSlotText,
-      isSlotOccupied,
-      calculateSlotId,
-      getSlotDetails,
-      isSlotDisabled,
-      handleSlotClick,
-      showDetailsModal,
-      reservationDetails,
-      showReservationDetailsModal,
-      closeReservationDetailsModal,
-    }
-  },
+			selectedLab.value = lab.lab_id // Set the selected lab
+			loadLabSchedule() // Load the schedule for the selected lab
+			filterLabs() // Initialize filtered labs
+		})
+		return {
+			currentUser,
+			allLabs,
+			filteredLabs,
+			selectedBuilding,
+			selectedLab,
+			selectedDate,
+			selectedSlots,
+			reserveAnonymously,
+			studentIdForReservation,
+			showConfirmModal,
+			showSuccessModal,
+			confirmData,
+			minDate,
+			maxDate,
+			allTimeSlots, // Expose all time slots
+			filteredTimeSlots, // Expose filtered time slots
+			timeFilter, // Expose time filter
+			scrollToSearchFilter,
+			filterLabs,
+			viewSchedule,
+			goBack,
+			getLabName,
+			getSeatsForLab,
+			currentSeatsPage,
+			currentPage,
+			totalPages,
+			nextPage,
+			prevPage,
+			setTimeFilter, // Expose setTimeFilter
+			toggleSlotSelection,
+			clearSelection,
+			getSlotClass,
+			getSlotText,
+			isSlotDisabled,
+			getTotalFreeSeats,
+			getOccupiedSeats,
+			getMaintenanceSeats,
+			loadLabSchedule,
+			reserveSlot,
+			confirmReservation,
+			closeConfirmModal,
+			closeSuccessModal,
+			formatDate,
+			getLabOperatingHours,
+			showReservationDetails,
+			getSlotClass,
+			getSlotText,
+			isSlotOccupied,
+			calculateSlotId,
+			getSlotDetails,
+			isSlotDisabled,
+			handleSlotClick,
+			showDetailsModal,
+			reservationDetails,
+			showReservationDetailsModal,
+			closeReservationDetailsModal,
+		}
+	},
 }
 </script>
