@@ -28,11 +28,21 @@ import { useUsersStore } from '@/stores/users_store.js'
 				</div>
 				<div>
 					<label class="form-label">Password</label>
-					<input type="password" class="form-input" placeholder="••••••••" />
+					<input
+						v-model="password"
+						type="password"
+						class="form-input"
+						placeholder="••••••••"
+					/>
 				</div>
 				<div>
 					<label class="form-label">Confirm Password</label>
-					<input type="password" class="form-input" placeholder="••••••••" />
+					<input
+						v-model="password"
+						type="password"
+						class="form-input"
+						placeholder="••••••••"
+					/>
 				</div>
 
 				<button type="submit" class="form-button">Register <span>→</span></button>
