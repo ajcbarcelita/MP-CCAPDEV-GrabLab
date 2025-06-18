@@ -103,11 +103,6 @@
 
               <!-- Time Slot Filter -->
               <div class="flex justify-center gap-4 mb-4 flex-wrap">
-                <button @click="setTimeFilter('All')"
-                  :class="{ 'bg-grablab-primary text-white': timeFilter === 'All', 'bg-gray-200 text-gray-700': timeFilter !== 'All' }"
-                  class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
-                  All Times
-                </button>
                 <button @click="setTimeFilter('Morning')"
                   :class="{ 'bg-grablab-primary text-white': timeFilter === 'Morning', 'bg-gray-200 text-gray-700': timeFilter !== 'Morning' }"
                   class="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-colors duration-200">
@@ -239,10 +234,12 @@
 
 <script>
 import { ref, computed, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'StudentMain',
   setup() {
+    const router = useRouter();
     // Hardcoded data for Phase 1 visual representation
     const currentUser = reactive({
       user_id: 1,
@@ -398,7 +395,9 @@ export default {
     const currentPage = ref(1);
 
     // Time Slot Filtering
-    const timeFilter = ref('All');
+
+    const timeFilter = ref('Morning'); // 'Morning', 'Afternoon', 'Evening'
+
 
     const minDate = computed(() => {
       const today = new Date();
@@ -503,12 +502,10 @@ export default {
     };
 
     const goBack = () => {
-      selectedLab.value = '';
-      selectedSlots.value = [];
-      const el = document.getElementById('lab-slots');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+      selectedLab.value = ''; // Reset selected lab to hide schedule view
+      selectedSlots.value = []; // Clear any selected slots
+      router.push('/view');
+
     };
 
     const getLabName = (labId) => {
@@ -561,7 +558,6 @@ export default {
       timeFilter.value = filter;
       selectedSlots.value = selectedSlots.value.filter(slot => {
         const [hours] = slot.time.split(':').map(Number);
-        if (filter === 'All') return true;
         if (filter === 'Morning' && hours >= 7 && hours < 12) return true;
         if (filter === 'Afternoon' && hours >= 12 && hours < 18) return true;
         if (filter === 'Evening' && hours >= 18 && hours <= 19) return true;
@@ -643,8 +639,16 @@ export default {
     const getMaintenanceSeats = () => { return 0; };
 
     const loadLabSchedule = () => {
-      clearSelection();
-      currentPage.value = 1;
+
+    const selectedDay = new Date(selectedDate.value).getDay();
+    if (selectedDay === 0) {
+      alert("Reservations are not allowed on Sundays.");
+      selectedDate.value = minDate.value; // Reset to the minimum date
+      return;
+    }
+    clearSelection();
+    currentPage.value = 1; // Reset pagination when lab or date changes
+
     };
 
     const reserveSlot = () => {
@@ -684,6 +688,7 @@ export default {
       clearSelection();
       showSuccessModal.value = true;
     };
+    
 
 
     const closeConfirmModal = () => {
