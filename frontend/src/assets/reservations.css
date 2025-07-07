@@ -1,0 +1,286 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Jersey+25&family=Karma:wght@300;400;500;600;700&display=swap');
+
+/* Base styles */
+.font-jersey {
+	font-family: 'Jersey 25', cursive;
+}
+
+.font-karma {
+	font-family: 'Karma', serif;
+}
+
+.grablab-primary {
+	background-color: #12372a;
+}
+
+.grablab-secondary {
+	background-color: #436850;
+}
+
+.grablab-accent {
+	background-color: #adbc9f;
+}
+
+.grablab-light {
+	background-color: #fbfada;
+}
+
+.text-grablab-primary {
+	color: #12372a;
+}
+
+.text-grablab-secondary {
+	color: #436850;
+}
+
+.border-grablab-primary {
+	border-color: #12372a;
+}
+
+.modal-overlay {
+	background: rgba(18, 55, 42, 0.8);
+	backdrop-filter: blur(4px);
+}
+
+/* Specific styles for the schedule grid */
+.schedule-grid {
+	display: grid;
+	grid-template-columns: 80px repeat(auto-fit, minmax(60px, 1fr));
+	/* Adjusted to auto-fit for smaller slots */
+	gap: 2px;
+}
+
+.seat-button {
+	min-height: 50px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	white-space: nowrap;
+	/* Prevent text wrapping inside buttons */
+	overflow: hidden;
+	/* Hide overflow if content is too large */
+	text-overflow: ellipsis;
+	/* Add ellipsis for overflowing text */
+}
+
+/* Custom Scrollbar for overflow-x-auto */
+.custom-scrollbar::-webkit-scrollbar {
+	height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: #888;
+	border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}
+
+/* Styles inspired by landing_page.css / landing.txt */
+#app-bg {
+	background-color: #fbfada;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	font-family: 'Karma', serif;
+}
+
+#navbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 2rem;
+	background-color: #12372a;
+	color: #fbfada;
+	font-weight: bold;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#navbar-brand {
+	font-family: 'Jersey 25', cursive;
+	font-size: 2.5rem;
+}
+
+#links a {
+	margin-left: 1.5rem;
+	color: #fbfada;
+	text-decoration: none;
+	transition: color 0.3s ease;
+}
+
+#links a:hover {
+	color: #adbc9f;
+}
+
+#hero-section {
+	background-color: #436850;
+	color: #fbfada;
+	padding: 4rem 2rem;
+	text-align: center;
+	margin-bottom: 2rem;
+}
+
+#hero-title {
+	font-family: 'Jersey 25', cursive;
+	font-size: 3.5rem;
+	margin-bottom: 1rem;
+	line-height: 1.2;
+}
+
+#hero-description {
+	font-size: 1.1rem;
+	max-width: 700px;
+	margin: 0 auto 2rem;
+}
+
+#hero-cta {
+	display: inline-block;
+	background-color: #adbc9f;
+	color: #12372a;
+	padding: 0.8rem 2rem;
+	border-radius: 0.5rem;
+	text-decoration: none;
+	font-weight: bold;
+	transition: background-color 0.3s ease;
+}
+
+#hero-cta:hover {
+	background-color: #8d9f88;
+}
+
+/* Search and Filter */
+#search-filter {
+	background-color: #fbfada;
+	padding: 2rem;
+	margin: 2rem auto;
+	border-radius: 0.75rem;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	max-width: 7xl;
+	width: 90%;
+}
+
+#search-title {
+	font-family: 'Jersey 25', cursive;
+	font-size: 3rem;
+	color: #12372a;
+	margin-bottom: 1rem;
+	text-align: center;
+}
+
+.filter-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.filter-row label {
+	font-weight: bold;
+	color: #12372a;
+}
+
+.filter-row select,
+.filter-row input {
+	padding: 0.75rem;
+	border: 1px solid #ccc;
+	border-radius: 0.5rem;
+	font-size: 1rem;
+	flex-grow: 1;
+	max-width: 300px;
+}
+
+#search-btn {
+	background-color: #436850;
+	color: #fbfada;
+	padding: 0.75rem 1.5rem;
+	border-radius: 0.5rem;
+	font-weight: bold;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+
+#search-btn:hover {
+	background-color: #375344;
+}
+
+/* Lab Slots Grid */
+#lab-slots {
+	padding: 2rem 1rem;
+	max-width: 7xl;
+	margin: 0 auto;
+}
+
+.lab-slots-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 1.5rem;
+}
+
+.lab-card {
+	background-color: #fbfada;
+	border-radius: 0.75rem;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	border: 1px solid #e0e0e0;
+}
+
+.lab-card-header {
+	background-color: #12372a;
+	color: #fbfada;
+	font-family: 'Jersey 25', cursive;
+	font-size: 2rem;
+	padding: 0.75rem 1rem;
+	text-align: center;
+}
+
+.lab-info {
+	padding: 1rem;
+	font-size: 0.95rem;
+	color: #12372a;
+	flex-grow: 1;
+}
+
+.lab-info-label {
+	font-weight: bold;
+	color: #436850;
+}
+
+.lab-info-value {
+	margin-left: 0.5rem;
+	font-weight: 500;
+}
+
+.lab-card-actions {
+	padding: 1rem;
+	background-color: #adbc9f;
+	text-align: center;
+}
+
+.lab-btn {
+	background-color: #12372a;
+	color: #fbfada;
+	padding: 0.6rem 1.5rem;
+	border-radius: 0.5rem;
+	font-weight: bold;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+	border: none;
+}
+
+.lab-btn:hover {
+	background-color: #0a1f18;
+}

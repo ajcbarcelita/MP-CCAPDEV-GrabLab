@@ -13,13 +13,13 @@ import View from './components/View.vue'
 const routes = [
 	{ path: '/', component: GuestLanding },
 	{ path: '/student-landing', component: StudentLanding },
-  	{ path: '/technician-landing', component: TechLanding },
+	{ path: '/technician-landing', component: TechLanding },
 	{ path: '/profile', component: Profile_Page },
 	{ path: '/profile/:userId', component: Profile_Page }, // For viewing a specific user's profile
 	{ path: '/login', component: Login },
 	{ path: '/register', component: Register },
 	{ path: '/reservation/:labId', component: Reservation },
-  	{ path: '/view', component: View }, // Assuming this is for viewing reservations
+	{ path: '/view', component: View }, // Assuming this is for viewing reservations
 ]
 
 const router = createRouter({

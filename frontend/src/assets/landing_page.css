@@ -1,0 +1,358 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Jomhuria&family=Karma:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+#app-bg {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+#logout {
+	font-family: 'Jomhuria';
+	font-size: 35px;
+	color: #adbc9f;
+	text-decoration: none;
+	transition: text-decoration 0.2s;
+}
+#logout:hover {
+	text-decoration: underline;
+}
+#profile {
+	font-family: 'Jomhuria';
+	font-size: 35px;
+	color: #adbc9f;
+	text-decoration: none;
+	transition: text-decoration 0.2s;
+	margin-right: 20px;
+}
+#profile:hover {
+	text-decoration: underline;
+}
+#home {
+	font-family: 'Jomhuria';
+	font-size: 35px;
+	color: #adbc9f;
+	text-decoration: none;
+	transition: text-decoration 0.2s;
+	margin-right: 20px;
+}
+#home:hover {
+	text-decoration: underline;
+}
+
+#hero-cta {
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-top: 1px;
+	padding-bottom: 0px;
+}
+
+#search-filter {
+	background: #fbfada;
+	margin-top: 2rem;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 95%;
+	width: 95%;
+	padding: 1.2rem 0.5rem 0.7rem 0.5rem;
+}
+
+#Title {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
+#filter-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 2rem;
+	justify-content: center;
+}
+#date-time label,
+#Lab label {
+	margin-right: 0.3rem;
+}
+#date-time input,
+#Lab select {
+	margin-right: 1.2rem;
+}
+#search-btn {
+	background-color: #fbfada;
+	color: #436850;
+	padding-left: 10px;
+	padding-right: 10px;
+	font-family: 'Jomhuria';
+	font-size: 40px;
+	align-self: center;
+	height: 50px;
+	margin-left: 10px;
+	display: flex;
+	align-items: center;
+}
+#search-btn:hover {
+	background-color: #436850;
+	color: #fbfada;
+	transition:
+		background-color 0.3s,
+		color 0.3s;
+}
+.filter-row {
+	font-family: 'Jomhuria';
+	font-size: 40px;
+	color: #12372a;
+}
+
+#lab {
+	color: #436850;
+}
+#ID {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+.search-input {
+	background-color: #fbfada;
+	border: #436850 1px solid;
+	width: 300px;
+	height: 50px;
+}
+
+/* Hide number input arrows/spinners */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+/* For Firefox and other browsers */
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield; /* Standard property */
+}
+
+#lab-slots {
+	margin-top: 2rem;
+	margin-left: 2.5%;
+	max-width: 95%;
+	padding: 1.2rem 0.5rem 0.7rem 0.5rem;
+	margin: 2rem 0;
+}
+#lab-slots-title {
+	font-family: 'Jomhuria';
+	font-size: 50px;
+	color: #12372a;
+	margin-left: 20px;
+	margin-top: -20px;
+}
+.lab-slots-grid {
+	margin-left: 3%;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 30px;
+	justify-items: center;
+}
+.lab-card {
+	background: #fbfada;
+	border-radius: 0.25rem;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+	width: 450px;
+	min-height: 200px;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+}
+.lab-card-header {
+	background: #436850;
+	color: #fbfada;
+	font-size: 1.5rem;
+	font-weight: 600;
+	padding: 0.7rem 1rem;
+	border-top-left-radius: 0.25rem;
+	border-top-right-radius: 0.25rem;
+}
+.lab-card-body {
+	padding: 1rem 1.2rem 0.5rem 1.2rem;
+	flex: 1;
+}
+.lab-info {
+	font-size: 1rem;
+	margin-top: 1rem;
+	margin-bottom: 0.3rem;
+	align-items: center;
+	color: #12372a;
+	font-family: 'Karma';
+}
+.lab-info-label {
+	margin-right: 1rem;
+	color: #436850;
+	margin-left: 1rem;
+	font-weight: bold;
+	margin-right: 0.5rem;
+}
+.lab-card-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.7rem;
+	padding: 0.7rem 1.2rem 1rem 1.2rem;
+}
+.lab-btn {
+	background: #436850;
+	color: #fbfada;
+	border: none;
+	border-radius: 0.15rem;
+	padding: 0.5rem 1rem;
+	font-size: 1rem;
+	font-family: 'Karma';
+	font-weight: bold;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.lab-btn:hover {
+	background: #234c36;
+}
+#Lab {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	white-space: nowrap;
+}
+.search-label {
+	color: #436850;
+}
+
+/* Reservation styles */
+.reservations-grid {
+	margin-left: 3%;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 30px;
+	justify-items: center;
+}
+
+.reservation-card {
+	background: #fbfada;
+	border-radius: 0.25rem;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+	width: 450px;
+	min-height: 200px;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.reservation-card-header {
+	background: #436850;
+	color: #fbfada;
+	font-size: 1.5rem;
+	font-weight: 600;
+	padding: 0.7rem 1rem;
+	border-top-left-radius: 0.25rem;
+	border-top-right-radius: 0.25rem;
+	text-align: center;
+}
+
+.reservation-info {
+	font-size: 1rem;
+	margin-top: 1rem;
+	margin-bottom: 0.3rem;
+	align-items: center;
+	color: #12372a;
+	font-family: 'Karma';
+	padding: 1rem 1.2rem 0.5rem 1.2rem;
+	flex: 1;
+}
+
+.reservation-info > div {
+	margin-bottom: 0.5rem;
+}
+
+.reservation-info-label {
+	margin-right: 1rem;
+	color: #436850;
+	margin-left: 1rem;
+	font-weight: bold;
+	margin-right: 0.5rem;
+}
+
+.slots-section {
+	margin-top: 0.5rem;
+}
+
+.slots-list {
+	margin: 0.5rem 0 0 2rem;
+	padding-left: 1.2rem;
+	list-style-type: disc;
+}
+
+.slots-list li {
+	margin-bottom: 0.3rem;
+}
+
+.reservation-card-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.7rem;
+	padding: 0.7rem 1.2rem 1rem 1.2rem;
+}
+
+.reservation-btn {
+	border: none;
+	border-radius: 0.15rem;
+	padding: 0.5rem 1rem;
+	font-size: 1rem;
+	font-family: 'Karma';
+	font-weight: bold;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.view-btn {
+	background: #436850;
+	color: #fbfada;
+}
+
+.view-btn:hover {
+	background: #234c36;
+}
+
+.cancel-btn {
+	background: #f39c12;
+	color: white;
+}
+
+.cancel-btn:hover {
+	background: #d68910;
+}
+
+.delete-btn {
+	background: #d32f2f;
+	color: white;
+}
+
+.delete-btn:hover {
+	background: #b71c1c;
+}
+
+.no-results-message {
+	font-size: 1.5rem;
+	color: #d32f2f;
+	font-family: 'Karma';
+	font-weight: bold;
+	margin: 2rem 0;
+}
+
+#reservations-title {
+	font-family: 'Jomhuria';
+	font-size: 50px;
+	color: #12372a;
+	margin-left: 20px;
+	margin-top: -20px;
+	margin-bottom: 20px;
+	text-align: center;
+}

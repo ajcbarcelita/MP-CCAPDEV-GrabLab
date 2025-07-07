@@ -110,13 +110,13 @@
 			</div>
 		</section>
 
-    <!-- Footer -->
-    <footer class="bg-[#12372A] text-[#FBFADA] text-center p-4 mt-10  font-bold">
-      <div class="flex justify-center gap-2">
-      <p>&copy; 2025 GrabLab. All rights reserved.<br /></p>
-    </div>
-    </footer>
-  </div>
+		<!-- Footer -->
+		<footer class="bg-[#12372A] text-[#FBFADA] text-center p-4 mt-10 font-bold">
+			<div class="flex justify-center gap-2">
+				<p>&copy; 2025 GrabLab. All rights reserved.<br /></p>
+			</div>
+		</footer>
+	</div>
 </template>
 
 <script>

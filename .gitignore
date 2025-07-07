@@ -1,0 +1,41 @@
+# === General ===
+.DS_Store
+*.log
+*.local
+*.tsbuildinfo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# === Dependency Folders ===
+/frontend/node_modules/
+/backend/node_modules/
+
+# === Environment Files ===
+/frontend/.env
+/backend/.env
+
+# === Build Outputs ===
+/frontend/dist/
+/frontend/dist-ssr/
+/backend/uploads/        # if storing profile pics or uploads here
+
+# === Test Artifacts ===
+/frontend/coverage/
+/frontend/cypress/videos/
+/frontend/cypress/screenshots/
+
+# === Editor Settings ===
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# === Debug Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
