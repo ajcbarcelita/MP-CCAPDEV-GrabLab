@@ -7,7 +7,8 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "seed:users": "node seeds/seedUsers.js",
         "seed:labs": "node seeds/seedLabs.js",
-        "seed:all": "npm run seed:users && npm run seed:labs"
+        "seed:labslots": "node seeds/seedLabSlots.js",
+        "seed:all": "npm run seed:users && npm run seed:labs && npm run seed:labslots"
     },
     "keywords": [],
     "author": "",
