@@ -29,7 +29,7 @@ export default [
 		building: 'Andrew Gonzalez Hall',
 		display_name: 'Andrew Gonzalez Room 1903',
 		operating_hours: {
-			open: '7:00',
+			open: '07:00',
 			close: '18:30',
 		},
 		capacity: 35,
