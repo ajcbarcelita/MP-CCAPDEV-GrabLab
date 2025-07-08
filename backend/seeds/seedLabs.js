@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import Lab from "../models/Lab.js"; // adjust path if needed
-import labs from "../../frontend/src/data/labs.js"; // your hardcoded user array
+import Lab from "../models/Lab.js";
+import labs from "./labs.js";
 
 dotenv.config();
 

@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema(
         profile_pic_path: {
             type: String,
             required: false,
-            default: "/uploads/profile_pictures/default.png",
+            default: "/uploads/profile_pictures/default_profile_picture.jpeg", // Default profile picture path
             trim: true,
         },
         description: {
