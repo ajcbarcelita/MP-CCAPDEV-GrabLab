@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import userRoutes from './routes/userRoutes.js';
 
 dotenv.config(); // Load environment variables from .env file
 const app = express();
@@ -16,6 +17,8 @@ app.use(express.json()); // Parse JSON request bodies
 
 // Serve static files from the "uploads/profile_pictures" directory for use in profile pictures
 app.use("/uploads/profile_pictures", express.static(path.join(__dirname, "uploads", "profile_pictures")));
+
+app.use('/api/users', userRoutes);
 
 // Connect to MongoDB using the MongoDB URI from .env file
 if (!process.env.MONGODB_URI) {
