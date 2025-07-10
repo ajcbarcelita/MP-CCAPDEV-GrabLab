@@ -4,10 +4,15 @@
 		<div id="navbar">
 			<span id="navbar-brand">GrabLab</span>
 			<div id="links">
-				<a id="home" href="#" @click.prevent="handleHome">Home</a>
+				<router-link id="home" :to="isTechnician ? '/technician-landing' : '/student-landing'">Home</router-link>
 				<router-link id="profile" to="/profile">Profile</router-link>
-				<a id="logout" href="#" @click.prevent="handleLogout">Log Out</a>
+				<router-link id="logout" to="/" @click="handleLogout">Log Out</router-link>
 			</div>
+		</div>
+
+		<!-- Error Message -->
+		<div v-if="error" class="error-message">
+			{{ error }}
 		</div>
 
 		<!-- Search and Filter -->
@@ -15,10 +20,14 @@
 			<div id="Title">
 				<div id="Lab" class="filter-row">
 					<label for="lab-input" id="lab" class="search-label">Building: </label>
-					<select id="lab-input" class="search-input" v-model="selectedBuilding">
+					<select
+						id="lab-input"
+						class="search-input"
+						v-model="selectedBuilding"
+					>
 						<option value="All">All</option>
 						<option
-							v-for="building in uniqueBuildings"
+							v-for="building in buildings"
 							:key="building"
 							:value="building"
 						>
@@ -40,9 +49,20 @@
 			</div>
 		</div>
 
-		<!-- Lab Slots Section (displayed when no user ID is specified or user is not a technician) -->
-		<section id="lab-slots" class="mb-16" v-if="!isTechnician || userIdFilter === ''">
-			<div class="lab-slots-grid">
+		<!-- Loading State -->
+		<div v-if="isLoading" class="loading-message">
+			Loading...
+		</div>
+
+		<!-- Lab Slots Section -->
+		<section id="lab-slots" class="mb-16" v-else-if="!isTechnician || userIdFilter === ''">
+			<!-- No Labs Message -->
+			<div v-if="!isLoading && labs.length === 0" class="no-data-message">
+				<p v-if="selectedBuilding === 'All'">No labs are available at the moment.</p>
+				<p v-else>No labs found in {{ selectedBuilding }}.</p>
+			</div>
+
+			<div v-else class="lab-slots-grid">
 				<div class="lab-card" v-for="lab in labs" :key="lab.lab_id">
 					<div class="lab-card-header">{{ lab.display_name }}</div>
 					<div class="lab-info">
@@ -54,7 +74,7 @@
 						/></span>
 						<span id="operatingHours" class="lab-info-label">Operating Hours: </span>
 						<span id="OperatingHours" class="lab-info-value"
-							>{{ lab.operating_hours.open }} - {{ lab.operating_hours.close }}<br
+							>{{ lab.operating_hours?.open || 'N/A' }} - {{ lab.operating_hours?.close || 'N/A' }}<br
 						/></span>
 						<span id="labStatus" class="lab-info-label">Status: </span>
 						<span id="LabStatus" class="lab-info-value">{{ lab.status }}<br /></span>
@@ -68,20 +88,26 @@
 			</div>
 		</section>
 
-		<!-- Reservations Section (only displayed when user ID is specified and user is a technician) -->
+		<!-- Reservations Section -->
 		<section
 			id="reservations"
 			class="mb-16 mt-10"
-			v-if="isTechnician && userIdFilter !== '' && filteredReservations.length > 0"
+			v-else-if="isTechnician && userIdFilter !== ''"
 		>
-			<div class="reservations-grid">
+			<!-- No Reservations Message -->
+			<div v-if="!isLoading && filteredReservations.length === 0" class="no-data-message">
+				<p>No reservations found for user ID: {{ userIdFilter }}</p>
+				<p class="no-data-hint">Try checking the ID number or viewing all reservations.</p>
+			</div>
+
+			<div v-else class="reservations-grid">
 				<div
 					class="reservation-card"
 					v-for="reservation in filteredReservations"
-					:key="reservation.reservation_id"
+					:key="reservation._id"
 				>
 					<div class="reservation-card-header">
-						Reservation #{{ reservation.reservation_id }}
+						Reservation #{{ reservation._id }}
 					</div>
 					<div class="reservation-info">
 						<div>
@@ -97,188 +123,133 @@
 						<div>
 							<span class="reservation-info-label">Date: </span>
 							<span class="reservation-info-value">{{
-								reservation.reservation_date
+								formatDateTime(reservation.reservation_date)
 							}}</span>
 						</div>
-						<div>
-							<span class="reservation-info-label">Status: </span>
-							<span class="reservation-info-value">{{ reservation.status }}</span>
-						</div>
-						<div>
-							<span class="reservation-info-label">Created At: </span>
-							<span class="reservation-info-value">{{
-								formatDateTime(reservation.created_at)
-							}}</span>
-						</div>
-						<div class="slots-section">
-							<span class="reservation-info-label">Slots: </span>
-							<ul class="slots-list">
-								<li v-for="slot in reservation.slots" :key="slot.slot_id">
-									{{ getSlotDetails(slot.slot_id) }}
-								</li>
-							</ul>
-						</div>
-					</div>
-					<div class="reservation-card-actions">
-						<button
-							class="reservation-btn view-btn"
-							@click="viewReservation(reservation.lab_id, reservation.reservation_id)"
-						>
-							View
-						</button>
-						<button
-							v-if="reservation.status !== 'cancelled'"
-							class="reservation-btn cancel-btn"
-							@click="cancelReservation(reservation.reservation_id)"
-						>
-							Cancel
-						</button>
-						<button
-							class="reservation-btn delete-btn"
-							@click="deleteReservation(reservation.reservation_id)"
-						>
-							Delete
-						</button>
 					</div>
 				</div>
 			</div>
 		</section>
-
-		<!-- No Results Message -->
-		<section
-			v-if="isTechnician && userIdFilter !== '' && filteredReservations.length === 0"
-			class="mb-16 text-center"
-		>
-			<div class="no-results-message">
-				No reservations found for User ID: {{ userIdFilter }}
-			</div>
-		</section>
-
-		<!-- Footer -->
-		<footer
-			class="bg-[#12372A] text-[#FBFADA] text-center p-4 text-sm font-bold fixed bottom-0 w-full"
-		>
-			<div class="flex justify-center gap-2">
-				<p>&copy; 2025 GrabLab. All rights reserved.<br /></p>
-			</div>
-		</footer>
 	</div>
 </template>
 
 <script>
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ref, watch } from 'vue'
-import labs from '../data/labs.js'
-import reservations from '../data/reservations.js'
-import slots from '../data/slots.js'
+import { useLabsStore } from '@/stores/labs_store'
+import { useReservationsStore } from '@/stores/reservations_store'
 
 export default {
 	name: 'StudentMain',
 	setup() {
 		const router = useRouter()
-		const currentUser = ref(JSON.parse(sessionStorage.getItem('user')))
-		const isTechnician = currentUser.value?.role === 'Technician'
-		const userIdFilter = ref('')
+		const labsStore = useLabsStore()
+		const reservationsStore = useReservationsStore()
+
 		const selectedBuilding = ref('All')
-		const uniqueBuildings = [...new Set(labs.map((lab) => lab.building))]
-		const filteredLabs = ref([...labs])
-		const filteredReservations = ref([])
+		const userIdFilter = ref('')
 
-		// Debug the format of user_id values in reservations for reference
-		console.log(
-			'Reservations user_id types:',
-			reservations.map((r) => ({
-				id: r.user_id,
-				type: typeof r.user_id,
-			})),
-		)
+		// Extract unique buildings from labs data
+		const buildings = computed(() => {
+			const uniqueBuildings = [...new Set(labsStore.labs.map(lab => lab.building))]
+			return uniqueBuildings.sort()
+		})
 
+		// Check if user is technician based on session storage
+		const isTechnician = computed(() => {
+			const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+			return user?.role === 'Technician'
+		})
+
+		const isLoading = ref(false)
+		const error = ref(null)
+
+		// Fetch initial data
+		onMounted(async () => {
+			// Check if user is logged in
+			const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+			if (!user.role) {
+				router.push('/')
+				return
+			}
+
+			isLoading.value = true
+			error.value = null
+			try {
+				await Promise.all([
+					labsStore.fetchAllLabs(),
+					isTechnician.value ? reservationsStore.fetchReservations() : Promise.resolve()
+				])
+			} catch (err) {
+				error.value = 'Failed to load data. Please try again later.'
+				console.error(err)
+			} finally {
+				isLoading.value = false
+			}
+		})
+
+		// Watch for building selection changes
+		watch(selectedBuilding, async (newValue) => {
+			isLoading.value = true
+			error.value = null
+			try {
+				if (newValue === 'All') {
+					await labsStore.fetchAllLabs()
+				} else {
+					await labsStore.fetchLabsByBuilding(newValue)
+				}
+			} catch (err) {
+				error.value = 'Failed to load labs. Please try again later.'
+				console.error(err)
+			} finally {
+				isLoading.value = false
+			}
+		})
+
+		// Watch for user ID filter changes
+		watch(userIdFilter, async (newValue) => {
+			if (isTechnician.value && newValue) {
+				isLoading.value = true
+				error.value = null
+				try {
+					await reservationsStore.fetchReservationsByUserId(newValue)
+				} catch (err) {
+					error.value = 'Failed to load reservations. Please try again later.'
+					console.error(err)
+				} finally {
+					isLoading.value = false
+				}
+			}
+		})
+
+		// Computed properties
+		const labs = computed(() => labsStore.labs)
+
+		const filteredReservations = computed(() => {
+			return reservationsStore.reservations
+		})
+
+		// Helper functions
+		const getLabName = (labId) => {
+			const lab = labsStore.labs.find(lab => lab.lab_id === labId)
+			return lab ? lab.display_name : 'Unknown Lab'
+		}
+
+		const formatDateTime = (dateTime) => {
+			return new Date(dateTime).toLocaleString()
+		}
+
+		// Navigation handlers
 		const handleLogout = () => {
 			sessionStorage.removeItem('user')
-			router.push('/login')
-		}
-
-		const handleHome = () => {
-			if (currentUser.value.role === 'Technician') {
-				router.push('/technician-landing')
-			} else if (currentUser.value.role === 'Student') {
-				router.push('/student-landing')
-			} else {
-				router.push('/')
-			}
-		}
-
-		// Function to filter reservations by user ID and technician's building
-		const filterReservationsByUserId = () => {
-			// If no user ID, don't show any reservations, just show labs
-			if (userIdFilter.value === '') {
-				filteredReservations.value = []
-				return
-			}
-
-			// Convert to Number explicitly and handle potential NaN cases
-			const userId = Number(userIdFilter.value)
-			console.log('Filtering for user ID:', userId, 'Type:', typeof userId)
-
-			if (isNaN(userId)) {
-				console.log('Invalid user ID (NaN)')
-				filteredReservations.value = []
-				return
-			}
-
-			// First filter by user ID - ensure the comparison is by value not by type+value
-			let results = reservations.filter((res) => {
-				console.log(
-					'Comparing reservation user_id:',
-					res.user_id,
-					'Type:',
-					typeof res.user_id,
-					'With input:',
-					userId,
-				)
-				return res.user_id === userId
-			})
-			console.log('Found reservations:', results)
-
-			// Then, if a building is selected, filter by lab_id that matches labs in that building
-			if (selectedBuilding.value !== 'All') {
-				const labsInBuilding = labs
-					.filter((lab) => lab.building === selectedBuilding.value)
-					.map((lab) => lab.lab_id)
-				console.log('Labs in building:', labsInBuilding)
-
-				results = results.filter((res) => labsInBuilding.includes(res.lab_id))
-				console.log('After building filter:', results)
-			}
-
-			filteredReservations.value = results
-			console.log('Final filtered reservations:', filteredReservations.value)
-		}
-
-		// Apply filters for both labs and reservations
-		const applyFilter = () => {
-			console.log('Apply filter called with building:', selectedBuilding.value)
-
-			// Filter labs by building
-			filteredLabs.value =
-				selectedBuilding.value === 'All'
-					? labs
-					: labs.filter((lab) => lab.building === selectedBuilding.value)
-
-			console.log('Filtered labs:', filteredLabs.value)
-
-			// Filter reservations if technician - always run this to update reservation list
-			// when building selection changes
-			if (isTechnician) {
-				filterReservationsByUserId()
-			}
+			router.push('/')
 		}
 
 		const navigateToReservation = (labId) => {
-			router.push({ path: `/reservation/${labId}` })
+			router.push(`/reservation/${labId}`)
 		}
 
-		// Function to view a specific reservation in the Reservation.vue component
+		// Function to view a specific reservation
 		const viewReservation = (labId, reservationId) => {
 			router.push({
 				path: `/reservation/${labId}`,
@@ -286,91 +257,51 @@ export default {
 			})
 		}
 
-		// Function to cancel a reservation (change status to "cancelled")
-		const cancelReservation = (reservationId) => {
+		// Function to cancel a reservation
+		const cancelReservation = async (reservationId) => {
 			if (confirm(`Are you sure you want to cancel reservation #${reservationId}?`)) {
-				// Find the reservation in the array
-				const reservation = reservations.find((res) => res.reservation_id === reservationId)
-
-				if (reservation) {
-					// Update the status to "cancelled"
-					reservation.status = 'cancelled'
-					console.log(`Cancelled reservation #${reservationId}`)
-
-					// Update the filtered reservations to reflect the change
-					filterReservationsByUserId()
-
-					// Show a success message
+				isLoading.value = true
+				error.value = null
+				try {
+					await reservationsStore.updateReservationStatus(reservationId, 'cancelled')
 					alert(`Reservation #${reservationId} has been cancelled.`)
+				} catch (err) {
+					error.value = 'Failed to cancel reservation. Please try again later.'
+					console.error(err)
+				} finally {
+					isLoading.value = false
 				}
 			}
 		}
 
 		// Function to delete a reservation
-		const deleteReservation = (reservationId) => {
+		const deleteReservation = async (reservationId) => {
 			if (confirm(`Are you sure you want to delete reservation #${reservationId}?`)) {
-				// Find the index of the reservation in the array
-				const index = reservations.findIndex((res) => res.reservation_id === reservationId)
-
-				if (index !== -1) {
-					// Remove the reservation from the array
-					reservations.splice(index, 1)
-					console.log(`Deleted reservation #${reservationId}`)
-
-					// Update the filtered reservations to reflect the change
-					filterReservationsByUserId()
-
-					// Show a success message
+				isLoading.value = true
+				error.value = null
+				try {
+					await reservationsStore.deleteReservation(reservationId)
 					alert(`Reservation #${reservationId} has been deleted.`)
+				} catch (err) {
+					error.value = 'Failed to delete reservation. Please try again later.'
+					console.error(err)
+				} finally {
+					isLoading.value = false
 				}
 			}
 		}
 
-		// Add watchers to automatically apply filters when selections change
-		watch(selectedBuilding, () => {
-			console.log('Building selection changed:', selectedBuilding.value)
-			applyFilter()
-		})
-
-		watch(userIdFilter, () => {
-			console.log('User ID filter changed:', userIdFilter.value)
-			applyFilter()
-		})
-
-		// Helper function to get lab name from lab_id
-		const getLabName = (labId) => {
-			const lab = labs.find((l) => l.lab_id === labId)
-			return lab ? lab.display_name : `Lab #${labId}`
-		}
-
-		// Helper function to format date and time
-		const formatDateTime = (dateTimeStr) => {
-			const date = new Date(dateTimeStr)
-			return date.toLocaleString()
-		}
-
-		// Helper function to get slot details
-		const getSlotDetails = (slotId) => {
-			const slot = slots.find((s) => s.slot_id === slotId)
-			if (!slot) return `Slot #${slotId}`
-
-			return `Seat ${slot.seat_num} - ${slot.start_time} to ${slot.end_time}`
-		}
-
 		return {
 			handleLogout,
-			handleHome,
 			isTechnician,
-			labs: filteredLabs,
+			labs,
 			selectedBuilding,
-			uniqueBuildings,
-			applyFilter,
+			buildings,
 			navigateToReservation,
 			userIdFilter,
 			filteredReservations,
 			getLabName,
 			formatDateTime,
-			getSlotDetails,
 			viewReservation,
 			deleteReservation,
 			cancelReservation,
@@ -388,7 +319,6 @@ export default {
 </script>
 
 <style scoped>
-@import '../assets/landing_page.css';
+@import '@/assets/landing_page.css';
 
-/* Styles for reservations are now in the landing_page.css file */
 </style>

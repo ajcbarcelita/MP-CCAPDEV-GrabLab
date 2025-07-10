@@ -5,8 +5,13 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import userRoutes from "./routes/userRoutes.js";
+import labRoutes from "./routes/labRoutes.js";
+import reservationRoutes from "./routes/reservationRoutes.js";
 
-dotenv.config(); // Load environment variables from .env file
+// Load environment variables from .env file
+dotenv.config();
+console.log('Environment loaded. MONGODB_URI exists:', !!process.env.MONGODB_URI);
+
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,29 +19,51 @@ const __dirname = path.dirname(__filename);
 
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
-// Serve static files from the "uploads/profile_pictures" directory for use in profile pictures
+// Serve static files
 app.use("/uploads/profile_pictures", express.static(path.join(__dirname, "uploads", "profile_pictures")));
+app.use(express.static(path.join(__dirname, 'public')));
 
+// API Routes with error handling
 app.use("/api/users", userRoutes);
+app.use("/api/labs", (req, res, next) => {
+    console.log('Lab route accessed:', req.method, req.path);
+    next();
+}, labRoutes);
+app.use("/api/reservations", reservationRoutes);
 
-// Connect to MongoDB using the MongoDB URI from .env file
-if (!process.env.MONGODB_URI) {
-    console.error("❌ MONGODB_URI is not defined in .env file");
-    process.exit(1); // Exit if MONGODB_URI is not set
-}
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Global error handler:', err);
+    res.status(500).json({ message: err.message });
+});
 
-mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
+// Connect to MongoDB
+const connectDB = async () => {
+    try {
+        const conn = await mongoose.connect(process.env.MONGODB_URI);
         console.log("✅ Connected to MongoDB!");
-    })
-    .catch((err) => {
-        console.error("❌ Error connecting to MongoDB:", err);
-        process.exit(1); // Quit if DB connection fails
-    });
+        console.log("Database name:", conn.connection.name);
+        console.log("Connected to host:", conn.connection.host);
+        
+        // Test query to check if we can access the Labs collection
+        const labCount = await mongoose.connection.db.collection('labs').countDocuments();
+        console.log("Number of documents in labs collection:", labCount);
+    } catch (error) {
+        console.error("❌ MongoDB connection error:", error);
+        process.exit(1);
+    }
+};
 
-// Start the server and listen on specified port in .env for requests
-app.listen(process.env.PORT, () => {
-    console.log(`✅ Server is running on port ${process.env.PORT}`);
+// Catch-all route to serve index.html for SPA
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
+connectDB();
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`✅ Server is running on port ${port}`);
 });

@@ -11,10 +11,11 @@
 		"format": "prettier --write src/"
 	},
 	"dependencies": {
-		"pinia": "^3.0.3",
-		"tailwind": "^2.3.1",
-		"vue": "^3.5.13",
-		"vue-router": "^4.5.0"
+		"axios": "^1.4.0",
+		"pinia": "^2.1.4",
+		"tailwind": "^4.0.0",
+		"vue": "^3.3.4",
+		"vue-router": "^4.2.4"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.22.0",
