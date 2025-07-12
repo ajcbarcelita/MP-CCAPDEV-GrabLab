@@ -12,11 +12,12 @@ const reservationSchema = new mongoose.Schema(
             ref: "LabSlot",
             required: true,
         },
-        time_slot: {
-            type: String, // format: "HH:MM"
-            required: true,
-            match: [/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)"],
-        },
+        time_slots: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true, // references the _id of a time slot subdocument in LabSlot
+            },
+        ],
         status: {
             type: String,
             enum: ["Active", "Cancelled", "Completed"],
