@@ -4,13 +4,17 @@ import {
     getReservationsByUserId,
     getReservationsByLab,
     deleteReservation,
-    updateReservation
+    updateReservation,
+    createReservation
 } from '../controllers/reservationController.js';
 
 const router = express.Router();
 
 // Get all reservations
 router.get('/', getReservations);
+
+// Create a new reservation
+router.post('/', createReservation);
 
 // Get reservations by user ID
 router.get('/user/:userId', getReservationsByUserId);
