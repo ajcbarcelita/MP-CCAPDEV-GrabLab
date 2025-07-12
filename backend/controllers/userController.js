@@ -34,8 +34,7 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // NOTE: In a real-world application (and in your Phase 3), you MUST hash the password before saving it.
-        // For Phase 2, we are storing it as plaintext as per the specifications.
+        // HASH PASSWORD HERE (Phase 3)
         const user = await User.create({
             email,
             password,
@@ -166,4 +165,4 @@ const searchUser = async (req, res) => {
     }
 };
 
-export { registerUser, loginUser, searchUser, deleteUser, updateUser };
+export { registerUser, loginUser, searchUser, deleteUser, updateUser, upload };

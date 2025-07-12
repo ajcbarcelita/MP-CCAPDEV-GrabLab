@@ -429,8 +429,7 @@ const getTimeSlotFromSlotId = (slotId) => {
 
 const userReservations = computed(() =>
 	// Filter reservations for the current user
-	currentUser.value
-		? reservations
+	currentUser.value ? reservations
 				.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
 				// Sort by reservation date (ascending order)
 				.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
