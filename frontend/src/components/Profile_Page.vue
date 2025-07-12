@@ -18,8 +18,8 @@
 		<div class="relative flex min-h-screen flex-col justify-center overflow-hidden">
 			<!-- Background image layer -->
 			<div
-				class="absolute inset-0 bg-[url(@/assets/lab.png)] bg-center bg-cover blur-lg [mask-image:linear-gradient(180deg,green,rgba(0,255,0,0))] z-0"
-			></div>
+				class="absolute inset-0 bg-[url(@/assets/lab.png)] bg-center bg-cover blur-lg [mask-image:linear-gradient(180deg,green,rgba(0,255,0,0))] z-0">
+			</div>
 
 			<!-- Main Content Layer - positioned above background -->
 			<div class="relative z-10 container mx-auto px-4 py-8 max-w-4xl" v-if="profileUser">
@@ -45,22 +45,16 @@
 				<!-- Conditional grid or flex layout based on own profile -->
 				<div :class="isOwnProfile ? 'grid md:grid-cols-3 gap-8' : 'flex justify-center'">
 					<!-- Profile Information Card -->
-					<div
-						:class="
-							isOwnProfile
-								? 'md:col-span-2 bg-cream rounded-lg shadow-lg p-6'
-								: 'bg-cream rounded-lg shadow-lg p-6 w-full max-w-5xl'
-						"
-					>
+					<div :class="isOwnProfile
+							? 'md:col-span-2 bg-cream rounded-lg shadow-lg p-6'
+							: 'bg-cream rounded-lg shadow-lg p-6 w-full max-w-5xl'
+						">
 						<div class="flex justify-between items-center mb-6">
 							<h3 class="text-2xl font-bold text-forest-dark font-karma">
 								Profile Information
 							</h3>
-							<button
-								v-if="showEditButton"
-								@click="handleEditProfile"
-								class="bg-forest-medium text-cream px-4 py-2 rounded-lg hover:bg-forest-dark transition-colors font-karma"
-							>
+							<button v-if="showEditButton" @click="handleEditProfile"
+								class="bg-forest-medium text-cream px-4 py-2 rounded-lg hover:bg-forest-dark transition-colors font-karma">
 								Edit Profile
 							</button>
 						</div>
@@ -68,23 +62,14 @@
 						<!-- Profile Picture Section -->
 						<div class="flex items-center mb-6">
 							<div
-								class="w-24 h-24 bg-sage rounded-full flex items-center justify-center mr-6 relative overflow-hidden"
-							>
-								<img
-									v-if="profileUser.profile_pic_path"
-									:src="profileUser.profile_pic_path"
-									class="w-full h-full object-cover"
-								/>
+								class="w-24 h-24 bg-sage rounded-full flex items-center justify-center mr-6 relative overflow-hidden">
+								<img v-if="profileUser.profile_pic_path" :src="profileUser.profile_pic_path"
+									class="w-full h-full object-cover" />
 								<!-- SVG Placeholder if no picture set yet -->
-								<svg
-									v-else
-									class="w-16 h-16 text-forest-medium"
-									fill="currentColor"
-									viewBox="0 0 24 24"
-								>
+								<svg v-else class="w-16 h-16 text-forest-medium" fill="currentColor"
+									viewBox="0 0 24 24">
 									<path
-										d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-									/>
+										d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
 								</svg>
 							</div>
 
@@ -94,11 +79,8 @@
 									{{ profileUser.first_name }} {{ profileUser.last_name }}
 								</h4>
 								<!-- If its your profile, then you can change it -->
-								<button
-									v-if="isOwnProfile"
-									@click="handleChangePicture"
-									class="text-forest-medium hover:text-forest-dark transition-colors text-sm font-karma"
-								>
+								<button v-if="isOwnProfile" @click="handleChangePicture"
+									class="text-forest-medium hover:text-forest-dark transition-colors text-sm font-karma">
 									Change Picture
 								</button>
 							</div>
@@ -109,108 +91,65 @@
 							<div class="grid md:grid-cols-2 gap-4">
 								<!-- User Role and Email div -->
 								<div>
-									<label
-										class="block text-forest-dark font-semibold mb-2 font-karma"
-										>User ID</label
-									>
-									<input
-										type="text"
-										:value="profileUser.user_id"
+									<label class="block text-forest-dark font-semibold mb-2 font-karma">User ID</label>
+									<input type="text" :value="profileUser.user_id"
 										class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white font-karma"
-										readonly
-									/>
+										readonly />
 								</div>
 								<div>
-									<label
-										class="block text-forest-dark font-semibold mb-2 font-karma"
-										>Email</label
-									>
-									<input
-										type="email"
-										:value="profileUser.email"
+									<label class="block text-forest-dark font-semibold mb-2 font-karma">Email</label>
+									<input type="email" :value="profileUser.email"
 										class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white font-karma"
-										readonly
-									/>
+										readonly />
 								</div>
 							</div>
 
 							<!-- First Name and Last Name div -->
 							<div class="grid md:grid-cols-2 gap-4">
 								<div>
-									<label
-										class="block text-forest-dark font-semibold mb-2 font-karma"
-										>First Name</label
-									>
+									<label class="block text-forest-dark font-semibold mb-2 font-karma">First
+										Name</label>
 									<!-- Read-only when it is not your profile and when not in editing mode -->
-									<input
-										type="text"
-										v-model="editForm.first_name"
-										:readonly="inputReadonly"
-										:class="[
-											'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
-											inputReadonly ? 'bg-white' : 'bg-gray-50',
-										]"
-									/>
+									<input type="text" v-model="editForm.first_name" :readonly="inputReadonly" :class="[
+										'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
+										inputReadonly ? 'bg-white' : 'bg-gray-50',
+									]" />
 								</div>
 								<div>
-									<label
-										class="block text-forest-dark font-semibold mb-2 font-karma"
-										>Last Name</label
-									>
-									<input
-										type="text"
-										v-model="editForm.last_name"
-										:readonly="inputReadonly"
-										:class="[
-											'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
-											inputReadonly ? 'bg-white' : 'bg-gray-50',
-										]"
-									/>
+									<label class="block text-forest-dark font-semibold mb-2 font-karma">Last
+										Name</label>
+									<input type="text" v-model="editForm.last_name" :readonly="inputReadonly" :class="[
+										'w-full px-3 py-2 border border-gray-300 rounded-lg font-karma',
+										inputReadonly ? 'bg-white' : 'bg-gray-50',
+									]" />
 								</div>
 							</div>
 
 							<!-- Role div (only show for other users) -->
 							<div v-if="!isOwnProfile">
-								<label class="block text-forest-dark font-semibold mb-2 font-karma"
-									>Role</label
-								>
-								<input
-									type="text"
-									:value="profileUser.role"
+								<label class="block text-forest-dark font-semibold mb-2 font-karma">Role</label>
+								<input type="text" :value="profileUser.role"
 									class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white font-karma"
-									readonly
-								/>
+									readonly />
 							</div>
 
 							<!-- Description div -->
 							<div>
-								<label class="block text-forest-dark font-semibold mb-2 font-karma"
-									>Description</label
-								>
-								<textarea
-									rows="4"
-									v-model="editForm.description"
-									:readonly="inputReadonly"
-									:class="[
-										'w-full px-3 py-2 border border-gray-300 rounded-lg resize-none font-karma',
-										inputReadonly ? 'bg-white' : 'bg-gray-50',
-									]"
-									:placeholder="isOwnProfile ? 'Tell us about yourself...' : ''"
-								></textarea>
+								<label class="block text-forest-dark font-semibold mb-2 font-karma">Description</label>
+								<textarea rows="4" v-model="editForm.description" :readonly="inputReadonly" :class="[
+									'w-full px-3 py-2 border border-gray-300 rounded-lg resize-none font-karma',
+									inputReadonly ? 'bg-white' : 'bg-gray-50',
+								]" :placeholder="isOwnProfile ? 'Tell us about yourself...' : ''"></textarea>
 							</div>
 
 							<!-- Save / Edit Buttons -->
 							<div v-if="showSaveCancel" class="flex space-x-4">
-								<button
-									@click="handleSaveChanges"
-									class="bg-forest-medium text-cream px-6 py-2.5 rounded-lg hover:bg-forest-dark transition-colors font-karma"
-								>
+								<button @click="handleSaveChanges"
+									class="bg-forest-medium text-cream px-6 py-2.5 rounded-lg hover:bg-forest-dark transition-colors font-karma">
 									Save Changes
 								</button>
-								<button
-									@click="handleCancelEdit"
-									class="bg-gray-500 text-white px-6 py-2.5 rounded-lg hover:bg-gray-600 transition-colors font-karma"
-								>
+								<button @click="handleCancelEdit"
+									class="bg-gray-500 text-white px-6 py-2.5 rounded-lg hover:bg-gray-600 transition-colors font-karma">
 									Cancel Edit
 								</button>
 							</div>
@@ -220,10 +159,8 @@
 					<!-- Sidebar - Only show for own profile -->
 					<div v-if="isOwnProfile" class="align-middle space-y-12">
 						<!-- Magic Button (Delete Account) - Only show for own profile not for other Users -->
-						<div
-							v-if="showDeleteAccount"
-							class="bg-pink-100 border-3 border-pink-200 rounded-lg p-6 text-center"
-						>
+						<div v-if="showDeleteAccount"
+							class="bg-pink-100 border-3 border-pink-200 rounded-lg p-6 text-center">
 							<h3 class="text-xl font-bold text-pink-600 mb-4 font-karma">
 								Magic Button
 							</h3>
@@ -231,10 +168,8 @@
 								Permanently delete your account and all associated data. This action
 								cannot be undone.
 							</p>
-							<button
-								@click="handleDeleteAccount"
-								class="w-full bg-pink-500 text-white py-2 rounded-lg hover:bg-pink-600 transition-colors font-karma"
-							>
+							<button @click="handleDeleteAccount"
+								class="w-full bg-pink-500 text-white py-2 rounded-lg hover:bg-pink-600 transition-colors font-karma">
 								Delete Account
 							</button>
 						</div>
@@ -251,11 +186,8 @@
 					<div class="overflow-x-auto">
 						<div v-if="userReservations.length > 0" class="flex gap-4 min-w-max pb-4">
 							<!-- Dynamic Reservation Cards -->
-							<div
-								v-for="reservation in userReservations"
-								:key="reservation.reservation_id"
-								class="bg-sage rounded-lg p-4 min-w-[280px]"
-							>
+							<div v-for="reservation in userReservations" :key="reservation.reservation_id"
+								class="bg-sage rounded-lg p-4 min-w-[280px]">
 								<div class="mb-3">
 									<h4 class="font-bold text-forest-dark text-lg font-karma">
 										{{ getLabName(reservation.lab_id) }}
@@ -284,13 +216,10 @@
 									<p>
 										<strong>Status:</strong>
 										<!-- Display Status -->
-										<span
-											:class="
-												reservation.status === 'confirmed'
-													? 'text-green-600'
-													: 'text-yellow-600'
-											"
-										>
+										<span :class="reservation.status === 'confirmed'
+												? 'text-green-600'
+												: 'text-yellow-600'
+											">
 											{{
 												' ' +
 												reservation.status.charAt(0).toUpperCase() +
@@ -300,19 +229,15 @@
 									</p>
 								</div>
 								<div class="flex space-x-2 mt-3">
-								<button
-									@click="editReservation(reservation.reservation_id)"
-									class="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors font-karma"
-								>
-									Edit
-								</button>
-								<button
-									@click="cancelReservation(reservation.reservation_id)"
-									class="w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma"
-								>
-									Cancel Reservation
-								</button>
-							</div>
+									<button @click="editReservation(reservation.reservation_id)"
+										class="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors font-karma">
+										Edit
+									</button>
+									<button @click="cancelReservation(reservation.reservation_id)"
+										class="w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma">
+										Cancel Reservation
+									</button>
+								</div>
 							</div>
 						</div>
 
@@ -337,7 +262,8 @@
 				<div v-if="editingReservation" class="space-y-4">
 					<div>
 						<label class="block text-forest-dark font-semibold mb-2 font-karma">Date</label>
-						<input type="date" v-model="editingReservation.reservation_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg font-karma" />
+						<input type="date" v-model="editingReservation.reservation_date"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg font-karma" />
 					</div>
 					<div>
 						<label class="block text-forest-dark font-semibold mb-2 font-karma">Time</label>
@@ -350,10 +276,12 @@
 				</div>
 
 				<div class="flex gap-3 mt-6">
-					<button @click="saveReservation" class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
+					<button @click="saveReservation"
+						class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
 						Save Changes
 					</button>
-					<button @click="closeEditModal" class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
+					<button @click="closeEditModal"
+						class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
 						Cancel
 					</button>
 				</div>
@@ -399,8 +327,8 @@ const profileUser = ref(null)
 
 // Computed properties
 const isOwnProfile = computed(() => {
-	return currentUser.value && profileUser.value && 
-		   currentUser.value.user_id === profileUser.value.user_id
+	return currentUser.value && profileUser.value &&
+		currentUser.value.user_id === profileUser.value.user_id
 })
 
 // Condition Checks
@@ -421,19 +349,19 @@ const inputReadonly = computed(() => {
 	return !isOwnProfile.value || !isEditing.value
 })
 
-// Reservation properties -- Calculated from slot_id in reservations
-const getSeatFromSlotId = (slotId) => {
-	return Math.floor((slotId - 1) / 22) + 1
-}
-// Convert slot_id to time slot (1-22)
-const getTimeSlotFromSlotId = (slotId) => {
-	return ((slotId - 1) % 22) + 1
-}
+// // Reservation properties -- Calculated from slot_id in reservations
+// const getSeatFromSlotId = (slotId) => {
+// 	return Math.floor((slotId - 1) / 22) + 1
+// }
+// // Convert slot_id to time slot (1-22)
+// const getTimeSlotFromSlotId = (slotId) => {
+// 	return ((slotId - 1) % 22) + 1
+// }
 
-// Updated to use store data instead of mock data
+// Updated to use store data 
 const userReservations = computed(() => {
 	if (!currentUser.value) return []
-	
+
 	// Filter reservations from store for the current user
 	return reservationsStore.reservations
 		.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
@@ -445,43 +373,44 @@ const getLabName = (labId) => {
 	const lab = labsStore.getLabById(labId)
 	return lab ? lab.name : 'Unknown Lab'
 }
-const formatReservationDate = (dateString) =>
-	new Date(dateString).toLocaleDateString('en-US', {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	})
 
-// Convert array of slot objects to a time range string
-const getTimeRangeForSlots = (slots) => {
-	if (!slots.length) return 'N/A'
-	// Extract time slots from the slot objects
-	const timeSlots = slots.map((slot) => getTimeSlotFromSlotId(slot.slot_id))
-	const minSlot = Math.min(...timeSlots)
-	const maxSlot = Math.max(...timeSlots)
-	const startTime = getTimeSlotDisplay(minSlot)
-	const endTime = getTimeSlotDisplay(maxSlot + 1)
-	return `${startTime.split(' - ')[0]} - ${endTime.split(' - ')[0]}`
-	// Example Output: "7:00 AM - 8:30 AM"
-}
+// const formatReservationDate = (dateString) =>
+// 	new Date(dateString).toLocaleDateString('en-US', {
+// 		weekday: 'long',
+// 		year: 'numeric',
+// 		month: 'long',
+// 		day: 'numeric',
+// 	})
 
-// Reservation Display Function
-function getTimeSlotDisplay(timeSlot) {
-	// Each slot is 30 minutes, starting at 7:00 AM
-	const baseMinutes = 7 * 60 + (timeSlot - 1) * 30 // Convert time slot to minutes from 00:00
-	const endMinutes = baseMinutes + 30
+// // Convert array of slot objects to a time range string
+// const getTimeRangeForSlots = (slots) => {
+// 	if (!slots.length) return 'N/A'
+// 	// Extract time slots from the slot objects
+// 	const timeSlots = slots.map((slot) => getTimeSlotFromSlotId(slot.slot_id))
+// 	const minSlot = Math.min(...timeSlots)
+// 	const maxSlot = Math.max(...timeSlots)
+// 	const startTime = getTimeSlotDisplay(minSlot)
+// 	const endTime = getTimeSlotDisplay(maxSlot + 1)
+// 	return `${startTime.split(' - ')[0]} - ${endTime.split(' - ')[0]}`
+// 	// Example Output: "7:00 AM - 8:30 AM"
+// }
 
-	const format = (mins) => {
-		const h = Math.floor(mins / 60)
-		const m = mins % 60
-		const period = h >= 12 ? 'PM' : 'AM'
-		const displayHour = h % 12 === 0 ? 12 : h % 12
-		return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`
-	}
+// // Reservation Display Function
+// function getTimeSlotDisplay(timeSlot) {
+// 	// Each slot is 30 minutes, starting at 7:00 AM
+// 	const baseMinutes = 7 * 60 + (timeSlot - 1) * 30 // Convert time slot to minutes from 00:00
+// 	const endMinutes = baseMinutes + 30
 
-	return `${format(baseMinutes)} - ${format(endMinutes)}`
-}
+// 	const format = (mins) => {
+// 		const h = Math.floor(mins / 60)
+// 		const m = mins % 60
+// 		const period = h >= 12 ? 'PM' : 'AM'
+// 		const displayHour = h % 12 === 0 ? 12 : h % 12
+// 		return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`
+// 	}
+
+// 	return `${format(baseMinutes)} - ${format(endMinutes)}`
+// }
 
 // Navbar and profile actions
 const handleLogout = () => {
@@ -522,7 +451,7 @@ async function saveReservation() {
 				editingReservation.value.reservation_id,
 				{ reservation_date: editingReservation.value.reservation_date }
 			)
-			
+
 			console.log('Reservation updated successfully')
 			closeEditModal()
 		} catch (error) {
@@ -559,10 +488,10 @@ async function handleSaveChanges() {
 
 	try {
 		await usersStore.updateUserProfile(currentUser.value.user_id, editForm.value)
-		
+
 		// Update local profileUser data
 		Object.assign(profileUser.value, editForm.value)
-		
+
 		// Reset editing state
 		isEditing.value = false
 		console.log('Profile updated successfully')
@@ -587,7 +516,7 @@ async function handleDeleteAccount() {
 		try {
 			await usersStore.deleteUserAccount(currentUser.value.user_id)
 			console.log('Account deleted successfully')
-			
+
 			// Clear user session and redirect to login
 			usersStore.clearUserSession()
 			currentUser.value = null
@@ -631,47 +560,45 @@ async function cancelReservation(reservationId) {
 
 async function handleView() {
 	try {
-		// Get current logged in user from store or session storage
-		const user = sessionStorage.getItem('user')
-		if (user) {
-			currentUser.value = JSON.parse(user)
-		} else {
-			// If no user is logged in, redirect to login
-			router.push('/login')
-			return
+		// 1. Check authentication
+		const user = sessionStorage.getItem('user');
+		if (!user) {
+			router.push('/login');
+			return;
+		}
+		currentUser.value = JSON.parse(user);
+
+		// 2. Determine which profile to view
+		const userId = route.params.userId || currentUser.value.user_id;
+
+		// 3. Fetch user data with proper error handling
+		const userData = await usersStore.fetchUserById(userId);
+
+		if (!userData) {
+			throw new Error('User not found');
 		}
 
-		// Get profile user ID from route (if viewing another profile)
-		const userId = route.params.userId || currentUser.value.user_id
+		profileUser.value = userData;
 
-		// Fetch user data from store instead of mock data
-		await usersStore.fetchUserById(userId)
-		profileUser.value = usersStore.getUserById(userId)
-
-		if (!profileUser.value) {
-			// Handle where user is not found - show error or redirect
-			alert(`User with ID "${userId}" not found.`)
-			// Redirect back to the appropriate landing page
-			if (currentUser.value.role === 'Student') {
-				router.push('/student-landing')
-			} else if (currentUser.value.role === 'Technician') {
-				router.push('/technician-landing')
-			} else {
-				router.push('/')
-			}
-			return
+		// 4. Fetch reservations if viewing own profile
+		if (userId === currentUser.value.user_id && currentUser.value.role === 'Student') {
+			await reservationsStore.fetchReservationsByUserId(userId);
 		}
 
-		// Fetch user's reservations if it's their own profile and they're a student
-		if (isOwnProfile.value && currentUser.value.role === 'Student') {
-			await reservationsStore.fetchReservationsByUserId(currentUser.value.user_id)
-		}
+		// 5. Initialize edit form
+		handleEditForm();
 
-		// Initialize edit form with profile data
-		handleEditForm()
 	} catch (error) {
-		console.error('Error loading user data:', error)
-		alert('Failed to load user data. Please try again.')
+		console.error('Profile load error:', error);
+
+		// Redirect based on role
+		const fallbackRoute = currentUser.value?.role === 'Technician'
+			? '/technician-landing'
+			: currentUser.value?.role === 'Student'
+				? '/student-landing'
+				: '/login';
+
+		router.push(fallbackRoute);
 	}
 }
 

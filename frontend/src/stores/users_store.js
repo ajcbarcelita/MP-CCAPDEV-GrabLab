@@ -27,29 +27,26 @@ export const useUsersStore = defineStore('users', {
       }
     },
 
-    // Fetch user by ID
     async fetchUserById(userId) {
-      this.loading = true
+      this.loading = true;
       try {
-        const response = await axios.get(`${API_URL}/users/${userId}`)
-        const user = response.data
+        const response = await axios.get(`${API_URL}/users/${userId}`);
+        const user = response.data;
 
-        // Update or add user to users array
-        const existingIndex = this.users.findIndex(u => u.user_id === userId)
+        // Store now expects and uses user_id exclusively
+        const existingIndex = this.users.findIndex(u => u.user_id === userId);
+
         if (existingIndex !== -1) {
-          this.users[existingIndex] = user
+          this.users[existingIndex] = user;
         } else {
-          this.users.push(user)
+          this.users.push(user);
         }
 
-        this.error = null
-        return user
+        return user;
       } catch (error) {
-        this.error = error.message
-        console.error('Error fetching user:', error)
-        throw error
+        throw error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
@@ -65,7 +62,7 @@ export const useUsersStore = defineStore('users', {
 
         // Set current user
         this.currentUser = {
-          user_id: user._id,
+          user_id: user.user_id,
           first_name: user.fname,
           last_name: user.lname,
           email: user.email,
