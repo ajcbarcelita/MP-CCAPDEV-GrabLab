@@ -61,7 +61,7 @@ const registerUser = async (req, res) => {
 
         if (user) {
             res.status(201).json({
-                _id: user._id,
+                _id: user.user_id,
                 fname: user.fname,
                 lname: user.lname,
                 email: user.email,
@@ -87,7 +87,7 @@ const loginUser = async (req, res) => {
 
         if (user && (password === user.password)) { // Plaintext password comparison for Phase 2
             res.json({
-                _id: user._id,
+                user_id: user.user_id,
                 fname: user.fname,
                 lname: user.lname,
                 email: user.email,
@@ -112,7 +112,7 @@ const getAllUsers = async (req, res) => {
         
         // Transform data to match frontend expectations
         const transformedUsers = users.map(user => ({
-            user_id: user._id,
+            user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
             email: user.email,
@@ -144,7 +144,7 @@ const getUserById = async (req, res) => {
 
         // Transform data to match frontend expectations
         const transformedUser = {
-            user_id: user._id,
+            user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
             email: user.email,
@@ -195,7 +195,7 @@ const createUser = async (req, res) => {
 
         // Transform data to match frontend expectations
         const transformedUser = {
-            user_id: user._id,
+            user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
             email: user.email,
@@ -225,7 +225,7 @@ const deleteUser = async (req, res) => {
         }
 
         // Delete all reservations associated with the user
-        await Reservation.deleteMany({ user: user._id });
+        await Reservation.deleteMany({ user: user.user_id });
 
         // Delete the user
         await User.findByIdAndDelete(id);
@@ -259,7 +259,7 @@ const updateUser = async (req, res) => {
 
         // Transform data to match frontend expectations
         const transformedUser = {
-            user_id: updatedUser._id,
+            user_id: updatedUser.user_id,
             first_name: updatedUser.fname,
             last_name: updatedUser.lname,
             email: updatedUser.email,
@@ -300,7 +300,7 @@ const updateUserProfilePicture = async (req, res) => {
 
         // Transform data to match frontend expectations
         const transformedUser = {
-            user_id: updatedUser._id,
+            user_id: updatedUser.user_id,
             first_name: updatedUser.fname,
             last_name: updatedUser.lname,
             email: updatedUser.email,
@@ -340,7 +340,7 @@ const searchUser = async (req, res) => {
 
         // Transform data to match frontend expectations
         const transformedUsers = users.map(user => ({
-            user_id: user._id,
+            user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
             email: user.email,
