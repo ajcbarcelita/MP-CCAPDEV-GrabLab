@@ -22,21 +22,18 @@ const usersStore = useUsersStore()
 onMounted(() => {
 	if (route.query.registered === 'true') {
 		success.value = 'Registration successful! You may now log in.'
-		// Optionally clear the query so it doesn't persist on refresh
 		router.replace({ query: {} })
 	}
 })
 
-function handleLogin() {
-	const user = usersStore.users.find(
-		(u) => u.email === email.value && u.password === password.value,
-	)
-	if (user) {
-		if (rememberMe.value) {
-			localStorage.setItem('user', JSON.stringify(user))
-		} else {
-			sessionStorage.setItem('user', JSON.stringify(user))
-		}
+async function handleLogin() {
+	try {
+		const user = await usersStore.loginUser({
+			email: email.value,
+			password: password.value,
+			rememberMe: rememberMe.value
+		})
+
 		error.value = ''
 		if (user.role === 'Technician') {
 			router.push('/technician-landing')
@@ -45,7 +42,7 @@ function handleLogin() {
 		} else {
 			router.push('/')
 		}
-	} else {
+	} catch (err) {
 		error.value = 'Invalid email or password. Try again.'
 	}
 }
@@ -77,12 +74,7 @@ function handleLogin() {
 
 				<div>
 					<label>Password</label>
-					<input
-						v-model="password"
-						type="password"
-						class="login-input"
-						placeholder="••••••••"
-					/>
+					<input v-model="password" type="password" class="login-input" placeholder="••••••••" />
 				</div>
 
 				<div class="login-checkbox">
@@ -102,4 +94,3 @@ function handleLogin() {
 		</div>
 	</div>
 </template>
-

@@ -14,16 +14,16 @@ import {
 
 const router = express.Router();
 
-// Route for user registration (legacy - keep for backward compatibility)
+// Route for user registration 
 router.post('/register', registerUser);
 
 // Route for user login
 router.post('/login', loginUser);
 
-// Route for searching users (preserved as requested)
+// Route for searching users 
 router.get('/search', searchUser);
 
-// Route for getting all users (for frontend store)
+// Route for getting all users 
 router.get('/', getAllUsers);
 
 // Route for creating a new user (for frontend store addUser method)
