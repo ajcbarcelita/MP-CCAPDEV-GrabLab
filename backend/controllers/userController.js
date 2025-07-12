@@ -68,4 +68,25 @@ const loginUser = async (req, res) => {
     }
 };
 
-export { registerUser, loginUser };
+/*
+@desc    Search for users by name or email
+@route   GET /api/users/search
+*/
+const searchUser = async (req, res) => {
+    const { searchTerm } = req.query; // Get the search term from query parameters
+    try {
+        const users = await User.find({
+            $or: [
+                { fname: new RegExp(searchTerm, 'i') }, // Case-insensitive search for first name
+                { lname: new RegExp(searchTerm, 'i') }, // Case-insensitive search for last name
+                { email: new RegExp(searchTerm, 'i') }  // Case-insensitive search for email
+            ]
+        });
+
+        res.json(users); // Return the found users
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+export { registerUser, loginUser, searchUser };

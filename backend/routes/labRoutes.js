@@ -1,31 +1,27 @@
+/* * Lab Routes
+ * This module defines the routes for lab-related API endpoints.
+ * It includes routes to get all labs, labs by building, specific lab by ID,
+ * available labs, labs by status, and to update lab status.
+ * 
+ * This file is used on the following file/s:
+ *  - ../controllers/labController.js (for handling the logic of each route)
+ *  - frontend/src/stores/labs_store.js (indirectly via API calls to these routes)
+ *  - frontend/src/components/View.vue (indirectly via the labs store)
+ */
 import express from 'express';
 import {
     getLabs,
     getLabsByBuilding,
-    getLabById,
-    getAvailableLabs,
-    getLabsByStatus,
-    updateLabStatus
+    getLabByIDNumber
 } from '../controllers/labController.js';
 
 const router = express.Router();
 
 // Get all labs
 router.get('/', getLabs);
-
-// Get only available (active) labs
-router.get('/available', getAvailableLabs);
-
 // Get labs by building
 router.get('/building/:building', getLabsByBuilding);
-
-// Get labs by status
-router.get('/status/:status', getLabsByStatus);
-
-// Get specific lab by ID
-router.get('/:id', getLabById);
-
-// Update lab status
-router.patch('/:id/status', updateLabStatus);
+// Get lab by ID Number
+router.get('/:id', getLabByIDNumber);
 
 export default router;
