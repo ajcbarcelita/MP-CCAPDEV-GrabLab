@@ -372,9 +372,9 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
-import { useUsersStore } from '@/stores/user_Store.js'
-import { useReservationsStore } from '@/stores/reservations_store.js'
-import { useLabsStore } from '@/stores/labs_store.js'
+import { useUsersStore } from '@/stores/users_store'
+import { useLabsStore } from '@/stores/labs_store'
+import { useReservationsStore } from '@/stores/reservations_store'
 
 // Stores
 const usersStore = useUsersStore()
