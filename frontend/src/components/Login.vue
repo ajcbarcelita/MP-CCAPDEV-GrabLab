@@ -1,3 +1,7 @@
+<style>
+@import '@/assets/login_styles.css';
+</style>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -8,6 +12,7 @@ import { useUsersStore } from '@/stores/users_store.js'
 
 const email = ref('')
 const password = ref('')
+const rememberMe = ref(false)
 const error = ref('')
 const success = ref('')
 const route = useRoute()
@@ -27,7 +32,11 @@ function handleLogin() {
 		(u) => u.email === email.value && u.password === password.value,
 	)
 	if (user) {
-		sessionStorage.setItem('user', JSON.stringify(user))
+		if (rememberMe.value) {
+			localStorage.setItem('user', JSON.stringify(user))
+		} else {
+			sessionStorage.setItem('user', JSON.stringify(user))
+		}
 		error.value = ''
 		if (user.role === 'Technician') {
 			router.push('/technician-landing')
@@ -77,7 +86,7 @@ function handleLogin() {
 				</div>
 
 				<div class="login-checkbox">
-					<input type="checkbox" id="remember" class="mr-2" />
+					<input type="checkbox" id="remember" class="mr-2" v-model="rememberMe" />
 					<label for="remember">Remember Me</label>
 				</div>
 
@@ -94,6 +103,3 @@ function handleLogin() {
 	</div>
 </template>
 
-<style>
-@import '@/assets/login_styles.css';
-</style>

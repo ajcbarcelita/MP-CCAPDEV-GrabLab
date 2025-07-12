@@ -1,3 +1,7 @@
+<style scoped>
+@import '@/assets/landing_page.css';
+</style>
+
 <template>
 	<div id="app-bg" class="flex flex-col min-h-screen">
 		<!-- Navbar -->
@@ -61,7 +65,8 @@
 				<p v-if="selectedBuilding === 'All'">No labs are available at the moment.</p>
 				<p v-else>No labs found in {{ selectedBuilding }}.</p>
 			</div>
-
+    <!-- Labs Grid -->
+      <!-- Display labs in a grid -->
 			<div v-else class="lab-slots-grid">
 				<div class="lab-card" v-for="lab in labs" :key="lab.lab_id">
 					<div class="lab-card-header">{{ lab.display_name }}</div>
@@ -149,10 +154,9 @@ export default {
 		const selectedBuilding = ref('All')
 		const userIdFilter = ref('')
 
-		// Extract unique buildings from labs data
+		// Extract unique buildings from labs data using store getter
 		const buildings = computed(() => {
-			const uniqueBuildings = [...new Set(labsStore.labs.map(lab => lab.building))]
-			return uniqueBuildings.sort()
+			return labsStore.getAllUniqueBuildings
 		})
 
 		// Check if user is technician based on session storage
@@ -160,9 +164,9 @@ export default {
 			const user = JSON.parse(sessionStorage.getItem('user') || '{}')
 			return user?.role === 'Technician'
 		})
-
+    // Reactive state for loading and error handling
 		const isLoading = ref(false)
-		const error = ref(null)
+    const error = ref(null)
 
 		// Fetch initial data
 		onMounted(async () => {
@@ -180,29 +184,25 @@ export default {
 					labsStore.fetchAllLabs(),
 					isTechnician.value ? reservationsStore.fetchReservations() : Promise.resolve()
 				])
-			} catch (err) {
+			} catch {
 				error.value = 'Failed to load data. Please try again later.'
-				console.error(err)
 			} finally {
 				isLoading.value = false
 			}
 		})
 
-		// Watch for building selection changes
+		// Watch for building selection changes - only fetch all labs when needed
 		watch(selectedBuilding, async (newValue) => {
-			isLoading.value = true
-			error.value = null
-			try {
-				if (newValue === 'All') {
+			if (newValue === 'All') {
+				isLoading.value = true
+				error.value = null
+				try {
 					await labsStore.fetchAllLabs()
-				} else {
-					await labsStore.fetchLabsByBuilding(newValue)
+				} catch {
+					error.value = 'Failed to load labs. Please try again later.'
+				} finally {
+					isLoading.value = false
 				}
-			} catch (err) {
-				error.value = 'Failed to load labs. Please try again later.'
-				console.error(err)
-			} finally {
-				isLoading.value = false
 			}
 		})
 
@@ -213,25 +213,30 @@ export default {
 				error.value = null
 				try {
 					await reservationsStore.fetchReservationsByUserId(newValue)
-				} catch (err) {
+				} catch {
 					error.value = 'Failed to load reservations. Please try again later.'
-					console.error(err)
 				} finally {
 					isLoading.value = false
 				}
 			}
 		})
 
-		// Computed properties
-		const labs = computed(() => labsStore.labs)
+    //Get the Labs using Getters on Lab Store
+		const labs = computed(() => {
+			if (selectedBuilding.value === 'All') {
+				return labsStore.labs
+			} else {
+				return labsStore.getLabsByBuilding(selectedBuilding.value)
+			}
+		})
 
 		const filteredReservations = computed(() => {
 			return reservationsStore.reservations
 		})
 
-		// Helper functions
+		// Helper functions using store getters
 		const getLabName = (labId) => {
-			const lab = labsStore.labs.find(lab => lab.lab_id === labId)
+			const lab = labsStore.getLabByIDNumber(labId)
 			return lab ? lab.display_name : 'Unknown Lab'
 		}
 
@@ -249,48 +254,6 @@ export default {
 			router.push(`/reservation/${labId}`)
 		}
 
-		// Function to view a specific reservation
-		const viewReservation = (labId, reservationId) => {
-			router.push({
-				path: `/reservation/${labId}`,
-				query: { reservation_id: reservationId },
-			})
-		}
-
-		// Function to cancel a reservation
-		const cancelReservation = async (reservationId) => {
-			if (confirm(`Are you sure you want to cancel reservation #${reservationId}?`)) {
-				isLoading.value = true
-				error.value = null
-				try {
-					await reservationsStore.updateReservationStatus(reservationId, 'cancelled')
-					alert(`Reservation #${reservationId} has been cancelled.`)
-				} catch (err) {
-					error.value = 'Failed to cancel reservation. Please try again later.'
-					console.error(err)
-				} finally {
-					isLoading.value = false
-				}
-			}
-		}
-
-		// Function to delete a reservation
-		const deleteReservation = async (reservationId) => {
-			if (confirm(`Are you sure you want to delete reservation #${reservationId}?`)) {
-				isLoading.value = true
-				error.value = null
-				try {
-					await reservationsStore.deleteReservation(reservationId)
-					alert(`Reservation #${reservationId} has been deleted.`)
-				} catch (err) {
-					error.value = 'Failed to delete reservation. Please try again later.'
-					console.error(err)
-				} finally {
-					isLoading.value = false
-				}
-			}
-		}
-
 		return {
 			handleLogout,
 			isTechnician,
@@ -302,23 +265,10 @@ export default {
 			filteredReservations,
 			getLabName,
 			formatDateTime,
-			viewReservation,
-			deleteReservation,
-			cancelReservation,
+			isLoading,
+			error,
 		}
-	},
-	methods: {
-		scrollToSearchFilter() {
-			const el = document.getElementById('search-filter')
-			if (el) {
-				el.scrollIntoView({ behavior: 'smooth' })
-			}
-		},
 	},
 }
 </script>
 
-<style scoped>
-@import '@/assets/landing_page.css';
-
-</style>

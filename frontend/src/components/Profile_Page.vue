@@ -299,12 +299,20 @@
 										</span>
 									</p>
 								</div>
+								<div class="flex space-x-2 mt-3">
+								<button
+									@click="editReservation(reservation.reservation_id)"
+									class="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors font-karma"
+								>
+									Edit
+								</button>
 								<button
 									@click="cancelReservation(reservation.reservation_id)"
-									class="mt-3 w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma"
+									class="w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma"
 								>
 									Cancel Reservation
 								</button>
+							</div>
 							</div>
 						</div>
 
@@ -319,6 +327,39 @@
 			</div>
 		</div>
 
+		<!-- Edit Reservation Modal -->
+		<div v-if="showEditModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+			<div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+				<h2 class="font-jersey text-2xl text-grablab-primary mb-6 text-center">
+					Edit Reservation
+				</h2>
+
+				<div v-if="editingReservation" class="space-y-4">
+					<div>
+						<label class="block text-forest-dark font-semibold mb-2 font-karma">Date</label>
+						<input type="date" v-model="editingReservation.reservation_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg font-karma" />
+					</div>
+					<div>
+						<label class="block text-forest-dark font-semibold mb-2 font-karma">Time</label>
+						<p class="text-sm text-gray-600">Time editing is not yet available.</p>
+					</div>
+					<div>
+						<label class="block text-forest-dark font-semibold mb-2 font-karma">Seats</label>
+						<p class="text-sm text-gray-600">Seat editing is not yet available.</p>
+					</div>
+				</div>
+
+				<div class="flex gap-3 mt-6">
+					<button @click="saveReservation" class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
+						Save Changes
+					</button>
+					<button @click="closeEditModal" class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
+						Cancel
+					</button>
+				</div>
+			</div>
+		</div>
+
 		<!-- Footer -->
 		<footer class="bg-forest-dark text-cream text-center p-4 font-bold">
 			<div class="flex justify-center gap-2">
@@ -329,19 +370,22 @@
 </template>
 
 <script setup>
-import reservations from '@/data/reservations.js'
-import labs from '@/data/labs.js'
-import users from '@/data/users.js'
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
+import { useUsersStore } from '@/stores/user_Store.js'
+import { useReservationsStore } from '@/stores/reservations_store.js'
+import { useLabsStore } from '@/stores/labs_store.js'
+
+// Stores
+const usersStore = useUsersStore()
+const reservationsStore = useReservationsStore()
+const labsStore = useLabsStore()
 
 // To access router and go to other panels
 const router = useRouter()
 const route = useRoute()
 
 // Reactive variables
-const currentUser = ref('')
-const profileUser = ref('')
 const isEditing = ref(false)
 const editForm = ref({
 	first_name: '',
@@ -349,16 +393,17 @@ const editForm = ref({
 	description: '',
 })
 
-// Condition Checks
+// User state from store
+const currentUser = ref(null)
+const profileUser = ref(null)
 
-// Check if exists, then compare user_id
+// Computed properties
 const isOwnProfile = computed(() => {
-	return (
-		currentUser.value &&
-		profileUser.value &&
-		currentUser.value.user_id === profileUser.value.user_id
-	)
+	return currentUser.value && profileUser.value && 
+		   currentUser.value.user_id === profileUser.value.user_id
 })
+
+// Condition Checks
 const showEditButton = computed(() => {
 	return isOwnProfile.value && !isEditing.value
 })
@@ -385,17 +430,21 @@ const getTimeSlotFromSlotId = (slotId) => {
 	return ((slotId - 1) % 22) + 1
 }
 
-const userReservations = computed(() =>
-	// Filter reservations for the current user
-	currentUser.value
-		? reservations
-				.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
-				// Sort by reservation date (ascending order)
-				.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
-		: [],
-)
+// Updated to use store data instead of mock data
+const userReservations = computed(() => {
+	if (!currentUser.value) return []
+	
+	// Filter reservations from store for the current user
+	return reservationsStore.reservations
+		.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
+		.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
+})
 
-const getLabName = (labId) => labs.find((l) => l.lab_id === labId)?.name
+// Get lab name from labs data
+const getLabName = (labId) => {
+	const lab = labsStore.getLabById(labId)
+	return lab ? lab.name : 'Unknown Lab'
+}
 const formatReservationDate = (dateString) =>
 	new Date(dateString).toLocaleDateString('en-US', {
 		weekday: 'long',
@@ -436,18 +485,56 @@ function getTimeSlotDisplay(timeSlot) {
 
 // Navbar and profile actions
 const handleLogout = () => {
-	sessionStorage.removeItem('user')
+	// Clear user session from store
+	usersStore.clearUserSession()
+	// Clear local state
+	currentUser.value = null
+	profileUser.value = null
 	router.push('/login')
 }
 
 function handleHome() {
-	if (currentUser.value.role === 'Technician') {
+	if (currentUser.value?.role === 'Technician') {
 		router.push('/technician-landing')
-	} else if (currentUser.value.role === 'Student') {
+	} else if (currentUser.value?.role === 'Student') {
 		router.push('/student-landing')
 	} else {
 		router.push('/')
 	}
+}
+
+const showEditModal = ref(false)
+const editingReservation = ref(null)
+
+function editReservation(reservationId) {
+	const reservation = userReservations.value.find((r) => r.reservation_id === reservationId)
+	if (reservation) {
+		editingReservation.value = { ...reservation }
+		showEditModal.value = true
+	}
+}
+
+async function saveReservation() {
+	if (editingReservation.value) {
+		try {
+			// Use reservations store method for updating
+			await reservationsStore.updateReservation(
+				editingReservation.value.reservation_id,
+				{ reservation_date: editingReservation.value.reservation_date }
+			)
+			
+			console.log('Reservation updated successfully')
+			closeEditModal()
+		} catch (error) {
+			console.error('Error updating reservation:', error)
+			alert('Failed to update reservation. Please try again.')
+		}
+	}
+}
+
+function closeEditModal() {
+	showEditModal.value = false
+	editingReservation.value = null
 }
 
 // Functions to handle page operations
@@ -467,27 +554,22 @@ function handleEditProfile() {
 	isEditing.value = true
 }
 
-function handleSaveChanges() {
-	// If not own profile, then can't proceed
+async function handleSaveChanges() {
 	if (!isOwnProfile.value) return
-	// Update the profile user data
-	profileUser.value.first_name = editForm.value.first_name
-	profileUser.value.last_name = editForm.value.last_name
-	profileUser.value.description = editForm.value.description
 
-	// Update session storage if it's the current user
-	if (currentUser.value.user_id === profileUser.value.user_id) {
-		// Spread operator to create new object (with all properties)
-		currentUser.value = { ...profileUser.value }
-		sessionStorage.setItem('user', JSON.stringify(currentUser.value))
+	try {
+		await usersStore.updateUserProfile(currentUser.value.user_id, editForm.value)
+		
+		// Update local profileUser data
+		Object.assign(profileUser.value, editForm.value)
+		
+		// Reset editing state
+		isEditing.value = false
+		console.log('Profile updated successfully')
+	} catch (error) {
+		console.error('Error updating profile:', error)
+		alert('Failed to update profile. Please try again.')
 	}
-
-	// Backend na dito
-
-	// Reset editing state
-	isEditing.value = false
-	// Show success message
-	console.log('Profile updated successfully')
 }
 
 function handleCancelEdit() {
@@ -495,70 +577,102 @@ function handleCancelEdit() {
 	resetEditForm()
 }
 
-function handleDeleteAccount() {
+function resetEditForm() {
+	handleEditForm()
+}
+
+async function handleDeleteAccount() {
 	if (!isOwnProfile.value) return
 	if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-		// backend stuff here to delete account AND ALSO THE RESERVATIONS PENDING
-		console.log('Account deleted successfully')
-
-		// Clear session and redirect to login
-		sessionStorage.removeItem('user')
-		router.push('/login')
+		try {
+			await usersStore.deleteUserAccount(currentUser.value.user_id)
+			console.log('Account deleted successfully')
+			
+			// Clear user session and redirect to login
+			usersStore.clearUserSession()
+			currentUser.value = null
+			profileUser.value = null
+			router.push('/login')
+		} catch (error) {
+			console.error('Error deleting account:', error)
+			alert('Failed to delete account. Please try again.')
+		}
 	}
 }
 
-function handleChangePicture() {
+async function handleChangePicture(event) {
 	if (!isOwnProfile.value) return
-	// Handle profile picture in when backend is implemented
-	console.log('Change picture functionality')
+
+	const file = event.target.files[0]
+	if (!file) return
+
+	try {
+		await usersStore.updateUserProfilePicture(currentUser.value.user_id, file)
+		console.log('Profile picture updated successfully')
+	} catch (error) {
+		console.error('Error updating profile picture:', error)
+		alert('Failed to update profile picture. Please try again.')
+	}
 }
 
-function cancelReservation(reservationId) {
+async function cancelReservation(reservationId) {
 	if (!isOwnProfile.value) return
 	if (confirm('Are you sure you want to cancel this reservation?')) {
-		// Find the reservation to cancel
-		const reservation = userReservations.value.find((r) => r.reservation_id === reservationId)
-		if (!reservation) {
-			console.error('Reservation not found')
-			return
-		} else reservation.status = 'cancelled'
-		console.log(`Reservation ${reservationId} cancelled successfully`)
+		try {
+			// Use reservations store method for canceling
+			await reservationsStore.updateReservationStatus(reservationId, 'Cancelled')
+			console.log(`Reservation ${reservationId} cancelled successfully`)
+		} catch (error) {
+			console.error('Error cancelling reservation:', error)
+			alert('Failed to cancel reservation. Please try again.')
+		}
 	}
 }
 
-function handleView() {
-	// Gets current logged in user from session storage
-	const user = sessionStorage.getItem('user')
-	if (user) {
-		currentUser.value = JSON.parse(user)
-	} else {
-		// If no user is logged in, redirect to login
-		router.push('/login')
-		return
-	}
-
-	// Get profile user ID from route (if viewing another profile)
-	const userId = route.params.userId || currentUser.value.user_id
-
-	// Find the user in the users list
-	profileUser.value = users.find((user) => user.user_id == userId)
-
-	if (!profileUser.value) {
-		// Handle where user is not found - show error or redirect
-		alert(`User with ID "${userId}" not found.`)
-		// Redirect back to the appropriate landing page
-		if (currentUser.value.role === 'Student') {
-			router.push('/student-landing')
-		} else if (currentUser.value.role === 'Technician') {
-			router.push('/technician-landing')
+async function handleView() {
+	try {
+		// Get current logged in user from store or session storage
+		const user = sessionStorage.getItem('user')
+		if (user) {
+			currentUser.value = JSON.parse(user)
 		} else {
-			router.push('/')
+			// If no user is logged in, redirect to login
+			router.push('/login')
+			return
 		}
-		return
-	}
 
-	// Initialize edit form with profile data
-	handleEditForm()
+		// Get profile user ID from route (if viewing another profile)
+		const userId = route.params.userId || currentUser.value.user_id
+
+		// Fetch user data from store instead of mock data
+		await usersStore.fetchUserById(userId)
+		profileUser.value = usersStore.getUserById(userId)
+
+		if (!profileUser.value) {
+			// Handle where user is not found - show error or redirect
+			alert(`User with ID "${userId}" not found.`)
+			// Redirect back to the appropriate landing page
+			if (currentUser.value.role === 'Student') {
+				router.push('/student-landing')
+			} else if (currentUser.value.role === 'Technician') {
+				router.push('/technician-landing')
+			} else {
+				router.push('/')
+			}
+			return
+		}
+
+		// Fetch user's reservations if it's their own profile and they're a student
+		if (isOwnProfile.value && currentUser.value.role === 'Student') {
+			await reservationsStore.fetchReservationsByUserId(currentUser.value.user_id)
+		}
+
+		// Initialize edit form with profile data
+		handleEditForm()
+	} catch (error) {
+		console.error('Error loading user data:', error)
+		alert('Failed to load user data. Please try again.')
+	}
 }
 
 // Once DOM is loaded/mounted, handle the view

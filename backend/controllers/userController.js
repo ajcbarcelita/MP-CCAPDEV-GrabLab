@@ -1,9 +1,43 @@
-
 import User from '../models/User.js';
+import Reservation from '../models/Reservation.js';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, '../uploads/profile_pictures'));
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    }
+});
+
 const registerUser = async (req, res) => {
     const { email, password, fname, lname, mname, role } = req.body;
 
@@ -15,8 +49,7 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // NOTE: In a real-world application (and in your Phase 3), you MUST hash the password before saving it.
-        // For Phase 2, we are storing it as plaintext as per the specifications.
+        // HASH PASSWORD HERE (Phase 3)
         const user = await User.create({
             email,
             password,
@@ -68,4 +101,272 @@ const loginUser = async (req, res) => {
     }
 };
 
-export { registerUser, loginUser };
+// @desc    Get all users
+// @route   GET /api/users
+// @access  Public (or add auth middleware later)
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({})
+            .select('-password') // Exclude password field
+            .sort({ createdAt: -1 });
+        
+        // Transform data to match frontend expectations
+        const transformedUsers = users.map(user => ({
+            user_id: user._id,
+            first_name: user.fname,
+            last_name: user.lname,
+            email: user.email,
+            role: user.role,
+            description: user.description || '',
+            profile_pic_path: user.profile_pic_path || null,
+            status: user.status || 'active',
+            created_at: user.createdAt,
+            updated_at: user.updatedAt
+        }));
+
+        res.json(transformedUsers);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Get user by ID
+// @route   GET /api/users/:userId
+// @access  Public (or add auth middleware later)
+const getUserById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Transform data to match frontend expectations
+        const transformedUser = {
+            user_id: user._id,
+            first_name: user.fname,
+            last_name: user.lname,
+            email: user.email,
+            role: user.role,
+            description: user.description || '',
+            profile_pic_path: user.profile_pic_path || null,
+            status: user.status || 'active',
+            created_at: user.createdAt,
+            updated_at: user.updatedAt
+        };
+
+        res.json(transformedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Create new user (for frontend registration)
+// @route   POST /api/users
+// @access  Public
+const createUser = async (req, res) => {
+    const { first_name, last_name, email, password, role = 'Student', description = '' } = req.body;
+
+    try {
+        // Validate required fields
+        if (!first_name || !last_name || !email || !password) {
+            return res.status(400).json({ 
+                message: 'First name, last name, email, and password are required' 
+            });
+        }
+
+        // Check if user already exists
+        const userExists = await User.findOne({ email });
+
+        if (userExists) {
+            return res.status(409).json({ message: 'User already exists' });
+        }
+
+        // Create user (password hashing should be added later)
+        const user = await User.create({
+            email,
+            password,
+            fname: first_name,
+            lname: last_name,
+            role,
+            description
+        });
+
+        // Transform data to match frontend expectations
+        const transformedUser = {
+            user_id: user._id,
+            first_name: user.fname,
+            last_name: user.lname,
+            email: user.email,
+            role: user.role,
+            description: user.description || '',
+            profile_pic_path: user.profile_pic_path || null,
+            status: user.status || 'active',
+            created_at: user.createdAt,
+            updated_at: user.updatedAt
+        };
+
+        res.status(201).json(transformedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find the user
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Delete all reservations associated with the user
+        await Reservation.deleteMany({ user: user._id });
+
+        // Delete the user
+        await User.findByIdAndDelete(id);
+
+        res.json({ message: 'User and associated reservations deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/users/:userId
+// @access  Private
+const updateUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { first_name, last_name, description } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update fields if provided
+        if (first_name !== undefined) user.fname = first_name;
+        if (last_name !== undefined) user.lname = last_name;
+        if (description !== undefined) user.description = description;
+
+        const updatedUser = await user.save();
+
+        // Transform data to match frontend expectations
+        const transformedUser = {
+            user_id: updatedUser._id,
+            first_name: updatedUser.fname,
+            last_name: updatedUser.lname,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            description: updatedUser.description || '',
+            profile_pic_path: updatedUser.profile_pic_path || null,
+            status: updatedUser.status || 'active',
+            created_at: updatedUser.createdAt,
+            updated_at: updatedUser.updatedAt
+        };
+
+        res.json(transformedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Update user profile picture
+// @route   POST /api/users/:userId/profile-picture
+// @access  Private
+const updateUserProfilePicture = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        // Update profile picture path
+        user.profile_pic_path = `/uploads/profile_pictures/${req.file.filename}`;
+        const updatedUser = await user.save();
+
+        // Transform data to match frontend expectations
+        const transformedUser = {
+            user_id: updatedUser._id,
+            first_name: updatedUser.fname,
+            last_name: updatedUser.lname,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            description: updatedUser.description || '',
+            profile_pic_path: updatedUser.profile_pic_path || null,
+            status: updatedUser.status || 'active',
+            created_at: updatedUser.createdAt,
+            updated_at: updatedUser.updatedAt
+        };
+
+        res.json(transformedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/*
+@desc    Search for users by name or email
+@route   GET /api/users/search
+*/
+const searchUser = async (req, res) => {
+    const { searchTerm } = req.query; // Get the search term from query parameters
+    
+    try {
+        if (!searchTerm || searchTerm.trim() === '') {
+            return res.status(400).json({ message: 'Search term is required' });
+        }
+
+        const users = await User.find({
+            $or: [
+                { fname: new RegExp(searchTerm, 'i') }, // Case-insensitive search for first name
+                { lname: new RegExp(searchTerm, 'i') }, // Case-insensitive search for last name
+                { email: new RegExp(searchTerm, 'i') }  // Case-insensitive search for email
+            ]
+        }).select('-password');
+
+        // Transform data to match frontend expectations
+        const transformedUsers = users.map(user => ({
+            user_id: user._id,
+            first_name: user.fname,
+            last_name: user.lname,
+            email: user.email,
+            role: user.role,
+            description: user.description || '',
+            profile_pic_path: user.profile_pic_path || null,
+            status: user.status || 'active',
+            created_at: user.createdAt,
+            updated_at: user.updatedAt
+        }));
+
+        res.json(transformedUsers); // Return the found users
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+export { 
+    registerUser, 
+    loginUser, 
+    searchUser, 
+    deleteUser, 
+    updateUser, 
+    upload,
+    getAllUsers,
+    getUserById,
+    createUser,
+    updateUserProfilePicture
+};

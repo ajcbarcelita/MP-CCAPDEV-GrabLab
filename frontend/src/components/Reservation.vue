@@ -337,6 +337,13 @@
 						View Profile
 					</router-link>
 					<button
+						v-if="currentUser.user_type === 'technician'"
+						@click="removeReservation(reservationDetails.reservation_id)"
+						class="flex-1 bg-red-500 text-white py-3 rounded font-medium hover:bg-red-600"
+					>
+						Cancel Reservation
+					</button>
+					<button
 						@click="closeReservationDetailsModal"
 						class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500"
 					>
@@ -433,6 +440,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import { ref, computed, reactive, onMounted } from 'vue'
 import allLabsData from '@/data/labs.js'
 import { useRouter } from 'vue-router'
@@ -900,29 +908,52 @@ export default {
 			showReservationDetailsModal.value = false
 		}
 
-		const confirmReservation = () => {
-			// Create slot_ids for the reservation
-			const timeSlots = getTimeSlots(parseInt(confirmData.lab_id))
-			const reservationSlots = confirmData.slots.map((slot) => {
-				const timeSlotIndex = timeSlots.indexOf(slot.time) + 1
-				const slotId = calculateSlotId(slot.seat, timeSlotIndex)
-				return { slot_id: slotId }
-			})
+		const confirmReservation = async () => {
+			try {
+				const timeSlots = getTimeSlots(parseInt(confirmData.lab_id))
+				const reservationSlots = confirmData.slots.map((slot) => {
+					const timeSlotIndex = timeSlots.indexOf(slot.time) + 1
+					const slotId = calculateSlotId(slot.seat, timeSlotIndex)
+					return { seat: slot.seat, time: slot.time } // Send seat and time for backend processing
+				})
 
-			// Add new reservation
-			hardcodedReservations.value.push({
-				reservation_id: hardcodedReservations.value.length + 1,
-				user_id: confirmData.student_id,
-				lab_id: confirmData.lab_id,
-				reservation_date: confirmData.date,
-				status: 'confirmed',
-				created_at: new Date().toISOString(),
-				slots: reservationSlots,
-			})
+				const payload = {
+					user_id: confirmData.student_id,
+					lab_id: confirmData.lab_id,
+					date: confirmData.date,
+					slots: reservationSlots,
+					anonymous: confirmData.anonymous,
+				}
 
-			closeConfirmModal()
-			clearSelection()
-			showSuccessModal.value = true
+				await axios.post('http://localhost:3000/api/reservations', payload)
+
+				closeConfirmModal()
+				clearSelection()
+				showSuccessModal.value = true
+			} catch (error) {
+				console.error('Error creating reservation:', error)
+				alert('Failed to create reservation. Please try again.')
+			}
+		}
+
+		const removeReservation = async (reservationId) => {
+			if (confirm('Are you sure you want to cancel this reservation?')) {
+				try {
+					await axios.delete(`http://localhost:3000/api/reservations/${reservationId}`)
+					const index = hardcodedReservations.value.findIndex(
+						(r) => r.reservation_id === reservationId,
+					)
+					if (index !== -1) {
+						hardcodedReservations.value.splice(index, 1)
+						console.log(`Reservation ${reservationId} cancelled successfully`)
+						closeReservationDetailsModal()
+					} else {
+						console.error('Reservation not found')
+					}
+				} catch (error) {
+					console.error('Error cancelling reservation:', error)
+				}
+			}
 		}
 
 		const showDetailsModal = ref(false)
