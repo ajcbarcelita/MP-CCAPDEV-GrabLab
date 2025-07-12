@@ -1,9 +1,28 @@
 
 import User from '../models/User.js';
+import Reservation from '../models/Reservation.js';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, '../uploads/profile_pictures'));
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
 const registerUser = async (req, res) => {
     const { email, password, fname, lname, mname, role } = req.body;
 
@@ -68,6 +87,64 @@ const loginUser = async (req, res) => {
     }
 };
 
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find the user
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Delete all reservations associated with the user
+        await Reservation.deleteMany({ user: user._id });
+
+        // Delete the user
+        await User.findByIdAndDelete(id);
+
+        res.json({ message: 'User and associated reservations deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { fname, lname, description } = req.body;
+
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.fname = fname || user.fname;
+        user.lname = lname || user.lname;
+        user.description = description || user.description;
+
+        if (req.file) {
+            user.profile_pic_path = `/uploads/profile_pictures/${req.file.filename}`;
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            fname: updatedUser.fname,
+            lname: updatedUser.lname,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            description: updatedUser.description,
+            profile_pic_path: updatedUser.profile_pic_path,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 /*
 @desc    Search for users by name or email
 @route   GET /api/users/search
@@ -89,4 +166,4 @@ const searchUser = async (req, res) => {
     }
 };
 
-export { registerUser, loginUser, searchUser };
+export { registerUser, loginUser, searchUser, deleteUser, updateUser };

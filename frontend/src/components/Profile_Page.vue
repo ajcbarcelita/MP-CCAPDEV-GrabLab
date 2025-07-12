@@ -299,12 +299,20 @@
 										</span>
 									</p>
 								</div>
+								<div class="flex space-x-2 mt-3">
+								<button
+									@click="editReservation(reservation.reservation_id)"
+									class="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors font-karma"
+								>
+									Edit
+								</button>
 								<button
 									@click="cancelReservation(reservation.reservation_id)"
-									class="mt-3 w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma"
+									class="w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma"
 								>
 									Cancel Reservation
 								</button>
+							</div>
 							</div>
 						</div>
 
@@ -319,6 +327,39 @@
 			</div>
 		</div>
 
+		<!-- Edit Reservation Modal -->
+		<div v-if="showEditModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+			<div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+				<h2 class="font-jersey text-2xl text-grablab-primary mb-6 text-center">
+					Edit Reservation
+				</h2>
+
+				<div v-if="editingReservation" class="space-y-4">
+					<div>
+						<label class="block text-forest-dark font-semibold mb-2 font-karma">Date</label>
+						<input type="date" v-model="editingReservation.reservation_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg font-karma" />
+					</div>
+					<div>
+						<label class="block text-forest-dark font-semibold mb-2 font-karma">Time</label>
+						<p class="text-sm text-gray-600">Time editing is not yet available.</p>
+					</div>
+					<div>
+						<label class="block text-forest-dark font-semibold mb-2 font-karma">Seats</label>
+						<p class="text-sm text-gray-600">Seat editing is not yet available.</p>
+					</div>
+				</div>
+
+				<div class="flex gap-3 mt-6">
+					<button @click="saveReservation" class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
+						Save Changes
+					</button>
+					<button @click="closeEditModal" class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
+						Cancel
+					</button>
+				</div>
+			</div>
+		</div>
+
 		<!-- Footer -->
 		<footer class="bg-forest-dark text-cream text-center p-4 font-bold">
 			<div class="flex justify-center gap-2">
@@ -329,6 +370,7 @@
 </template>
 
 <script setup>
+import axios from 'axios'
 import reservations from '@/data/reservations.js'
 import labs from '@/data/labs.js'
 import users from '@/data/users.js'
@@ -450,6 +492,44 @@ function handleHome() {
 	}
 }
 
+const showEditModal = ref(false)
+const editingReservation = ref(null)
+
+function editReservation(reservationId) {
+	const reservation = userReservations.value.find((r) => r.reservation_id === reservationId)
+	if (reservation) {
+		editingReservation.value = { ...reservation }
+		showEditModal.value = true
+	}
+}
+
+async function saveReservation() {
+	if (editingReservation.value) {
+		try {
+			await axios.patch(`http://localhost:3000/api/reservations/${editingReservation.value.reservation_id}`, {
+				reservation_date: editingReservation.value.reservation_date,
+			})
+			// Find the index of the reservation to update
+			const index = userReservations.value.findIndex(
+				(r) => r.reservation_id === editingReservation.value.reservation_id,
+			)
+			if (index !== -1) {
+				// Replace the old reservation with the updated one
+				userReservations.value.splice(index, 1, editingReservation.value)
+				console.log('Reservation updated successfully')
+			}
+			closeEditModal()
+		} catch (error) {
+			console.error('Error updating reservation:', error)
+		}
+	}
+}
+
+function closeEditModal() {
+	showEditModal.value = false
+	editingReservation.value = null
+}
+
 // Functions to handle page operations
 function handleEditForm() {
 	if (profileUser.value) {
@@ -467,27 +547,35 @@ function handleEditProfile() {
 	isEditing.value = true
 }
 
-function handleSaveChanges() {
-	// If not own profile, then can't proceed
+async function handleSaveChanges() {
 	if (!isOwnProfile.value) return
-	// Update the profile user data
-	profileUser.value.first_name = editForm.value.first_name
-	profileUser.value.last_name = editForm.value.last_name
-	profileUser.value.description = editForm.value.description
 
-	// Update session storage if it's the current user
-	if (currentUser.value.user_id === profileUser.value.user_id) {
-		// Spread operator to create new object (with all properties)
-		currentUser.value = { ...profileUser.value }
-		sessionStorage.setItem('user', JSON.stringify(currentUser.value))
+	try {
+		const payload = {
+			fname: editForm.value.first_name,
+			lname: editForm.value.last_name,
+			description: editForm.value.description,
+		}
+		await axios.patch(`http://localhost:3000/api/users/${currentUser.value.user_id}`, payload)
+
+		// Update the profile user data locally after successful backend update
+		profileUser.value.first_name = editForm.value.first_name
+		profileUser.value.last_name = editForm.value.last_name
+		profileUser.value.description = editForm.value.description
+
+		// Update session storage if it's the current user
+		if (currentUser.value.user_id === profileUser.value.user_id) {
+			currentUser.value = { ...profileUser.value }
+			sessionStorage.setItem('user', JSON.stringify(currentUser.value))
+		}
+
+		// Reset editing state
+		isEditing.value = false
+		console.log('Profile updated successfully')
+	} catch (error) {
+		console.error('Error updating profile:', error)
+		alert('Failed to update profile. Please try again.')
 	}
-
-	// Backend na dito
-
-	// Reset editing state
-	isEditing.value = false
-	// Show success message
-	console.log('Profile updated successfully')
 }
 
 function handleCancelEdit() {
@@ -495,22 +583,49 @@ function handleCancelEdit() {
 	resetEditForm()
 }
 
-function handleDeleteAccount() {
+async function handleDeleteAccount() {
 	if (!isOwnProfile.value) return
 	if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-		// backend stuff here to delete account AND ALSO THE RESERVATIONS PENDING
-		console.log('Account deleted successfully')
+		try {
+			await axios.delete(`http://localhost:3000/api/users/${currentUser.value.user_id}`)
+			console.log('Account deleted successfully')
 
-		// Clear session and redirect to login
-		sessionStorage.removeItem('user')
-		router.push('/login')
+			// Clear session and redirect to login
+			sessionStorage.removeItem('user')
+			router.push('/login')
+		} catch (error) {
+			console.error('Error deleting account:', error)
+		}
 	}
 }
 
-function handleChangePicture() {
+async function handleChangePicture(event) {
 	if (!isOwnProfile.value) return
-	// Handle profile picture in when backend is implemented
-	console.log('Change picture functionality')
+
+	const file = event.target.files[0]
+	if (!file) return
+
+	const formData = new FormData()
+	formData.append('profile_pic', file)
+
+	try {
+		await axios.patch(`http://localhost:3000/api/users/${currentUser.value.user_id}`, formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		})
+		console.log('Profile picture updated successfully')
+		// Optionally, update the profile_pic_path locally or refetch user data
+		profileUser.value.profile_pic_path = URL.createObjectURL(file)
+		// Update session storage if it's the current user
+		if (currentUser.value.user_id === profileUser.value.user_id) {
+			currentUser.value = { ...profileUser.value }
+			sessionStorage.setItem('user', JSON.stringify(currentUser.value))
+		}
+	} catch (error) {
+		console.error('Error updating profile picture:', error)
+		alert('Failed to update profile picture. Please try again.')
+	}
 }
 
 function cancelReservation(reservationId) {
