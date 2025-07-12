@@ -1,5 +1,5 @@
 <style scoped>
-@import '../assets/landing_page.css';
+@import '@/assets/landing_page.css';
 </style>
 
 <template>

@@ -1,4 +1,4 @@
-<style>
+<style scoped>
 @import '@/assets/landing_page.css';
 </style>
 

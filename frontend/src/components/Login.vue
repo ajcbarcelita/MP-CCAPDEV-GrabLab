@@ -1,3 +1,7 @@
+<style>
+@import '@/assets/login_styles.css';
+</style>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -99,6 +103,3 @@ function handleLogin() {
 	</div>
 </template>
 
-<style>
-@import '@/assets/login_styles.css';
-</style>

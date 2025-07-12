@@ -5,7 +5,7 @@
 			<span class="font-['Jersey_25'] text-3xl text-[#ADBC9F]">GrabLab</span>
 			<router-link
 				to="/login"
-				class="font-['Jomhuria'] text-3xl text-[#ADBC9F] hover:underline transition"
+				class="font-['Jomhuria'] text-[35px] text-[#ADBC9F] hover:underline transition"
 				>Login/Register</router-link
 			>
 		</div>

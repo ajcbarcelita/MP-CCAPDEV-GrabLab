@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Jomhuria&family=Karma:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jersey+25&family=Jomhuria&family=Karma:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -57,3 +57,14 @@
 .hover\:text-forest-dark:hover {
 	@apply text-[#12372A];
 }
+
+#home {
+	font-family: 'Jomhuria';
+	color: #ADBC9F;
+	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
+}
+
+#logout {
+	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
+}
+

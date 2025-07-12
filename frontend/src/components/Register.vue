@@ -1,3 +1,7 @@
+<style scoped>
+@import '@/assets/register_styles.css';
+</style>
+
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -120,6 +124,3 @@ function handleRegister() {
 	</div>
 </template>
 
-<style scoped>
-@import '@/assets/register_styles.css';
-</style>
