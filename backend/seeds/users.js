@@ -1,5 +1,6 @@
 export default [
     {
+        user_id: 1,
         email: "aaron_barcelita@dlsu.edu.ph",
         password: "12345678",
         fname: "Aaron",
@@ -11,6 +12,7 @@ export default [
         description: "",
     },
     {
+        user_id: 2,
         email: "john_mendoza@dlsu.edu.ph",
         password: "12345678",
         fname: "John Kirbie",
@@ -21,6 +23,7 @@ export default [
         description: "",
     },
     {
+        user_id: 3,
         email: "josh_cariaga@dlsu.edu.ph",
         password: "12345678",
         fname: "Josh Enrico",
@@ -31,6 +34,7 @@ export default [
         description: "Testing",
     },
     {
+        user_id: 4,
         email: "aaron_daniel_go@dlsu.edu.ph",
         password: "12345678",
         fname: "Aaron Daniel",
@@ -41,6 +45,7 @@ export default [
         description: "",
     },
     {
+        user_id: 5,
         email: "teto_kasane@dlsu.edu.ph",
         password: "12345678",
         fname: "Teto",

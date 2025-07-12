@@ -1,11 +1,11 @@
-import Reservation from '../models/Reservation.js';
-import LabSlot from '../models/LabSlot.js';
+import Reservation from "../models/Reservation.js";
+import LabSlot from "../models/LabSlot.js";
 
 export const createReservation = async (req, res) => {
     const { user_id, lab_id, date, slots } = req.body;
 
     if (!user_id || !lab_id || !date || !slots || !Array.isArray(slots) || slots.length === 0) {
-        return res.status(400).json({ message: 'Missing required fields or invalid slots format' });
+        return res.status(400).json({ message: "Missing required fields or invalid slots format" });
     }
 
     try {
@@ -27,7 +27,7 @@ export const createReservation = async (req, res) => {
             }
 
             // Find the specific time slot within the LabSlot's time_slots array
-            const timeSlotIndex = labSlot.time_slots.findIndex(ts => ts.startTime === time && ts.reserved === null);
+            const timeSlotIndex = labSlot.time_slots.findIndex((ts) => ts.startTime === time && ts.reserved === null);
 
             if (timeSlotIndex === -1) {
                 return res.status(400).json({ message: `Time slot ${time} for seat ${seat} is already reserved or invalid` });
@@ -38,7 +38,7 @@ export const createReservation = async (req, res) => {
                 user: user_id,
                 lab_slot: labSlot._id,
                 time_slot: time,
-                status: 'Active', // Default status
+                status: "Active", // Default status
             });
 
             const savedReservation = await newReservation.save();
@@ -52,7 +52,7 @@ export const createReservation = async (req, res) => {
 
         res.status(201).json(createdReservations);
     } catch (error) {
-        console.error('Error creating reservation:', error);
+        console.error("Error creating reservation:", error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -60,13 +60,13 @@ export const createReservation = async (req, res) => {
 export const getReservations = async (req, res) => {
     try {
         const reservations = await Reservation.find({})
-            .populate('user', 'email fname lname') // Populate user details
+            .populate("user", "email fname lname") // Populate user details
             .populate({
-                path: 'lab_slot',
+                path: "lab_slot",
                 populate: {
-                    path: 'lab', // Populate the lab reference inside lab_slot
-                    select: 'name display_name building'
-                }
+                    path: "lab", // Populate the lab reference inside lab_slot
+                    select: "name display_name building",
+                },
             })
             .sort({ createdAt: -1 }); // Sort by newest first
 
@@ -80,13 +80,13 @@ export const getReservationsByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
         const reservations = await Reservation.find({ user: userId }) // Changed from user_id to user
-            .populate('user', 'email fname lname')
+            .populate("user", "email fname lname")
             .populate({
-                path: 'lab_slot',
+                path: "lab_slot",
                 populate: {
-                    path: 'lab',
-                    select: 'name display_name building'
-                }
+                    path: "lab",
+                    select: "name display_name building",
+                },
             })
             .sort({ createdAt: -1 });
 
@@ -102,11 +102,11 @@ export const deleteReservation = async (req, res) => {
         const reservation = await Reservation.findById(id);
 
         if (!reservation) {
-            return res.status(404).json({ message: 'Reservation not found' });
+            return res.status(404).json({ message: "Reservation not found" });
         }
 
         await Reservation.findByIdAndDelete(id);
-        res.json({ message: 'Reservation deleted successfully' });
+        res.json({ message: "Reservation deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -116,11 +116,11 @@ export const updateReservation = async (req, res) => {
     try {
         const { id } = req.params;
         const { status, reservation_date } = req.body;
-        
+
         const updateData = {};
         if (status) {
-            if (!['Active', 'Cancelled', 'Completed'].includes(status)) {
-                return res.status(400).json({ message: 'Invalid status value' });
+            if (!["Active", "Cancelled", "Completed"].includes(status)) {
+                return res.status(400).json({ message: "Invalid status value" });
             }
             updateData.status = status;
         }
@@ -129,24 +129,20 @@ export const updateReservation = async (req, res) => {
             updateData.reservation_date = reservation_date;
         }
 
-        const reservation = await Reservation.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        )
-        .populate('user', 'email fname lname')
-        .populate({
-            path: 'lab_slot',
-            populate: {
-                path: 'lab',
-                select: 'name display_name building'
-            }
-        });
-        
+        const reservation = await Reservation.findByIdAndUpdate(id, updateData, { new: true })
+            .populate("user", "email fname lname")
+            .populate({
+                path: "lab_slot",
+                populate: {
+                    path: "lab",
+                    select: "name display_name building",
+                },
+            });
+
         if (!reservation) {
-            return res.status(404).json({ message: 'Reservation not found' });
+            return res.status(404).json({ message: "Reservation not found" });
         }
-        
+
         res.json(reservation);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -158,18 +154,18 @@ export const getReservationsByLab = async (req, res) => {
     try {
         const { labId } = req.params;
         const reservations = await Reservation.find({
-            'lab_slot.lab': labId,
-            status: 'Active'
+            "lab_slot.lab": labId,
+            status: "Active",
         })
-        .populate('user', 'email fname lname')
-        .populate({
-            path: 'lab_slot',
-            populate: {
-                path: 'lab',
-                select: 'name display_name building'
-            }
-        })
-        .sort({ createdAt: -1 });
+            .populate("user", "email fname lname")
+            .populate({
+                path: "lab_slot",
+                populate: {
+                    path: "lab",
+                    select: "name display_name building",
+                },
+            })
+            .sort({ createdAt: -1 });
 
         res.json(reservations);
     } catch (error) {
