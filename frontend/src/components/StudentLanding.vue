@@ -4,12 +4,38 @@
 
 <template>
 	<div id="app-bg">
+		<!-- Error Popup -->
+		<div v-if="showErrorPopup" class="fixed inset-0 flex items-center justify-center z-50">
+			<div class="bg-white rounded-md p-6 w-96 mx-4 border-1 border-black">
+				<div class="justify-between items-center mb-3 flex">
+					<h3 class="text-xl font-bold text-red-600">Error</h3>
+				</div>
+				<p class="text-gray-700 mb-4">{{ error }}</p>
+				<div class="flex justify-end">
+					<button @click="closeErrorPopup" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+						Close
+					</button>
+				</div>
+			</div>
+			<div class="fixed inset-0" @click="closeErrorPopup"></div>
+		</div>
+
 		<!-- Navbar -->
 		<div id="navbar">
 			<span id="navbar-brand">GrabLab</span>
-			<div id="links">
+			<div id="links" class="flex items-center">
+				<div class="flex items-center mr-4 mb-1">
+					<input
+						v-model="searchQuery"
+						type="number"
+						placeholder="Enter User ID"
+						class="p-1 border border-[#adbc9f] bg-transparent text-[#FBFADA] rounded-md w-50 text-sm"
+						@keyup.enter="searchUser"
+						@keypress="validateNumber"
+					/>
+				</div>
 				<router-link id="profile" to="/profile">Profile</router-link>
-				<router-link id="logout" to="/">Log Out</router-link>
+				<a id="logout" href="#" @click.prevent="logout">Log Out</a>
 			</div>
 		</div>
 
@@ -86,25 +112,6 @@
 						</div>
 					</div>
 				</section>
-
-				<!-- Search User Section -->
-				<section class="max-w-4xl mx-auto mt-10 mb-16 text-[#12372A]">
-					<h2 class="text-2xl font-bold mb-4 text-center">Search User by ID</h2>
-					<div class="flex justify-center items-center gap-4">
-						<input
-							v-model="searchUserId"
-							type="text"
-							placeholder="Enter User ID"
-							class="p-2 border border-[#12372A] rounded-md w-1/2"
-						/>
-						<router-link
-							:to="`/profile/${searchUserId}`"
-							class="bg-[#12372A] text-[#FBFADA] px-4 py-2 rounded hover:bg-[#0f2d23]"
-						>
-							View Profile
-						</router-link>
-					</div>
-				</section>
 			</div>
 		</div>
 
@@ -119,21 +126,89 @@
 
 <script>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUsersStore } from '@/stores/users_store'
 
 export default {
 	name: 'StudentMain',
 	setup() {
 		const currentUser = ref(JSON.parse(sessionStorage.getItem('user')))
-		const searchUserId = ref('')
-		return { currentUser, searchUserId }
-	},
-	methods: {
-		scrollToSearchFilter() {
-			const el = document.getElementById('search-filter')
-			if (el) {
-				el.scrollIntoView({ behavior: 'smooth' })
+		const searchQuery = ref('')
+		const error = ref(null)
+		const showErrorPopup = ref(false)
+		const router = useRouter()
+		const usersStore = useUsersStore()
+
+		const closeErrorPopup = () => {
+			showErrorPopup.value = false
+			// Clear the search query when closing the error popup
+			searchQuery.value = ''
+		}
+
+		const validateNumber = (event) => {
+			// Prevent 'e', '+', '-', and '.' characters
+			const invalidChars = ['e', '+', '-', '.'];
+			if (invalidChars.includes(event.key)) {
+				event.preventDefault();
 			}
-		},
+		}
+
+		const searchUser = async () => {
+			try {
+				// Clear any previous errors
+				error.value = null
+
+				// Check if the search query is a valid number
+				const userId = parseInt(searchQuery.value, 10)
+				if (isNaN(userId) || userId <= 0) {
+					error.value = userId <= 0 ? 'User ID must be greater than 0' : 'Invalid user ID format'
+					showErrorPopup.value = true
+					return
+				}
+
+				// Check if user exists before navigating
+				try {
+					const user = await usersStore.fetchUserById(userId)
+					if (!user) {
+						error.value = 'User with ID ' + userId + ' was not found'
+						showErrorPopup.value = true
+						return
+					}
+          router.push(`/profile/${userId}`)
+          // Navigate to the profile page with the user ID
+				} catch (err) {
+					console.error('Error fetching user:', err)
+					console.error('Error response:', err.response?.data)
+					error.value = 'User with ID ' + userId + ' was not found'
+					showErrorPopup.value = true
+				}
+			} catch (error) {
+				console.error('Error navigating to profile:', error)
+				error.value = 'An error occurred while navigating to the profile page'
+				showErrorPopup.value = true
+			}
+		}
+
+		const logout = () => {
+			// Remove token from local storage
+			localStorage.removeItem('token')
+			localStorage.removeItem('role')
+			sessionStorage.removeItem('user')
+
+			// Navigate to login page
+			router.push('/login')
+		}
+
+		return {
+			currentUser,
+			searchQuery,
+			searchUser,
+			logout,
+			error,
+			showErrorPopup,
+			closeErrorPopup,
+			validateNumber
+		}
 	},
 }
 </script>

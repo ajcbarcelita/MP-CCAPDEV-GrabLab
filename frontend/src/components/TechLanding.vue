@@ -4,12 +4,38 @@
 
 <template>
 	<div id="app-bg">
+		<!-- Error Popup -->
+		<div v-if="showErrorPopup" class="fixed inset-0 flex items-center justify-center z-50">
+			<div class="bg-white rounded-md p-6 w-96 mx-4 border-2 border-black">
+				<div class="flex justify-between items-center mb-4">
+					<h3 class="text-xl font-bold text-red-600">Error</h3>
+				</div>
+				<p class="text-gray-700 mb-4">{{ error }}</p>
+				<div class="flex justify-end">
+					<button @click="closeErrorPopup" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+						Close
+					</button>
+				</div>
+			</div>
+			<div class="fixed inset-0" @click="closeErrorPopup"></div>
+		</div>
+
 		<!-- Navbar -->
 		<div id="navbar">
 			<span id="navbar-brand">GrabLab</span>
-			<div id="links">
+			<div id="links" class="flex items-center">
+				<div class="flex items-center mr-4">
+					<input
+						v-model="searchTerm"
+						type="number"
+						placeholder="Enter User ID"
+						class="p-1 border border-[#FBFADA] bg-transparent text-[#FBFADA] rounded-md w-32 text-sm"
+						@keyup.enter="onSearch"
+						@keypress="validateNumber"
+					/>
+				</div>
 				<router-link id="profile" to="/profile">Profile</router-link>
-				<router-link id="logout" to="/login">Log Out</router-link>
+				<a id="logout" href="#" @click.prevent="onLogout">Log Out</a>
 			</div>
 		</div>
 
@@ -92,25 +118,6 @@
 						</div>
 					</div>
 				</section>
-
-				<!-- Search User Section -->
-				<section class="max-w-4xl mx-auto mt-10 mb-16 text-[#12372A]">
-					<h2 class="text-2xl font-bold mb-4 text-center">Search User by ID</h2>
-					<div class="flex justify-center items-center gap-4">
-						<input
-							v-model="searchUserId"
-							type="text"
-							placeholder="Enter User ID"
-							class="p-2 border border-[#12372A] rounded-md w-1/2"
-						/>
-						<router-link
-							:to="`/profile/${searchUserId}`"
-							class="bg-[#12372A] text-[#FBFADA] px-4 py-2 rounded hover:bg-[#0f2d23]"
-						>
-							View Profile
-						</router-link>
-					</div>
-				</section>
 			</div>
 		</div>
 
@@ -124,19 +131,69 @@
 </template>
 
 <script>
+import { useUsersStore } from '@/stores/users_store'
+
 export default {
 	data() {
 		return {
 			currentUser: JSON.parse(sessionStorage.getItem('user')) || {},
-			searchUserId: '',
+			searchTerm: '',
+			error: null,
+			usersStore: useUsersStore(),
+			showErrorPopup: false
 		}
 	},
 	methods: {
-		scrollToSearchFilter() {
-			const el = document.getElementById('search-filter')
-			if (el) {
-				el.scrollIntoView({ behavior: 'smooth' })
+		closeErrorPopup() {
+			this.showErrorPopup = false;
+			// Clear the search term when closing the error popup
+			this.searchTerm = '';
+		},
+		validateNumber(event) {
+			// Prevent 'e', '+', '-', and '.' characters
+			const invalidChars = ['e', '+', '-', '.'];
+			if (invalidChars.includes(event.key)) {
+				event.preventDefault();
 			}
+		},
+		async onSearch() {
+			// Clear any previous errors
+			this.error = null;
+
+			// Validate input - ensure it's a number (Controller logic - data transformation)
+			const userId = parseInt(this.searchTerm.value, 10);
+			if (isNaN(userId) || userId <= 0) {
+				this.error = userId <= 0 ? "User ID must be greater than 0" : "ID is not valid or ID not found";
+				this.showErrorPopup = true;
+				return;
+			}
+
+      // Fetch user by ID (Controller logic - data retrieval)
+      try {
+				const user = await this.usersStore.fetchUserById(userId);
+				if (!user) {
+					this.error = "User with ID " + userId + " was not found";
+					this.showErrorPopup = true;
+					return;
+				}
+
+				// Navigate to the profile page with the user ID
+				this.navigateToProfile(userId);
+			} catch (err) {
+				console.error('Error fetching user:', err);
+				console.error('Error response:', err.response?.data);
+				this.error = "User with ID " + userId + " was not found";
+				this.showErrorPopup = true;
+			}
+		},
+		onLogout() {
+			// Remove token from local storage
+			localStorage.removeItem('token');
+			localStorage.removeItem('role');
+			sessionStorage.removeItem('user');
+
+			// Navigate to login page
+			this.$router.push('/login');
 		},
 	},
 }

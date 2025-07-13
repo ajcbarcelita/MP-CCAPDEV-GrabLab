@@ -46,10 +46,7 @@ const connectDB = async () => {
         console.log("✅ Connected to MongoDB!");
         console.log("Database name:", conn.connection.name);
         console.log("Connected to host:", conn.connection.host);
-        
-        // Test query to check if we can access the Labs collection
-        const labCount = await mongoose.connection.db.collection('labs').countDocuments();
-        console.log("Number of documents in labs collection:", labCount);
+            
     } catch (error) {
         console.error("❌ MongoDB connection error:", error);
         process.exit(1);

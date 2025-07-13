@@ -18,8 +18,6 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 
-// Search users
-router.get('/search', searchUser);
 
 // User CRUD operations
 router.route('/')

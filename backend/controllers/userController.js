@@ -136,8 +136,14 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
     try {
         const { userId } = req.params;
-        const user = await User.findOne({ user_id: userId }).select('-password').lean();
-
+        console.log('Backend received userId:', userId, 'Type:', typeof userId);
+        
+        // Convert userId to number for consistent comparison
+        const numericUserId = parseInt(userId, 10);
+        console.log('Converted to numeric userId:', numericUserId);
+        
+        const user = await User.findOne({ user_id: numericUserId }).select('-password').lean();
+        console.log('User found in DB:', user ? 'Yes' : 'No');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -319,50 +325,10 @@ const updateUserProfilePicture = async (req, res) => {
     }
 };
 
-/*
-@desc    Search for users by name or email
-@route   GET /api/users/search
-*/
-const searchUser = async (req, res) => {
-    const { searchTerm } = req.query; // Get the search term from query parameters
-    
-    try {
-        if (!searchTerm || searchTerm.trim() === '') {
-            return res.status(400).json({ message: 'Search term is required' });
-        }
-
-        const users = await User.find({
-            $or: [
-                { fname: new RegExp(searchTerm, 'i') }, // Case-insensitive search for first name
-                { lname: new RegExp(searchTerm, 'i') }, // Case-insensitive search for last name
-                { email: new RegExp(searchTerm, 'i') }  // Case-insensitive search for email
-            ]
-        }).select('-password');
-
-        // Transform data to match frontend expectations
-        const transformedUsers = users.map(user => ({
-            user_id: user.user_id,
-            first_name: user.fname,
-            last_name: user.lname,
-            email: user.email,
-            role: user.role,
-            description: user.description || '',
-            profile_pic_path: user.profile_pic_path || null,
-            status: user.status || 'active',
-            created_at: user.createdAt,
-            updated_at: user.updatedAt
-        }));
-
-        res.json(transformedUsers); // Return the found users
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
 
 export { 
     registerUser, 
     loginUser, 
-    searchUser, 
     deleteUser, 
     updateUser, 
     upload,
