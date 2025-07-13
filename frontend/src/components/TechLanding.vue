@@ -26,7 +26,7 @@
 			<div id="links" class="flex items-center">
 				<div class="flex items-center mr-4">
 					<input
-						v-model="searchTerm"
+						v-model="searchQuery"
 						type="number"
 						placeholder="Enter User ID"
 						class="p-1 border border-[#FBFADA] bg-transparent text-[#FBFADA] rounded-md w-32 text-sm"
@@ -35,7 +35,7 @@
 					/>
 				</div>
 				<router-link id="profile" to="/profile">Profile</router-link>
-				<a id="logout" href="#" @click.prevent="onLogout">Log Out</a>
+				<a id="logout" href="#" @click.prevent="logout">Log Out</a>
 			</div>
 		</div>
 
@@ -131,85 +131,15 @@
 </template>
 
 <script>
-import { useUsersStore } from '@/stores/users_store'
+import { useLandingPage } from '@/composables/useLandingPage'
 
 export default {
-	data() {
+	name: 'TechLanding',
+  // Using the useLandingPage composable to manage state and methods
+	setup() {
 		return {
-			currentUser: JSON.parse(sessionStorage.getItem('user')) || {},
-			searchTerm: '',
-			error: null,
-			usersStore: useUsersStore(),
-			showErrorPopup: false
+			...useLandingPage()
 		}
-	},
-	methods: {
-		closeErrorPopup() {
-			this.showErrorPopup = false;
-			// Clear the search term when closing the error popup
-			this.searchTerm = '';
-		},
-		validateNumber(event) {
-			// Prevent 'e', '+', '-', and '.' characters
-			const invalidChars = ['e', '+', '-', '.'];
-			if (invalidChars.includes(event.key)) {
-				event.preventDefault();
-			}
-		},
-		async searchUser() {
-			try {
-				// Clear any previous errors
-				this.error = null;
-
-				// Type-safe approach to handle the input value
-				const inputValue = this.searchTerm;
-				// If it's already a number, use it directly; otherwise, parse it
-				const userId = typeof inputValue === 'number' ? inputValue : parseInt(String(inputValue), 10);
-
-				console.log('Parsed userId:', userId, 'Original value:', this.searchTerm, 'Type:', typeof this.searchTerm);
-
-				if (isNaN(userId) || userId <= 0) {
-					this.error = userId <= 0 ? "User ID must be greater than 0" : "Invalid user ID format";
-					this.showErrorPopup = true;
-					console.log("Invalid user ID format or value:", this.searchTerm);
-					return;
-				}
-
-				console.log('Navigating to profile page for user ID:', userId);
-
-				// Check if user exists before navigating
-				try {
-					console.log('Fetching user with ID:', userId);
-					const user = await this.usersStore.fetchUserById(userId);
-					console.log('User fetch result:', user);
-
-					if (!user) {
-						this.error = "User with ID " + userId + " was not found";
-						this.showErrorPopup = true;
-						return;
-					}
-					this.$router.push(`/profile/${userId}`);
-					// Navigate to the profile page with the user ID
-				} catch (err) {
-					console.error('Error fetching user:', err);
-					console.error('Error response:', err.response?.data);
-					this.error = "User with ID " + userId + " was not found";
-					this.showErrorPopup = true;
-				}
-			} catch (error) {
-				console.error('Error navigating to profile:', error);
-				this.error = "An error occurred while navigating to the profile page";
-				this.showErrorPopup = true;
-			}
-		},
-		onLogout() {
-			// Remove token from local storage
-			useUsersStore.clearuserSession();
-      // Clear session storage
-
-			// Navigate to login page
-			this.$router.push('/');
-		},
-	},
+	}
 }
 </script>

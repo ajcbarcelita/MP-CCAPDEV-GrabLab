@@ -147,7 +147,7 @@ import { useReservationsStore } from '@/stores/reservations_store'
 import { useUsersStore } from '@/stores/users_store'
 
 export default {
-	name: 'StudentMain',
+	name: 'ViewScript',
 	setup() {
 		const router = useRouter()
 		const labsStore = useLabsStore()
