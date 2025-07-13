@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
     {
@@ -64,6 +65,33 @@ const userSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+// Adding these methods to the userSchema allows us easily reuse the logic for hashing passwords and comparing them later on.
+
+// Pre-save hook to hash the password before saving
+userSchema.pre("save", async function (next) {
+    try {
+        // We only hash the password if it has been modified (or is new)
+        if (!this.isModified("password")) return next();
+
+        const salt = await bcrypt.genSalt(12); // 2 ^ 12 rounds of processing, more is lslower but more secure
+
+        // Hash the password using bcrypt salt
+        const hashedPassword = await bcrypt.hash(this.password, salt);
+        this.password = hashedPassword;
+        next(); // proceed with the save operation
+    } catch (err) {
+        next(err); // stop the save operation if there's an error
+    }
+});
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    try {
+        return await bcrypt.compare(candidatePassword, this.password);
+    } catch (err) {
+        throw new Error("Password comparison failed");
+    }
+};
 
 export default mongoose.model("User", userSchema); // Export the User model
 // This allows us to use the User model in other parts of the application for CRUD operations.

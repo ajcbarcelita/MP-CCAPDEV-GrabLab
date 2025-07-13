@@ -1,27 +1,29 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "seed:users": "node seeds/seedUsers.js",
-    "seed:labs": "node seeds/seedLabs.js",
-    "seed:labslots": "node seeds/seedLabSlots.js",
-    "seed:all": "npm run seed:users && npm run seed:labs && npm run seed:labslots"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "axios": "^1.10.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "mongoose": "^8.0.3",
-    "multer": "^2.0.1",
-    "node-fetch": "^3.3.2"
-  }
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "seed:users": "node seeds/seedUsers.js",
+        "seed:labs": "node seeds/seedLabs.js",
+        "seed:labslots": "node seeds/seedLabSlots.js",
+        "seed:reservations": "node seeds/seedReservations.js",
+        "seed:all": "npm run seed:users && npm run seed:labs && npm run seed:labslots && npm run seed:reservations"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "axios": "^1.10.0",
+        "bcrypt": "^6.0.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "mongoose": "^8.0.3",
+        "multer": "^2.0.1",
+        "node-fetch": "^3.3.2"
+    }
 }
