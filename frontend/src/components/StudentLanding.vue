@@ -44,7 +44,7 @@
 				<!-- Hero Section -->
 				<section id="hero-section">
 					<h1 id="hero-title">
-						Hi, {{ currentUser.first_name }} {{ currentUser.last_name }} <br />
+						Hi, {{ currentUser.fname }} {{ currentUser.lname }} <br />
 						Welcome back to GrabLab!
 					</h1>
 					<p id="hero-description">

@@ -329,9 +329,7 @@ export default {
 		}
 
 		// Temporary placeholder for edit function
-		const editReservation = (reservationId) => {
-			alert('Edit functionality will be implemented soon')
-		}
+
 
 		// Handle deleting a reservation
 		const deleteReservation = async (reservationId) => {
@@ -364,7 +362,6 @@ export default {
 			formatTimeSlot,
 			isLoading,
 			error,
-			editReservation,
 			deleteReservation
 		}
 	},
