@@ -1,4 +1,4 @@
-# MP-CCAPDEV-GrabLab
+    # MP-CCAPDEV-GrabLab
 
 A group major course output for Web Application Development (CCAPDEV) at De La Salle University - Manila. This project is a web application for reserving seats in university computer laboratories.
 
@@ -14,17 +14,29 @@ A group major course output for Web Application Development (CCAPDEV) at De La S
 
 ```
 /
-├── backend/        # Node.js, Express, MongoDB
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   └── app.js
-└── frontend/       # Vue.js, Vite, Tailwind CSS
+├── backend/                  # Node.js, Express, MongoDB backend
+│   ├── controllers/          # Request handlers and business logic
+│   ├── models/               # MongoDB schema definitions
+│   ├── routes/               # API route definitions
+│   ├── seeds/                # Database seed scripts
+│   ├── uploads/              # File uploads (e.g., profile pictures)
+│   ├── app.js                # Express application setup
+│   └── package.json          # Backend dependencies and scripts
+└── frontend/                 # Vue.js, Vite, Tailwind CSS frontend
+    ├── public/               # Static files
     ├── src/
-    │   ├── components/
-    │   ├── stores/
-    │   ├── assets/
-    │   └── main.js
+    │   ├── assets/           # Images, fonts, and other static resources
+    │   ├── components/       # Reusable Vue components
+    │   ├── composables/      # Reusable Vue composition functions
+    │   ├── data/             # Static data files
+    │   ├── stores/           # Pinia/Vuex state management
+    │   ├── App.vue           # Root component
+    │   ├── main.js           # Application entry point
+    │   └── router.js         # Vue Router configuration
+    ├── index.html            # HTML entry point
+    ├── tailwind.config.js    # Tailwind CSS configuration
+    ├── vite.config.js        # Vite bundler configuration
+    └── package.json          # Frontend dependencies and scripts
 ```
 
 ---
@@ -109,3 +121,80 @@ The project includes seed scripts to populate the database with initial sample d
     The frontend application will be available at `http://localhost:5173`.
 
 You can now access the GrabLab application in your web browser.
+
+### How to Run the Program
+
+To run the GrabLab application, follow these steps:
+
+1. **Connect to the MongoDB Server:**
+   - Ensure that your MongoDB server is running locally or accessible via a cloud instance.
+   - Update the `MONGODB_URI` in the `.env` file located in the `backend` directory with the correct connection string.
+
+2. **Start the Backend Server:**
+   - Navigate to the `backend` directory:
+     ```bash
+     cd backend
+     ```
+   - Install the required dependencies:
+     ```bash
+     npm install
+     ```
+   - Start the server:
+     ```bash
+     npm start
+     ```
+   - The backend server will run on `http://localhost:3000`.
+
+3. **Start the Frontend Development Server:**
+   - Open a new terminal window.
+   - Navigate to the `frontend` directory:
+     ```bash
+     cd frontend
+     ```
+   - Install the required dependencies:
+     ```bash
+     npm install
+     ```
+   - Start the development server:
+     ```bash
+     npm run dev
+     ```
+   - The frontend application will be available at `http://localhost:5173`.
+
+4. **Access the Application:**
+   - Open your web browser and navigate to `http://localhost:5173` to access the GrabLab application.
+
+5. **Optional - Seed the Database:**
+   - If you want to populate the database with sample data, run the seed scripts:
+     ```bash
+     node seeds/seedUsers.js
+     node seeds/seedLabs.js
+     node seeds/seedLabSlots.js
+     ```
+   - These scripts are located in the `backend/seeds/` directory and will add sample users, labs, and lab slots to your database.
+
+### MVC Architecture
+
+The project follows the Model-View-Controller (MVC) architectural pattern, which separates the application logic into three interconnected components:
+
+1. **Model**
+   - Represents the data and business logic of the application.
+   - In this project, the `backend/models/` directory contains the MongoDB schema definitions for entities such as `Lab`, `LabSlot`, `Reservation`, and `User`.
+   - Example: The `Lab.js` model defines the structure of a laboratory document in the database, including fields like `name`, `location`, and `capacity`.
+
+2. **View**
+   - Handles the presentation layer and user interface.
+   - In this project, the `frontend/src/components/` directory contains reusable Vue components that render the UI.
+   - Example: The `StudentLanding.vue` component displays the landing page for students, showing available labs and reservation options.
+
+3. **Controller**
+   - Manages the flow of data between the Model and the View.
+   - In this project, the `backend/controllers/` directory contains request handlers that process incoming API requests and interact with the models.
+   - Example: The `labController.js` file includes functions to fetch lab data from the database and send it as a response to the frontend.
+
+4. **Stores**
+   - Manage the application's state and provide a centralized data store.
+   - In this project, the `frontend/src/stores/` directory contains state management files for entities such as `labs`, `reservations`, `slots`, and `users`.
+   - Example: The `labs_store.js` file manages the state of laboratory data, including fetching lab details from the backend and storing them for use across components.
+
+By adhering to the MVC pattern, the project ensures a clear separation of concerns, making the codebase easier to maintain and scale.

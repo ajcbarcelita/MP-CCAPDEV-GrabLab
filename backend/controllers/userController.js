@@ -4,9 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// @desc    Register a new user
-// @route   POST /api/users/register
-// @access  Public
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -38,7 +36,48 @@ const upload = multer({
     }
 });
 
+// @desc    Register a new user
+// @route   POST /api/users/register
+// @access  Public
+const registerUser = async (req, res) => {
+    const { email, password, fname, lname, mname = '', role = 'Student', status = 'Active' } = req.body;
 
+    console.log('Registering user with email:', email);
+    
+    try {
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Get the next available user_id
+        const lastUser = await User.findOne().sort({ user_id: -1 });
+        const nextUserId = lastUser ? lastUser.user_id + 1 : 1;
+
+        const user = await User.create({
+            user_id: nextUserId,
+            email,
+            password,
+            fname,
+            lname,
+            mname,
+            role,
+            status,
+            profile_pic_path: '',
+            description: ''
+        });
+
+        res.status(201).json({
+            user_id: user.user_id,  
+            fname: user.fname,
+            lname: user.lname,
+            email: user.email,
+            role: user.role,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
@@ -129,58 +168,6 @@ const getUserById = async (req, res) => {
         };
 
         res.json(transformedUser);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-// @desc    Create new user (for frontend registration)
-// @route   POST /api/users
-// @access  Public
-const createUser = async (req, res) => {
-    const { first_name, last_name, mname, email, password, role = 'Student', description = '' } = req.body;
-
-    try {
-        // Validate required fields
-        if (!first_name || !last_name || !email || !password) {
-            return res.status(400).json({ 
-                message: 'First name, last name, email, and password are required' 
-            });
-        }
-
-        // Check if user already exists
-        const userExists = await User.findOne({ email });
-
-        if (userExists) {
-            return res.status(409).json({ message: 'User already exists' });
-        }
-
-        // Create user (password hashing should be added later)
-        const user = await User.create({
-            email,
-            password,
-            fname: first_name,
-            lname: last_name,
-            mname: mname,
-            role,
-            description
-        });
-
-        // Transform data to match frontend expectations
-        const transformedUser = {
-            user_id: user.user_id,
-            first_name: user.fname,
-            last_name: user.lname,
-            email: user.email,
-            role: user.role,
-            description: user.description || '',
-            profile_pic_path: user.profile_pic_path || null,
-            status: user.status || 'active',
-            created_at: user.createdAt,
-            updated_at: user.updatedAt
-        };
-
-        res.status(201).json(transformedUser);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -299,6 +286,6 @@ export {
     upload,
     getAllUsers,
     getUserById,
-    createUser,
+    registerUser,
     updateUserProfilePicture
 };

@@ -104,6 +104,7 @@ export const useUsersStore = defineStore('users', {
     async addUser(userData) {
       this.loading = true
       try {
+        console.log('With data:', userData);
         const response = await axios.post(`${API_URL}/users`, userData)
         const newUser = response.data
         this.users.push(newUser)
