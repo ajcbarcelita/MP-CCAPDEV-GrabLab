@@ -28,7 +28,7 @@ function generateTimeSlots(openTime, closeTime) {
         slots.push({
             startTime: `${pad(startHour)}:${pad(startMinute)}`,
             endTime: `${pad(endSlotHour)}:${pad(endSlotMinute)}`,
-            reservation: null,
+            reserved: null,
         });
 
         startHour = endSlotHour;
@@ -63,7 +63,7 @@ async function seedLabSlots() {
                         lab: labId,
                         seat_number: seat,
                         date: new Date(date),
-                        time_slots: timeSlots,
+                        time_slots: generateTimeSlots(operating_hours.open, operating_hours.close), // generate a fresh array for each seat
                     });
                 }
             }

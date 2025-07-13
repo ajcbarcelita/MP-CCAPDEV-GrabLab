@@ -63,7 +63,8 @@
 						<div class="flex items-center mb-6">
 							<div
 								class="w-24 h-24 bg-sage rounded-full flex items-center justify-center mr-6 relative overflow-hidden">
-								<img v-if="profileUser.profile_pic_path" :src="profileUser.profile_pic_path"
+								<img v-if="profileUser.profile_pic_path"
+									:src="getProfilePicUrl(profileUser.profile_pic_path)"
 									class="w-full h-full object-cover" />
 								<!-- SVG Placeholder if no picture set yet -->
 								<svg v-else class="w-16 h-16 text-forest-medium" fill="currentColor"
@@ -349,15 +350,6 @@ const inputReadonly = computed(() => {
 	return !isOwnProfile.value || !isEditing.value
 })
 
-// // Reservation properties -- Calculated from slot_id in reservations
-// const getSeatFromSlotId = (slotId) => {
-// 	return Math.floor((slotId - 1) / 22) + 1
-// }
-// // Convert slot_id to time slot (1-22)
-// const getTimeSlotFromSlotId = (slotId) => {
-// 	return ((slotId - 1) % 22) + 1
-// }
-
 // Updated to use store data 
 const userReservations = computed(() => {
 	if (!currentUser.value) return []
@@ -374,43 +366,6 @@ const getLabName = (labId) => {
 	return lab ? lab.name : 'Unknown Lab'
 }
 
-// const formatReservationDate = (dateString) =>
-// 	new Date(dateString).toLocaleDateString('en-US', {
-// 		weekday: 'long',
-// 		year: 'numeric',
-// 		month: 'long',
-// 		day: 'numeric',
-// 	})
-
-// // Convert array of slot objects to a time range string
-// const getTimeRangeForSlots = (slots) => {
-// 	if (!slots.length) return 'N/A'
-// 	// Extract time slots from the slot objects
-// 	const timeSlots = slots.map((slot) => getTimeSlotFromSlotId(slot.slot_id))
-// 	const minSlot = Math.min(...timeSlots)
-// 	const maxSlot = Math.max(...timeSlots)
-// 	const startTime = getTimeSlotDisplay(minSlot)
-// 	const endTime = getTimeSlotDisplay(maxSlot + 1)
-// 	return `${startTime.split(' - ')[0]} - ${endTime.split(' - ')[0]}`
-// 	// Example Output: "7:00 AM - 8:30 AM"
-// }
-
-// // Reservation Display Function
-// function getTimeSlotDisplay(timeSlot) {
-// 	// Each slot is 30 minutes, starting at 7:00 AM
-// 	const baseMinutes = 7 * 60 + (timeSlot - 1) * 30 // Convert time slot to minutes from 00:00
-// 	const endMinutes = baseMinutes + 30
-
-// 	const format = (mins) => {
-// 		const h = Math.floor(mins / 60)
-// 		const m = mins % 60
-// 		const period = h >= 12 ? 'PM' : 'AM'
-// 		const displayHour = h % 12 === 0 ? 12 : h % 12
-// 		return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`
-// 	}
-
-// 	return `${format(baseMinutes)} - ${format(endMinutes)}`
-// }
 
 // Navbar and profile actions
 const handleLogout = () => {
@@ -536,6 +491,18 @@ async function handleDeleteAccount() {
 		}
 	}
 }
+
+// Profile Picture Handling
+const getProfilePicUrl = (profilePicPath) => {
+  if (!profilePicPath) return null;
+  
+  // Local path
+  if (process.env.NODE_ENV === 'development') {
+    return `http://localhost:3000${profilePicPath}`;
+  }
+
+  return profilePicPath;
+};
 
 async function handleChangePicture(event) {
 	if (!isOwnProfile.value) return

@@ -29,6 +29,6 @@ router.route('/:userId')
   .delete(deleteUser);      // DELETE /api/users/:userId
 
 // Profile picture upload
-router.post('/:userId/profile-picture', upload.single('profilePicture'), updateUserProfilePicture);
+router.post('/:userId/profile-picture', upload.single('profilePicture'), updateUserProfilePicture)
 
 export default router;

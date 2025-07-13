@@ -2,9 +2,8 @@ import mongoose from "mongoose";
 
 const reservationSchema = new mongoose.Schema(
     {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+        user_id: {
+            type: Number,
             required: true,
         },
         user_id: {

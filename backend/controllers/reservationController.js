@@ -112,7 +112,7 @@ export const getReservationsByUserId = async (req, res) => {
             });
         }
 
-        console.log("Reservations fetched successfully:", reservations); // Log the fetched reservations
+        // console.log("Reservations fetched successfully:", reservations); // Log the fetched reservations
         res.json(reservations);
     } catch (error) {
         console.error("Error fetching reservations by user ID:", error); // Log the full error object
