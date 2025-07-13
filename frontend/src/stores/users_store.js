@@ -155,14 +155,14 @@ export const useUsersStore = defineStore('users', {
     },
 
     // Update user profile picture
-
-    // Update user profile picture
     async updateUserProfilePicture(userId, file) {
       this.loading = true
       try {
+        // Prepare form data for file upload
         const formData = new FormData()
         formData.append('profilePicture', file)
 
+        // Send POST request to backend API to upload the profile picture
         const response = await axios.post(`${API_URL}/users/${userId}/profile-picture`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
@@ -171,19 +171,21 @@ export const useUsersStore = defineStore('users', {
 
         const updatedUser = response.data
 
-        // Update user in users array
+        // Update local users array
         const index = this.users.findIndex(u => u.user_id === userId)
         if (index !== -1) {
           this.users[index] = { ...this.users[index], ...updatedUser }
         }
 
-        // Update currentUser if it's the same user
+        // If the current user is the one being updated, update currentUser and session storage
         if (this.currentUser && this.currentUser.user_id === userId) {
           this.currentUser = { ...this.currentUser, ...updatedUser }
           sessionStorage.setItem('user', JSON.stringify(this.currentUser))
         }
 
         this.error = null
+
+        // Return the updated user object (to present dynamically in the UI)
         return updatedUser
       } catch (error) {
         this.error = error.response?.data?.message || error.message

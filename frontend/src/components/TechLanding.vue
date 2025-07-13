@@ -49,7 +49,7 @@
 					</h1>
 					<p id="hero-description">
 						Streamline your laboratory Reservations with our modern booking system.
-						Available from 7am on wards with real-time availability tracking.
+						Available from 7am onwards with real-time availability tracking.
 					</p>
 					<router-link to="/view">
 						<a href="#" id="hero-cta" class="view-slots"> View Slots </a>

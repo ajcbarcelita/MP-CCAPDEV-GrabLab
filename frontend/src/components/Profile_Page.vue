@@ -6,6 +6,9 @@
 <template>
 	<div class="bg-sage min-h-screen">
 		<!-- Header -->
+		<div v-if="isLoading" class="flex items-center justify-center h-screen">
+			<p class="text-forest-medium font-karma text-lg">Loading...</p>
+		</div>
 		<div id="navbar">
 			<span id="navbar-brand">GrabLab</span>
 			<nav class="flex space-x-4 font-karma">
@@ -80,10 +83,8 @@
 									{{ profileUser.first_name }} {{ profileUser.last_name }}
 								</h4>
 								<!-- If its your profile, then you can change it -->
-								<button v-if="isOwnProfile" @click="handleChangePicture"
-									class="text-forest-medium hover:text-forest-dark transition-colors text-sm font-karma">
-									Change Picture
-								</button>
+								<input v-if="isOwnProfile" type="file" accept="image/*" @change="handleChangePicture"
+									class="text-forest-medium hover:text-forest-dark transition-colors text-sm font-karma" />
 							</div>
 						</div>
 
@@ -185,60 +186,47 @@
 
 					<!-- Horizontal Slider & Flexbox Cards -->
 					<div class="overflow-x-auto">
-						<div v-if="userReservations.length > 0" class="flex gap-4 min-w-max pb-4">
-							<!-- Dynamic Reservation Cards -->
-							<div v-for="reservation in userReservations" :key="reservation.reservation_id"
-								class="bg-sage rounded-lg p-4 min-w-[280px]">
+						<div v-if="filteredReservations.length > 0" class="flex gap-4 min-w-max pb-4">
+							<div class="bg-sage rounded-lg p-4 min-w-[280px] reservation-card align-middle"
+								v-for="reservation in filteredReservations" :key="reservation._id">
 								<div class="mb-3">
 									<h4 class="font-bold text-forest-dark text-lg font-karma">
-										{{ getLabName(reservation.lab_id) }}
+										{{ reservation.lab_slot?.lab?.display_name || getLabName(reservation.lab_id) }}
 									</h4>
 									<span class="text-xs text-forest-medium font-karma">
-										Reservation #{{ reservation.reservation_id }}
+										Reservation #{{ reservation._id }}
 									</span>
 								</div>
 								<div class="text-forest-dark text-sm space-y-1 font-karma">
 									<p>
-										<strong>Date:</strong>
-										{{ formatReservationDate(reservation.reservation_date) }}
+										<strong>Time Slots:</strong>
+									<div v-if="reservation.time_slots && reservation.time_slots.length > 0">
+										<div v-for="(slot, index) in reservation.time_slots" :key="index">
+											{{ formatTimeSlot(slot) }}
+										</div>
+									</div>
+									<div v-else>No time slots available</div>
 									</p>
 									<p>
-										<strong>Time:</strong>
-										{{ getTimeRangeForSlots(reservation.slots) }}
+										<strong>Created At:</strong>
+										{{ formatDateTime(reservation.createdAt || reservation.reservation_date) }}
 									</p>
 									<p>
-										<strong>Seats:</strong>
-										{{
-											reservation.slots
-												.map((slot) => getSeatFromSlotId(slot.slot_id))
-												.join(',')
-										}}
+										<strong>Updated At:</strong>
+										{{ formatDateTime(reservation.updatedAt) }}
 									</p>
 									<p>
 										<strong>Status:</strong>
-										<!-- Display Status -->
-										<span :class="reservation.status === 'confirmed'
-											? 'text-green-600'
-											: 'text-yellow-600'
-											">
-											{{
-												' ' +
-												reservation.status.charAt(0).toUpperCase() +
-												reservation.status.slice(1)
-											}}
-										</span>
+										{{ reservation.status }}
 									</p>
 								</div>
-								<div class="flex space-x-2 mt-3">
-									<button @click="editReservation(reservation.reservation_id)"
-										class="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors font-karma">
-										Edit
-									</button>
-									<button @click="cancelReservation(reservation.reservation_id)"
-										class="w-full bg-red-500 text-white py-2 rounded text-sm hover:bg-red-600 transition-colors font-karma">
-										Cancel Reservation
-									</button>
-								</div>
+								<!-- Cancel button, only if not already cancelled/deleted -->
+								<button
+									v-if="isOwnProfile && reservation.status !== 'Cancelled' && reservation.status !== 'Deleted'"
+									@click="cancelReservation(reservation._id)"
+									class="mt-4 mx-auto block bg-pink-100 text-pink-700 px-4 py-2 rounded font-karma transition-colors hover:bg-pink-300">
+									Cancel Reservation
+								</button>
 							</div>
 						</div>
 
@@ -253,42 +241,6 @@
 			</div>
 		</div>
 
-		<!-- Edit Reservation Modal -->
-		<div v-if="showEditModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
-				<h2 class="font-jersey text-2xl text-grablab-primary mb-6 text-center">
-					Edit Reservation
-				</h2>
-
-				<div v-if="editingReservation" class="space-y-4">
-					<div>
-						<label class="block text-forest-dark font-semibold mb-2 font-karma">Date</label>
-						<input type="date" v-model="editingReservation.reservation_date"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg font-karma" />
-					</div>
-					<div>
-						<label class="block text-forest-dark font-semibold mb-2 font-karma">Time</label>
-						<p class="text-sm text-gray-600">Time editing is not yet available.</p>
-					</div>
-					<div>
-						<label class="block text-forest-dark font-semibold mb-2 font-karma">Seats</label>
-						<p class="text-sm text-gray-600">Seat editing is not yet available.</p>
-					</div>
-				</div>
-
-				<div class="flex gap-3 mt-6">
-					<button @click="saveReservation"
-						class="flex-1 grablab-primary text-white py-3 rounded font-medium hover:opacity-90">
-						Save Changes
-					</button>
-					<button @click="closeEditModal"
-						class="flex-1 bg-gray-400 text-white py-3 rounded font-medium hover:bg-gray-500">
-						Cancel
-					</button>
-				</div>
-			</div>
-		</div>
-
 		<!-- Footer -->
 		<footer class="bg-forest-dark text-cream text-center p-4 font-bold">
 			<div class="flex justify-center gap-2">
@@ -298,287 +250,16 @@
 	</div>
 </template>
 
-<script setup>
-import { useRoute, useRouter } from 'vue-router'
-import { ref, computed, onMounted } from 'vue'
-import { useUsersStore } from '@/stores/users_store'
-import { useLabsStore } from '@/stores/labs_store'
-import { useReservationsStore } from '@/stores/reservations_store'
+<script>
+import { useProfile } from '@/composables/useProfilePage'
 
-// Stores
-const usersStore = useUsersStore()
-const reservationsStore = useReservationsStore()
-const labsStore = useLabsStore()
-
-// To access router and go to other panels
-const router = useRouter()
-const route = useRoute()
-
-// Reactive variables
-const isEditing = ref(false)
-const editForm = ref({
-	first_name: '',
-	last_name: '',
-	description: '',
-})
-
-// User state from store
-const currentUser = ref(null)
-const profileUser = ref(null)
-
-// Computed properties
-const isOwnProfile = computed(() => {
-	return currentUser.value && profileUser.value &&
-		currentUser.value.user_id === profileUser.value.user_id
-})
-
-// Condition Checks
-const showEditButton = computed(() => {
-	return isOwnProfile.value && !isEditing.value
-})
-const showSaveCancel = computed(() => {
-	return isOwnProfile.value && isEditing.value
-})
-const showDeleteAccount = computed(() => {
-	return isOwnProfile.value
-})
-//Check if student and own profile to show reservations
-const showReservations = computed(() => {
-	return isOwnProfile.value && currentUser.value && currentUser.value.role === 'Student'
-})
-const inputReadonly = computed(() => {
-	return !isOwnProfile.value || !isEditing.value
-})
-
-// Updated to use store data 
-const userReservations = computed(() => {
-	if (!currentUser.value) return []
-
-	// Filter reservations from store for the current user
-	return reservationsStore.reservations
-		.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
-		.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
-})
-
-// Get lab name from labs data
-const getLabName = (labId) => {
-	const lab = labsStore.getLabById(labId)
-	return lab ? lab.name : 'Unknown Lab'
-}
-
-
-// Navbar and profile actions
-const handleLogout = () => {
-	// Clear user session from store
-	usersStore.clearUserSession()
-	// Clear local state
-	currentUser.value = null
-	profileUser.value = null
-	router.push('/login')
-}
-
-function handleHome() {
-	if (currentUser.value?.role === 'Technician') {
-		router.push('/technician-landing')
-	} else if (currentUser.value?.role === 'Student') {
-		router.push('/student-landing')
-	} else {
-		router.push('/')
-	}
-}
-
-const showEditModal = ref(false)
-const editingReservation = ref(null)
-
-function editReservation(reservationId) {
-	const reservation = userReservations.value.find((r) => r.reservation_id === reservationId)
-	if (reservation) {
-		editingReservation.value = { ...reservation }
-		showEditModal.value = true
-	}
-}
-
-async function saveReservation() {
-	if (editingReservation.value) {
-		try {
-			// Use reservations store method for updating
-			await reservationsStore.updateReservation(
-				editingReservation.value.reservation_id,
-				{ reservation_date: editingReservation.value.reservation_date }
-			)
-
-			console.log('Reservation updated successfully')
-			closeEditModal()
-		} catch (error) {
-			console.error('Error updating reservation:', error)
-			alert('Failed to update reservation. Please try again.')
+export default {
+	name: 'ProfilePage',
+	// Using the useProfile composable to manage state and methods
+	setup() {
+		return {
+			...useProfile()
 		}
 	}
 }
-
-function closeEditModal() {
-	showEditModal.value = false
-	editingReservation.value = null
-}
-
-// Functions to handle page operations
-function handleEditForm() {
-	if (profileUser.value) {
-		editForm.value = {
-			first_name: profileUser.value.first_name,
-			last_name: profileUser.value.last_name,
-			description: profileUser.value.description || '',
-		}
-	}
-}
-
-// If not own profile, then can't edit
-function handleEditProfile() {
-	if (!isOwnProfile.value) return
-	isEditing.value = true
-}
-
-async function handleSaveChanges() {
-	if (!isOwnProfile.value) return;
-
-	try {
-		// Prepare the data 
-		const updateData = {
-			fname: editForm.value.first_name,
-			lname: editForm.value.last_name,
-			description: editForm.value.description || ''
-		};
-
-		await usersStore.updateUserProfile(currentUser.value.user_id, updateData);
-
-		// Update local data
-		profileUser.value = {
-			...profileUser.value,
-			...updateData
-		};
-
-		isEditing.value = false;
-	} catch (error) {
-		console.error('Update error:', error);
-		alert(error.message || 'Failed to update profile');
-	}
-}
-
-function handleCancelEdit() {
-	isEditing.value = false
-	resetEditForm()
-}
-
-function resetEditForm() {
-	handleEditForm()
-}
-
-async function handleDeleteAccount() {
-	if (!isOwnProfile.value) return
-	if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-		try {
-			await usersStore.deleteUserAccount(currentUser.value.user_id)
-			console.log('Account deleted successfully')
-
-			// Clear user session and redirect to login
-			usersStore.clearUserSession()
-			currentUser.value = null
-			profileUser.value = null
-			router.push('/login')
-		} catch (error) {
-			console.error('Error deleting account:', error)
-			alert('Failed to delete account. Please try again.')
-		}
-	}
-}
-
-// Profile Picture Handling
-const getProfilePicUrl = (profilePicPath) => {
-  if (!profilePicPath) return null;
-  
-  // Local path
-  if (process.env.NODE_ENV === 'development') {
-    return `http://localhost:3000${profilePicPath}`;
-  }
-
-  return profilePicPath;
-};
-
-async function handleChangePicture(event) {
-	if (!isOwnProfile.value) return
-
-	const file = event.target.files[0]
-	if (!file) return
-
-	try {
-		await usersStore.updateUserProfilePicture(currentUser.value.user_id, file)
-		console.log('Profile picture updated successfully')
-	} catch (error) {
-		console.error('Error updating profile picture:', error)
-		alert('Failed to update profile picture. Please try again.')
-	}
-}
-
-async function cancelReservation(reservationId) {
-	if (!isOwnProfile.value) return
-	if (confirm('Are you sure you want to cancel this reservation?')) {
-		try {
-			// Use reservations store method for canceling
-			await reservationsStore.updateReservationStatus(reservationId, 'Cancelled')
-			console.log(`Reservation ${reservationId} cancelled successfully`)
-		} catch (error) {
-			console.error('Error cancelling reservation:', error)
-			alert('Failed to cancel reservation. Please try again.')
-		}
-	}
-}
-
-async function handleView() {
-	try {
-		// 1. Check authentication
-		const user = sessionStorage.getItem('user');
-		if (!user) {
-			router.push('/login');
-			return;
-		}
-		currentUser.value = JSON.parse(user);
-
-		// 2. Determine which profile to view
-		const userId = route.params.userId || currentUser.value.user_id;
-
-		// 3. Fetch user data with proper error handling
-		const userData = await usersStore.fetchUserById(userId);
-
-		if (!userData) {
-			throw new Error('User not found');
-		}
-
-		profileUser.value = userData;
-
-		// 4. Fetch reservations if viewing own profile
-		if (userId === currentUser.value.user_id && currentUser.value.role === 'Student') {
-			await reservationsStore.fetchReservationsByUserId(userId);
-		}
-
-		// 5. Initialize edit form
-		handleEditForm();
-
-	} catch (error) {
-		console.error('Profile load error:', error);
-
-		// Redirect based on role
-		const fallbackRoute = currentUser.value?.role === 'Technician'
-			? '/technician-landing'
-			: currentUser.value?.role === 'Student'
-				? '/student-landing'
-				: '/login';
-
-		router.push(fallbackRoute);
-	}
-}
-
-// Once DOM is loaded/mounted, handle the view
-onMounted(() => {
-	handleView()
-})
 </script>
