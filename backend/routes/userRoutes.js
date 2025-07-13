@@ -1,8 +1,7 @@
 import express from 'express';
 import { 
      
-    loginUser, 
-    searchUser, 
+    loginUser,  
      
     deleteUser, 
     updateUser, 

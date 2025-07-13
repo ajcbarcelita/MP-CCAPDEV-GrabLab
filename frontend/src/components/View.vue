@@ -133,6 +133,10 @@
 							}}</span>
 						</div>
 					</div>
+					<div class="reservation-card-actions flex justify-center items-center gap-4">
+						<button class="edit-btn btn-primary bg-blue-500 text-white px-4 py-2" @click="editReservation(reservation._id)">Edit</button>
+						<button class="delete-btn btn-danger bg-red-500 px-4 py-2" @click="deleteReservation(reservation._id)">Delete</button>
+					</div>
 				</div>
 			</div>
 		</section>
