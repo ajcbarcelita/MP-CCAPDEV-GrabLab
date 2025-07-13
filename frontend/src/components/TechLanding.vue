@@ -204,12 +204,11 @@ export default {
 		},
 		onLogout() {
 			// Remove token from local storage
-			localStorage.removeItem('token');
-			localStorage.removeItem('role');
-			sessionStorage.removeItem('user');
+			useUsersStore.clearuserSession();
+      // Clear session storage
 
 			// Navigate to login page
-			this.$router.push('/login');
+			this.$router.push('/');
 		},
 	},
 }

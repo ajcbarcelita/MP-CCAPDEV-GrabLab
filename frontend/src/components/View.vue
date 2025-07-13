@@ -144,6 +144,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLabsStore } from '@/stores/labs_store'
 import { useReservationsStore } from '@/stores/reservations_store'
+import { useUsersStore } from '@/stores/users_store'
 
 export default {
 	name: 'StudentMain',
@@ -245,7 +246,7 @@ export default {
 
 		// Navigation handlers
 		const handleLogout = () => {
-			sessionStorage.removeItem('user')
+			useUsersStore.clearUserSession()
 			router.push('/')
 		}
 

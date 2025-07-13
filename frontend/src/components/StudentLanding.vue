@@ -201,13 +201,11 @@ export default {
 		}
 
 		const logout = () => {
-			// Remove token from local storage
-			localStorage.removeItem('token')
-			localStorage.removeItem('role')
-			sessionStorage.removeItem('user')
+			useUsersStore.clearUserSession()
+      // Clear session storage
 
 			// Navigate to login page
-			router.push('/login')
+			router.push('/')
 		}
 
 		return {
