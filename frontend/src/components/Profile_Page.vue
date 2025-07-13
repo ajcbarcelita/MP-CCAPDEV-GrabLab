@@ -46,8 +46,8 @@
 				<div :class="isOwnProfile ? 'grid md:grid-cols-3 gap-8' : 'flex justify-center'">
 					<!-- Profile Information Card -->
 					<div :class="isOwnProfile
-							? 'md:col-span-2 bg-cream rounded-lg shadow-lg p-6'
-							: 'bg-cream rounded-lg shadow-lg p-6 w-full max-w-5xl'
+						? 'md:col-span-2 bg-cream rounded-lg shadow-lg p-6'
+						: 'bg-cream rounded-lg shadow-lg p-6 w-full max-w-5xl'
 						">
 						<div class="flex justify-between items-center mb-6">
 							<h3 class="text-2xl font-bold text-forest-dark font-karma">
@@ -217,8 +217,8 @@
 										<strong>Status:</strong>
 										<!-- Display Status -->
 										<span :class="reservation.status === 'confirmed'
-												? 'text-green-600'
-												: 'text-yellow-600'
+											? 'text-green-600'
+											: 'text-yellow-600'
 											">
 											{{
 												' ' +
@@ -484,20 +484,28 @@ function handleEditProfile() {
 }
 
 async function handleSaveChanges() {
-	if (!isOwnProfile.value) return
+	if (!isOwnProfile.value) return;
 
 	try {
-		await usersStore.updateUserProfile(currentUser.value.user_id, editForm.value)
+		// Prepare the data 
+		const updateData = {
+			fname: editForm.value.first_name,
+			lname: editForm.value.last_name,
+			description: editForm.value.description || ''
+		};
 
-		// Update local profileUser data
-		Object.assign(profileUser.value, editForm.value)
+		await usersStore.updateUserProfile(currentUser.value.user_id, updateData);
 
-		// Reset editing state
-		isEditing.value = false
-		console.log('Profile updated successfully')
+		// Update local data
+		profileUser.value = {
+			...profileUser.value,
+			...updateData
+		};
+
+		isEditing.value = false;
 	} catch (error) {
-		console.error('Error updating profile:', error)
-		alert('Failed to update profile. Please try again.')
+		console.error('Update error:', error);
+		alert(error.message || 'Failed to update profile');
 	}
 }
 
