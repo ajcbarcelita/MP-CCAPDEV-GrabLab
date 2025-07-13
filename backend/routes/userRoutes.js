@@ -1,28 +1,27 @@
 import express from 'express';
 import { 
      
-    loginUser,  
-     
+    loginUser,   
     deleteUser, 
     updateUser, 
     upload,
     getAllUsers,
     getUserById,
-    createUser,
+    registerUser,
     updateUserProfilePicture
 } from '../controllers/userController.js';
 
 const router = express.Router();
 
 // Public routes
-router.post('/register', createUser);
 router.post('/login', loginUser);
 
 
 // User CRUD operations
 router.route('/')
   .get(getAllUsers)         // GET /api/users
-  .post(createUser);        // POST /api/users
+  .post(registerUser);      // POST /api/users
+
 
 router.route('/:userId')
   .get(getUserById)         // GET /api/users/:userId

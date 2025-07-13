@@ -35,8 +35,9 @@ function handleRegister() {
 		user_id: Date.now(), // Simple unique ID based on timestamp
 		email: email.value,
 		password: password.value,
-		first_name: firstName.value,
-		last_name: lastName.value,
+		fname: firstName.value,
+		lname: lastName.value,
+		mname: '',
 		role: 'Student', // Default role for new users
 		status: 'Active', // Default status for new users
 		profile_pic_path: '',
