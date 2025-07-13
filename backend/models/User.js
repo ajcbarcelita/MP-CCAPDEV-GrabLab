@@ -71,7 +71,14 @@ const userSchema = new mongoose.Schema(
 // Pre-save hook to hash the password before saving
 userSchema.pre("save", async function (next) {
     try {
-        // We only hash the password if it has been modified (or is new)
+        /*
+            We only hash the password if it has been modified or is new.
+            Mongoose tracks changes to document fields after they’re loaded from the database.
+            The isModified("password") check ensures that we don’t accidentally re-hash a password
+            that’s already been hashed, which would corrupt it and break login functionality.
+
+            PW is hashed when a new user is created or when an existing user's password is updated.
+        */
         if (!this.isModified("password")) return next();
 
         const salt = await bcrypt.genSalt(12); // 2 ^ 12 rounds of processing, more is lslower but more secure
@@ -85,6 +92,10 @@ userSchema.pre("save", async function (next) {
     }
 });
 
+/*
+    This method allows us to compare a plaintext password with the hashed password stored in the database.
+    It returns true if the passwords match, otherwise false. Will be used for login authentication.
+*/
 userSchema.methods.comparePassword = async function (candidatePassword) {
     try {
         return await bcrypt.compare(candidatePassword, this.password);
