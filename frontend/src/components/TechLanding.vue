@@ -30,7 +30,7 @@
 						type="number"
 						placeholder="Enter User ID"
 						class="p-1 border border-[#FBFADA] bg-transparent text-[#FBFADA] rounded-md w-32 text-sm"
-						@keyup.enter="onSearch"
+						@keyup.enter="searchUser"
 						@keypress="validateNumber"
 					/>
 				</div>
@@ -156,33 +156,49 @@ export default {
 				event.preventDefault();
 			}
 		},
-		async onSearch() {
-			// Clear any previous errors
-			this.error = null;
+		async searchUser() {
+			try {
+				// Clear any previous errors
+				this.error = null;
 
-			// Validate input - ensure it's a number (Controller logic - data transformation)
-			const userId = parseInt(this.searchTerm.value, 10);
-			if (isNaN(userId) || userId <= 0) {
-				this.error = userId <= 0 ? "User ID must be greater than 0" : "ID is not valid or ID not found";
-				this.showErrorPopup = true;
-				return;
-			}
+				// Type-safe approach to handle the input value
+				const inputValue = this.searchTerm;
+				// If it's already a number, use it directly; otherwise, parse it
+				const userId = typeof inputValue === 'number' ? inputValue : parseInt(String(inputValue), 10);
 
-      // Fetch user by ID (Controller logic - data retrieval)
-      try {
-				const user = await this.usersStore.fetchUserById(userId);
-				if (!user) {
-					this.error = "User with ID " + userId + " was not found";
+				console.log('Parsed userId:', userId, 'Original value:', this.searchTerm, 'Type:', typeof this.searchTerm);
+
+				if (isNaN(userId) || userId <= 0) {
+					this.error = userId <= 0 ? "User ID must be greater than 0" : "Invalid user ID format";
 					this.showErrorPopup = true;
+					console.log("Invalid user ID format or value:", this.searchTerm);
 					return;
 				}
 
-				// Navigate to the profile page with the user ID
-				this.navigateToProfile(userId);
-			} catch (err) {
-				console.error('Error fetching user:', err);
-				console.error('Error response:', err.response?.data);
-				this.error = "User with ID " + userId + " was not found";
+				console.log('Navigating to profile page for user ID:', userId);
+
+				// Check if user exists before navigating
+				try {
+					console.log('Fetching user with ID:', userId);
+					const user = await this.usersStore.fetchUserById(userId);
+					console.log('User fetch result:', user);
+
+					if (!user) {
+						this.error = "User with ID " + userId + " was not found";
+						this.showErrorPopup = true;
+						return;
+					}
+					this.$router.push(`/profile/${userId}`);
+					// Navigate to the profile page with the user ID
+				} catch (err) {
+					console.error('Error fetching user:', err);
+					console.error('Error response:', err.response?.data);
+					this.error = "User with ID " + userId + " was not found";
+					this.showErrorPopup = true;
+				}
+			} catch (error) {
+				console.error('Error navigating to profile:', error);
+				this.error = "An error occurred while navigating to the profile page";
 				this.showErrorPopup = true;
 			}
 		},

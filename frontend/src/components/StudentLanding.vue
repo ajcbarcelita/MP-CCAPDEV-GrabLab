@@ -158,17 +158,28 @@ export default {
 				// Clear any previous errors
 				error.value = null
 
-				// Check if the search query is a valid number
-				const userId = parseInt(searchQuery.value, 10)
+				// Type-safe approach to handle the input value
+				const inputValue = searchQuery.value;
+				// If it's already a number, use it directly; otherwise, parse it
+				const userId = typeof inputValue === 'number' ? inputValue : parseInt(String(inputValue), 10);
+
+				console.log('Parsed userId:', userId, 'Original value:', searchQuery.value, 'Type:', typeof searchQuery.value);
+
 				if (isNaN(userId) || userId <= 0) {
 					error.value = userId <= 0 ? 'User ID must be greater than 0' : 'Invalid user ID format'
 					showErrorPopup.value = true
+					console.log('Invalid user ID format or value:', searchQuery.value)
 					return
 				}
 
+				console.log('Navigating to profile page for user ID:', userId)
+
 				// Check if user exists before navigating
 				try {
+					console.log('Fetching user with ID:', userId);
 					const user = await usersStore.fetchUserById(userId)
+					console.log('User fetch result:', user);
+
 					if (!user) {
 						error.value = 'User with ID ' + userId + ' was not found'
 						showErrorPopup.value = true

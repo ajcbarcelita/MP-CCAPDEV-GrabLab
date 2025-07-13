@@ -105,6 +105,7 @@
 				<p class="no-data-hint">Try checking the ID number or viewing all reservations.</p>
 			</div>
 
+      <!-- Reservations Grid -->
 			<div v-else class="reservations-grid">
 				<div
 					class="reservation-card"
@@ -234,11 +235,6 @@ export default {
 			return reservationsStore.reservations
 		})
 
-		// Helper functions using store getters
-		const getLabName = (labId) => {
-			const lab = labsStore.getLabByIDNumber(labId)
-			return lab ? lab.display_name : 'Unknown Lab'
-		}
 
 		const formatDateTime = (dateTime) => {
 			return new Date(dateTime).toLocaleString()
@@ -263,7 +259,6 @@ export default {
 			navigateToReservation,
 			userIdFilter,
 			filteredReservations,
-			getLabName,
 			formatDateTime,
 			isLoading,
 			error,
