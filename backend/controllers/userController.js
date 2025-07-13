@@ -38,42 +38,7 @@ const upload = multer({
     }
 });
 
-const registerUser = async (req, res) => {
-    const { email, password, fname, lname, mname, role } = req.body;
 
-    try {
-        // Check if user already exists
-        const userExists = await User.findOne({ email });
-
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // HASH PASSWORD HERE (Phase 3)
-        const user = await User.create({
-            email,
-            password,
-            fname,
-            lname,
-            mname,
-            role,
-        });
-
-        if (user) {
-            res.status(201).json({
-                _id: user.user_id,
-                fname: user.fname,
-                lname: user.lname,
-                email: user.email,
-                role: user.role,
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
@@ -173,7 +138,7 @@ const getUserById = async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const createUser = async (req, res) => {
-    const { first_name, last_name, email, password, role = 'Student', description = '' } = req.body;
+    const { first_name, last_name, mname, email, password, role = 'Student', description = '' } = req.body;
 
     try {
         // Validate required fields
@@ -196,6 +161,7 @@ const createUser = async (req, res) => {
             password,
             fname: first_name,
             lname: last_name,
+            mname: mname,
             role,
             description
         });
@@ -327,7 +293,6 @@ const updateUserProfilePicture = async (req, res) => {
 
 
 export { 
-    registerUser, 
     loginUser, 
     deleteUser, 
     updateUser, 

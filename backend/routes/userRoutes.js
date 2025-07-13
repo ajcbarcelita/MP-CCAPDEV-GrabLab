@@ -1,8 +1,9 @@
 import express from 'express';
 import { 
-    registerUser, 
+     
     loginUser, 
     searchUser, 
+     
     deleteUser, 
     updateUser, 
     upload,
@@ -15,7 +16,7 @@ import {
 const router = express.Router();
 
 // Public routes
-router.post('/register', registerUser);
+router.post('/register', createUser);
 router.post('/login', loginUser);
 
 
