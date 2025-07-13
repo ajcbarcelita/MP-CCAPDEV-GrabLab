@@ -6,17 +6,21 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUsersStore } from '@/stores/users_store.js'
+import axios from 'axios'
 
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const firstName = ref('')
+const middleName = ref('')
 const lastName = ref('')
+const role = ref('Student') // Default role for new users
 const error = ref('')
+
 const router = useRouter()
 const usersStore = useUsersStore()
 
-function handleRegister() {
+async function handleRegister() {
 	const emailPattern = /^[a-zA-Z0-9._%+-]+@dlsu\.edu\.ph$/
 	if (!emailPattern.test(email.value)) {
 		error.value = 'Please enter a valid DLSU email address.'
@@ -26,26 +30,29 @@ function handleRegister() {
 		error.value = 'Passwords do not match.'
 		return
 	}
-	const existingUser = usersStore.users.find((u) => u.email === email.value)
-	if (existingUser) {
-		error.value = 'Email already registered. Please use a different email.'
-		return
+
+	// Axios POST request to register the user to backend API (/api/users)
+	try {
+		const res = await axios.post('http://localhost:3000/api/users', {
+			email: email.value,
+			password: password.value,
+			fname: firstName.value,
+			mname: middleName.value,
+			lname: lastName.value,
+			role: role.value, // Default role for new users
+			status: 'Active', // Default status for new users
+			profile_pic_path: '/uploads/profile_pictures/default_profile_picture.jpeg', // Default profile picture path
+			description: '', // Default description
+		})
+		error.value = ''
+		router.push({ path: '/login', query: { registered: 'true' } })
+	} catch (err) {
+		if (err.response && err.response.data && err.response.data.message) {
+			error.value = err.response.data.message
+		} else {
+			error.value = 'Registration failed. Please try again.'
+		}
 	}
-	const newUser = {
-		user_id: Date.now(), // Simple unique ID based on timestamp
-		email: email.value,
-		password: password.value,
-		fname: firstName.value,
-		lname: lastName.value,
-		mname: '',
-		role: 'Student', // Default role for new users
-		status: 'Active', // Default status for new users
-		profile_pic_path: '',
-		description: '',
-	}
-	usersStore.addUser(newUser)
-	error.value = ''
-	router.push({ path: '/login', query: { registered: 'true' } })
 }
 </script>
 
@@ -82,6 +89,16 @@ function handleRegister() {
 				</div>
 
 				<div>
+					<label class="form-label">Middle Name</label>
+					<input
+						v-model="middleName"
+						type="text"
+						class="form-input"
+						placeholder="Middle Name"
+					/>
+				</div>
+
+				<div>
 					<label class="form-label">Last Name</label>
 					<input
 						v-model="lastName"
@@ -100,6 +117,24 @@ function handleRegister() {
 						placeholder="name@dlsu.edu.ph"
 					/>
 				</div>
+
+				<div>
+					<label class="form-label">Role</label>
+					<div class="role-radio-group">
+						<!-- Radio buttons for role selection -->
+						<label>
+							<label>
+								<input type="radio" value="Student" v-model="role" />
+								Student
+							</label>
+							<label style="margin-left: 1em">
+								<input type="radio" value="Technician" v-model="role" />
+								Technician
+							</label>
+						</label>
+					</div>
+				</div>
+
 				<div>
 					<label class="form-label">Password</label>
 					<input
@@ -124,4 +159,3 @@ function handleRegister() {
 		</div>
 	</div>
 </template>
-

@@ -1,7 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Jersey+25&family=Jomhuria&family=Karma:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Custom CSS Variables */
 :root {
@@ -81,4 +78,13 @@
 /* Error message */
 .error-message {
 	@apply mb-4 px-4 py-2 rounded bg-red-100 border border-red-400 text-red-700;
+}
+
+.role-radio-group {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 2em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
 }

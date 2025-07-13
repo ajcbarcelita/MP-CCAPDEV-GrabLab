@@ -41,14 +41,13 @@ const userSchema = new mongoose.Schema(
         role: {
             type: String,
             required: true,
-            enum: ["Student", "Technician", "Admin"],
+            enum: ["Student", "Technician"],
             default: "Student",
         },
         status: {
             type: String,
             required: true,
             enum: ["Active", "Inactive"],
-            default: "Active",
         },
         profile_pic_path: {
             type: String,
