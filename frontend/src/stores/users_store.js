@@ -78,8 +78,8 @@ export const useUsersStore = defineStore('users', {
         // Set current user
         this.currentUser = {
           user_id: user.user_id,
-          first_name: user.fname,
-          last_name: user.lname,
+          fname: user.fname,
+          lname: user.lname,
           email: user.email,
           role: user.role
         };
@@ -118,35 +118,39 @@ export const useUsersStore = defineStore('users', {
         this.loading = false
       }
     },
-
+    
     // Update user profile
     async updateUserProfile(userId, updateData) {
-      this.loading = true
+      this.loading = true;
       try {
-        const response = await axios.put(`${API_URL}/users/${userId}`, updateData)
-        const updatedUser = response.data
+        // Ensure we're only sending allowed fields
+        const payload = {
+          fname: updateData.fname,
+          lname: updateData.lname,
+          description: updateData.description || ''
+        };
 
-        // Update user in users array
-        const index = this.users.findIndex(u => u.user_id === userId)
+        const response = await axios.put(`${API_URL}/users/${userId}`, payload)
+        const updatedUser = response.data;
+
+        // Update local state
+        const index = this.users.findIndex(u => u.user_id === userId);
         if (index !== -1) {
-          this.users[index] = updatedUser
+          this.users[index] = { ...this.users[index], ...updatedUser };
         }
 
         // Update currentUser if it's the same user
-        if (this.currentUser && this.currentUser.user_id === userId) {
-          this.currentUser = updatedUser
-          // Update session storage
-          sessionStorage.setItem('user', JSON.stringify(updatedUser))
+        if (this.currentUser?.user_id === userId) {
+          this.currentUser = { ...this.currentUser, ...updatedUser };
+          sessionStorage.setItem('user', JSON.stringify(this.currentUser));
         }
 
-        this.error = null
-        return updatedUser
+        return updatedUser;
       } catch (error) {
-        this.error = error.message
-        console.error('Error updating user profile:', error)
-        throw error
+        console.error('Update error:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'Failed to update profile');
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
@@ -191,6 +195,7 @@ export const useUsersStore = defineStore('users', {
 
     // Delete user account
     async deleteUserAccount(userId) {
+      console.log('Deleting user with ID:', userId)
       this.loading = true
       try {
         await axios.delete(`${API_URL}/users/${userId}`)
