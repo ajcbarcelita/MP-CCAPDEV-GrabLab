@@ -129,9 +129,19 @@ export const deleteReservation = async (req, res) => {
             return res.status(404).json({ message: "Reservation not found" });
         }
 
-        await Reservation.findByIdAndDelete(id);
-        res.json({ message: "Reservation deleted successfully" });
+        // Instead of deleting, update the status to "Deleted"
+        const updatedReservation = await Reservation.findByIdAndUpdate(
+            id,
+            { status: "Deleted" },
+            { new: true }
+        );
+
+        res.json({
+            message: "Reservation marked as deleted successfully",
+            reservation: updatedReservation
+        });
     } catch (error) {
+        console.error("Error marking reservation as deleted:", error);
         res.status(500).json({ message: error.message });
     }
 };

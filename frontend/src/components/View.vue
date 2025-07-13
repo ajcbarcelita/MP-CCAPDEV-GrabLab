@@ -262,11 +262,17 @@ export default {
 		})
 
 		const filteredReservations = computed(() => {
+			// First, filter out any reservations with "Deleted" status
+			const activeReservations = reservationsStore.reservations.filter(res =>
+				res.status !== 'Deleted'
+			);
+
+			// Then apply building filter if needed
 			if (selectedBuilding.value === 'All') {
-				return reservationsStore.reservations;
+				return activeReservations;
 			} else {
 				// Filter reservations by the selected building
-				return reservationsStore.reservations.filter(reservation => {
+				return activeReservations.filter(reservation => {
 					return reservation.lab_slot?.lab?.building === selectedBuilding.value;
 				});
 			}
@@ -322,6 +328,29 @@ export default {
       console.log(`Navigating to reservation for lab ID: ${labId}`)
 		}
 
+		// Temporary placeholder for edit function
+		const editReservation = (reservationId) => {
+			alert('Edit functionality will be implemented soon')
+		}
+
+		// Handle deleting a reservation
+		const deleteReservation = async (reservationId) => {
+			if (confirm('Are you sure you want to delete this reservation?')) {
+				isLoading.value = true
+				error.value = null
+				try {
+					// Use the store's deleteReservation action
+					await reservationsStore.deleteReservation(reservationId)
+					console.log(`Reservation ${reservationId} marked as deleted successfully`)
+				} catch (err) {
+					console.error('Error deleting reservation:', err)
+					error.value = 'Failed to delete reservation. Please try again later.'
+				} finally {
+					isLoading.value = false
+				}
+			}
+		}
+
 		return {
 			handleLogout,
 			isTechnician,
@@ -334,7 +363,9 @@ export default {
 			formatDateTime,
 			formatTimeSlot,
 			isLoading,
-			error
+			error,
+			editReservation,
+			deleteReservation
 		}
 	},
 }
