@@ -113,9 +113,7 @@ export const useLabsStore = defineStore('labs', {
         getLabsByBuilding: (state) => (building) => {
             return state.labs.filter(lab => lab.building === building)
         },
-        getAvailableLabs: (state) => {
-            return state.labs.filter(lab => lab.status === 'available')
-        },
+        // Get all unique buildings from the labs
         getAllUniqueBuildings: (state) => {
             return [...new Set(state.labs.map(lab => lab.building))]
         },

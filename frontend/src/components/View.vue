@@ -15,7 +15,7 @@
 		</div>
 
 		<!-- Error Message -->
-		<div v-if="error" class="error-message">
+		<div v-if="error" class="text-center">
 			{{ error }}
 		</div>
 
@@ -46,7 +46,7 @@
 						type="number"
 						id="number"
 						class="search-input"
-						placeholder="Enter ID number"
+						placeholder="Enter User ID number"
 						v-model="userIdFilter"
 					/>
 				</div>
@@ -54,7 +54,7 @@
 		</div>
 
 		<!-- Loading State -->
-		<div v-if="isLoading" class="loading-message">
+		<div v-if="isLoading" class=" text-center loading-message">
 			Loading...
 		</div>
 
@@ -68,7 +68,7 @@
     <!-- Labs Grid -->
       <!-- Display labs in a grid -->
 			<div v-else class="lab-slots-grid">
-				<div class="lab-card" v-for="lab in labs" :key="lab.lab_id">
+				<div class="lab-card" v-for="lab in labs" :key="lab._id">
 					<div class="lab-card-header">{{ lab.display_name }}</div>
 					<div class="lab-info">
 						<span id="buildingName" class="lab-info-label">Building: </span>
@@ -85,7 +85,7 @@
 						<span id="LabStatus" class="lab-info-value">{{ lab.status }}<br /></span>
 					</div>
 					<div class="lab-card-actions">
-						<button class="lab-btn" @click="navigateToReservation(lab.lab_id)">
+						<button class="lab-btn" @click="navigateToReservation(lab._id)">
 							View
 						</button>
 					</div>
@@ -101,8 +101,8 @@
 		>
 			<!-- No Reservations Message -->
 			<div v-if="!isLoading && filteredReservations.length === 0" class="no-data-message">
-				<p>No reservations found for user ID: {{ userIdFilter }}</p>
-				<p class="no-data-hint">Try checking the ID number or viewing all reservations.</p>
+				<p class="text-center error-message">No reservations found for user ID: {{ userIdFilter }}</p>
+				<p class="text-center error-message">Try checking the ID number or viewing all reservations.</p>
 			</div>
 
       <!-- Reservations Grid -->
@@ -118,18 +118,18 @@
 					<div class="reservation-info">
 						<div>
 							<span class="reservation-info-label">User ID: </span>
-							<span class="reservation-info-value">{{ reservation.user_id }}</span>
+							<span class="reservation-info-value">{{ reservation.user?.email || 'Unknown User' }}</span>
 						</div>
 						<div>
 							<span class="reservation-info-label">Lab: </span>
 							<span class="reservation-info-value">{{
-								getLabName(reservation.lab_id)
+								reservation.lab_slot?.lab?.display_name || 'Unknown Lab'
 							}}</span>
 						</div>
 						<div>
 							<span class="reservation-info-label">Date: </span>
 							<span class="reservation-info-value">{{
-								formatDateTime(reservation.reservation_date)
+								formatDateTime(reservation.createdAt)
 							}}</span>
 						</div>
 					</div>
@@ -170,6 +170,7 @@ export default {
     const error = ref(null)
 
 		// Fetch initial data
+    // This works by checking if the user is logged in and then fetching labs and reservations
 		onMounted(async () => {
 			// Check if user is logged in
 			const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -181,9 +182,9 @@ export default {
 			isLoading.value = true
 			error.value = null
 			try {
-				await Promise.all([
+				await Promise.all([ // Fetch all labs
 					labsStore.fetchAllLabs(),
-					isTechnician.value ? reservationsStore.fetchReservations() : Promise.resolve()
+					isTechnician.value ? reservationsStore.fetchReservations() : Promise.resolve() // Fetch reservations only if technician
 				])
 			} catch {
 				error.value = 'Failed to load data. Please try again later.'
@@ -193,6 +194,7 @@ export default {
 		})
 
 		// Watch for building selection changes - only fetch all labs when needed
+    // Watch makes it reactive to changes in selectedBuilding
 		watch(selectedBuilding, async (newValue) => {
 			if (newValue === 'All') {
 				isLoading.value = true
@@ -223,6 +225,8 @@ export default {
 		})
 
     //Get the Labs using Getters on Lab Store
+    // Used for displaying labs based on selected building
+    // This is reactive to changes in selectedBuilding
 		const labs = computed(() => {
 			if (selectedBuilding.value === 'All') {
 				return labsStore.labs
@@ -234,7 +238,6 @@ export default {
 		const filteredReservations = computed(() => {
 			return reservationsStore.reservations
 		})
-
 
 		const formatDateTime = (dateTime) => {
 			return new Date(dateTime).toLocaleString()
@@ -248,6 +251,7 @@ export default {
 
 		const navigateToReservation = (labId) => {
 			router.push(`/reservation/${labId}`)
+      console.log(`Navigating to reservation for lab ID: ${labId}`)
 		}
 
 		return {
@@ -261,7 +265,7 @@ export default {
 			filteredReservations,
 			formatDateTime,
 			isLoading,
-			error,
+			error
 		}
 	},
 }
