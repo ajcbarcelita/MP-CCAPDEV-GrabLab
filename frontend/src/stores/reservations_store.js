@@ -14,7 +14,10 @@ export const useReservationsStore = defineStore('reservations', {
             this.loading = true
             try {
                 const response = await axios.get(`${API_URL}/reservations`)
-                this.reservations = response.data
+                this.reservations = response.data.map(reservation => ({
+                    ...reservation,
+                    time_slots: reservation.time_slots || [] // Ensure time_slots is always an array
+                }))
                 this.error = null
             } catch (error) {
                 this.error = error.message
@@ -24,16 +27,21 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
         async fetchReservationsByUserId(userId) {
-            this.loading = true
+            this.loading = true;
             try {
-                const response = await axios.get(`${API_URL}/reservations/user/${userId}`)
-                this.reservations = response.data
-                this.error = null
+                const response = await axios.get(`${API_URL}/reservations/user/${userId}`);
+                this.reservations = response.data.map(reservation => ({
+                    ...reservation,
+                    time_slots: reservation.time_slots || [],
+                    lab: reservation.lab_slot?.lab || null, // Include lab information if available
+                    user: reservation.user || null // Include user information if available
+                }));
+                this.error = null;
             } catch (error) {
-                this.error = error.message
-                console.error('Error fetching user reservations:', error)
+                this.error = error.message;
+                console.error('Error fetching user reservations:', error);
             } finally {
-                this.loading = false
+                this.loading = false;
             }
         },
         async fetchReservationsByLab(labId) {

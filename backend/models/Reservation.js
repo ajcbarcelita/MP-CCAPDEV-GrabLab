@@ -7,6 +7,10 @@ const reservationSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
+        user_id: {
+            type: Number,
+            required: false, // Making it optional since we have the user ObjectId
+        },
         lab_slot: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "LabSlot",
@@ -15,7 +19,8 @@ const reservationSchema = new mongoose.Schema(
         time_slots: [
             {
                 type: mongoose.Schema.Types.ObjectId,
-                required: true, // references the _id of a time slot subdocument in LabSlot
+                ref: "TimeSlot", // Ensure this references the correct subdocument
+                required: true,
             },
         ],
         status: {

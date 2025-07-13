@@ -106,9 +106,9 @@
 			</div>
 
       <!-- Reservations Grid -->
-			<div v-else class="reservations-grid">
+			<div v-else class="reservations-grid flex flex-col items-center max-w-60 mx-w-4xl mx-auto ">
 				<div
-					class="reservation-card"
+					class="reservation-card align-middle"
 					v-for="reservation in filteredReservations"
 					:key="reservation._id"
 				>
@@ -117,21 +117,40 @@
 					</div>
 					<div class="reservation-info">
 						<div>
-							<span class="reservation-info-label">User ID: </span>
-							<span class="reservation-info-value">{{ reservation.user?.email || 'Unknown User' }}</span>
+							<span class="reservation-info-label">User Name: </span>
+							<span class="reservation-info-value">{{ reservation.user?.fname || 'Unknown' }} {{ reservation.user?.lname || '' }}</span>
+						</div>
+						<div>
+							<span class="reservation-info-label">User Email: </span>
+							<span class="reservation-info-value">{{ reservation.user?.email || 'Unknown Email' }}</span>
 						</div>
 						<div>
 							<span class="reservation-info-label">Lab: </span>
-							<span class="reservation-info-value">{{
-								reservation.lab_slot?.lab?.display_name || 'Unknown Lab'
-							}}</span>
+							<span class="reservation-info-value">{{ reservation.lab_slot?.lab?.display_name || 'Unknown Lab' }}</span>
 						</div>
 						<div>
-							<span class="reservation-info-label">Date: </span>
-							<span class="reservation-info-value">{{
-								formatDateTime(reservation.createdAt)
-							}}</span>
+							<span class="reservation-info-label">Time Slots: </span>
+							<span class="reservation-info-value">
+								<div v-if="reservation.time_slots && reservation.time_slots.length > 0">
+									<div v-for="(slot, index) in reservation.time_slots" :key="index" class="text-center">
+										{{ formatTimeSlot(slot) }}
+									</div>
+								</div>
+								<div v-else>No time slots available</div>
+							</span>
 						</div>
+						<div>
+							<span class="reservation-info-label">Status: </span>
+							<span class="reservation-info-value">{{ reservation.status }}</span>
+						</div>
+						<div>
+							<span class="reservation-info-label">Created Date: </span>
+							<span class="reservation-info-value">{{ formatDateTime(reservation.createdAt) }}</span>
+						</div>
+            <div>
+              <span class="reservation-info-label">Updated Date: </span>
+              <span class="reservation-info-value">{{ formatDateTime(reservation.updatedAt) }}</span>
+            </div>
 					</div>
 					<div class="reservation-card-actions flex justify-center items-center gap-4">
 						<button class="edit-btn btn-primary bg-blue-500 text-white px-4 py-2" @click="editReservation(reservation._id)">Edit</button>
@@ -216,17 +235,19 @@ export default {
 
 		// Watch for user ID filter changes
 		watch(userIdFilter, async (newValue) => {
-			if (isTechnician.value && newValue) {
-				isLoading.value = true
-				error.value = null
-				try {
-					await reservationsStore.fetchReservationsByUserId(newValue)
-				} catch {
-					error.value = 'Failed to load reservations. Please try again later.'
-				} finally {
-					isLoading.value = false
-				}
-			}
+			console.log('User ID filter changed:', newValue); // Debugging log
+            if (isTechnician.value && newValue) {
+                isLoading.value = true;
+                error.value = null;
+                try {
+                    await reservationsStore.fetchReservationsByUserId(newValue);
+                } catch (err) {
+                    console.error('Error fetching reservations by user ID:', err);
+                    error.value = 'Failed to load reservations. Please try again later.';
+                } finally {
+                    isLoading.value = false;
+                }
+            }
 		})
 
     //Get the Labs using Getters on Lab Store
@@ -241,11 +262,53 @@ export default {
 		})
 
 		const filteredReservations = computed(() => {
-			return reservationsStore.reservations
+			if (selectedBuilding.value === 'All') {
+				return reservationsStore.reservations;
+			} else {
+				// Filter reservations by the selected building
+				return reservationsStore.reservations.filter(reservation => {
+					return reservation.lab_slot?.lab?.building === selectedBuilding.value;
+				});
+			}
 		})
 
 		const formatDateTime = (dateTime) => {
 			return new Date(dateTime).toLocaleString()
+		}
+
+		// Function to format time slots
+		const formatTimeSlot = (slot) => {
+			// Check if slot has startTime and endTime properties
+			if (slot && slot.startTime && slot.endTime) {
+				// Format time in 12-hour format with AM/PM
+				const formatTime = (timeStr) => {
+					const [hours, minutes] = timeStr.split(':').map(Number);
+					const period = hours >= 12 ? 'PM' : 'AM';
+					const hour12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+					return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+				};
+
+				return `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+			}
+			// Check if it has start_time and end_time (alternate naming)
+			else if (slot && slot.start_time && slot.end_time) {
+				// Format time in 12-hour format with AM/PM
+				const formatTime = (timeStr) => {
+					const [hours, minutes] = timeStr.split(':').map(Number);
+					const period = hours >= 12 ? 'PM' : 'AM';
+					const hour12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+					return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+				};
+
+				return `${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`;
+			}
+			// Just display the ID if that's all we have
+			else if (typeof slot === 'string' || (slot && slot._id)) {
+				return `Time Slot #${typeof slot === 'string' ? slot.substring(slot.length - 6) : slot._id.toString().substring(slot._id.toString().length - 6)}`;
+			}
+			else {
+				return 'Time slot details not available';
+			}
 		}
 
 		// Navigation handlers
@@ -269,6 +332,7 @@ export default {
 			userIdFilter,
 			filteredReservations,
 			formatDateTime,
+			formatTimeSlot,
 			isLoading,
 			error
 		}
