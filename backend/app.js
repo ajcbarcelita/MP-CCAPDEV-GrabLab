@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import userRoutes from "./routes/userRoutes.js";
@@ -21,8 +22,17 @@ app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
-// Serve static files
-app.use("/uploads/profile_pictures", express.static(path.join(__dirname, "uploads", "profile_pictures")));
+// Configure profile pictures directory
+const profilePicsDir = path.join(__dirname, "uploads", "profile_pictures");
+
+// Ensure directory exists
+if (!fs.existsSync(profilePicsDir)) {
+  fs.mkdirSync(profilePicsDir, { recursive: true });
+  console.log(`Created profile pictures directory: ${profilePicsDir}`);
+}
+
+// Serve profile pictures
+app.use("/uploads/profile_pictures", express.static(profilePicsDir));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes with error handling

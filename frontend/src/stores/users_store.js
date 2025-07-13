@@ -118,7 +118,7 @@ export const useUsersStore = defineStore('users', {
         this.loading = false
       }
     },
-    
+
     // Update user profile
     async updateUserProfile(userId, updateData) {
       this.loading = true;
@@ -155,6 +155,8 @@ export const useUsersStore = defineStore('users', {
     },
 
     // Update user profile picture
+
+    // Update user profile picture
     async updateUserProfilePicture(userId, file) {
       this.loading = true
       try {
@@ -172,20 +174,19 @@ export const useUsersStore = defineStore('users', {
         // Update user in users array
         const index = this.users.findIndex(u => u.user_id === userId)
         if (index !== -1) {
-          this.users[index] = updatedUser
+          this.users[index] = { ...this.users[index], ...updatedUser }
         }
 
         // Update currentUser if it's the same user
         if (this.currentUser && this.currentUser.user_id === userId) {
-          this.currentUser = updatedUser
-          // Update session storage
-          sessionStorage.setItem('user', JSON.stringify(updatedUser))
+          this.currentUser = { ...this.currentUser, ...updatedUser }
+          sessionStorage.setItem('user', JSON.stringify(this.currentUser))
         }
 
         this.error = null
         return updatedUser
       } catch (error) {
-        this.error = error.message
+        this.error = error.response?.data?.message || error.message
         console.error('Error updating profile picture:', error)
         throw error
       } finally {

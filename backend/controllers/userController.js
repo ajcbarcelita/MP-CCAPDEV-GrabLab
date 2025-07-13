@@ -2,11 +2,18 @@ import User from '../models/User.js';
 import Reservation from '../models/Reservation.js';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Ensure upload directory exists
+const uploadsDir = path.join(__dirname, '../uploads/profile_pictures')
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true })
+}
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
@@ -18,7 +25,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB limit
@@ -27,7 +34,7 @@ const upload = multer({
         const allowedTypes = /jpeg|jpg|png|gif/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
         const mimetype = allowedTypes.test(file.mimetype);
-        
+
         if (mimetype && extname) {
             return cb(null, true);
         } else {
@@ -36,6 +43,66 @@ const upload = multer({
     }
 });
 
+
+// @desc    Update user profile picture
+// @route   POST /api/users/:userId/profile-picture
+// @access  Private
+const updateUserProfilePicture = async (req, res) => {
+    try {
+        const { userId } = req.params
+
+        console.log('Controller: Updating profile picture for user:', userId)
+
+        const numericUserId = parseInt(userId, 10)
+
+        if (isNaN(numericUserId)) {
+            return res.status(400).json({ message: 'Invalid user ID' })
+        }
+
+        const user = await User.findOne({ user_id: numericUserId })
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' })
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' })
+        }
+
+        // Delete old profile picture if it exists
+        if (user.profile_pic_path) {
+            const oldPicPath = path.join(__dirname, '..', user.profile_pic_path)
+            if (fs.existsSync(oldPicPath)) {
+                fs.unlinkSync(oldPicPath)
+            }
+        }
+
+        // Update profile picture path
+        user.profile_pic_path = `/uploads/profile_pictures/${req.file.filename}`
+        const updatedUser = await user.save()
+
+        // Transform data to match frontend expectations
+        const transformedUser = {
+            user_id: updatedUser.user_id,
+            first_name: updatedUser.fname,
+            last_name: updatedUser.lname,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            description: updatedUser.description || '',
+            profile_pic_path: updatedUser.profile_pic_path,
+            status: updatedUser.status || 'active',
+            created_at: updatedUser.createdAt,
+            updated_at: updatedUser.updatedAt
+        }
+
+        res.json(transformedUser)
+    } catch (error) {
+        console.error('Profile picture update error:', error)
+        res.status(500).json({ message: 'Server error', error: error.message })
+    }
+};
+
+
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
@@ -43,7 +110,7 @@ const registerUser = async (req, res) => {
     const { email, password, fname, lname, mname = '', role = 'Student', status = 'Active' } = req.body;
 
     console.log('Registering user with email:', email);
-    
+
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -68,7 +135,7 @@ const registerUser = async (req, res) => {
         });
 
         res.status(201).json({
-            user_id: user.user_id,  
+            user_id: user.user_id,
             fname: user.fname,
             lname: user.lname,
             email: user.email,
@@ -113,7 +180,7 @@ const getAllUsers = async (req, res) => {
         const users = await User.find({})
             .select('-password') // Exclude password field
             .sort({ createdAt: -1 });
-        
+
         // Transform data to match frontend expectations
         const transformedUsers = users.map(user => ({
             user_id: user.user_id,
@@ -141,11 +208,11 @@ const getUserById = async (req, res) => {
     try {
         const { userId } = req.params;
         console.log('Backend received userId:', userId, 'Type:', typeof userId);
-        
+
         // Convert userId to number for consistent comparison
         const numericUserId = parseInt(userId, 10);
         console.log('Converted to numeric userId:', numericUserId);
-        
+
         const user = await User.findOne({ user_id: numericUserId }).select('-password').lean();
         console.log('User found in DB:', user ? 'Yes' : 'No');
 
@@ -176,19 +243,21 @@ const getUserById = async (req, res) => {
 const deleteUser = async (req, res) => {
     try {
         const { userId } = req.params; // Match the route parameter name
-        
+
         // Find the user by user_id field
         const user = await User.findOne({ user_id: userId });
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
-        // Delete all reservations associated with the user
-        await Reservation.deleteMany({ user: userId });
-        
-        // Delete the user using the MongoDB _id
-        await User.findByIdAndDelete(user._id);
-        
+
+        // Delete all reservations associated with the user -- to be fixed
+        //await Reservation.deleteMany({ user: userId });
+        // Also delete profile picture if it exists
+
+        // Delete the user using user_id
+        await User.findOneAndDelete({ user_id: userId });
+
         res.json({ message: 'User and associated reservations deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -236,52 +305,10 @@ const updateUser = async (req, res) => {
     }
 };
 
-// @desc    Update user profile picture
-// @route   POST /api/users/:userId/profile-picture
-// @access  Private
-const updateUserProfilePicture = async (req, res) => {
-    try {
-        const { userId } = req.params;
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' });
-        }
-
-        // Update profile picture path
-        user.profile_pic_path = `/uploads/profile_pictures/${req.file.filename}`;
-        const updatedUser = await user.save();
-
-        // Transform data to match frontend expectations
-        const transformedUser = {
-            user_id: updatedUser.user_id,
-            first_name: updatedUser.fname,
-            last_name: updatedUser.lname,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            description: updatedUser.description || '',
-            profile_pic_path: updatedUser.profile_pic_path || null,
-            status: updatedUser.status || 'active',
-            created_at: updatedUser.createdAt,
-            updated_at: updatedUser.updatedAt
-        };
-
-        res.json(transformedUser);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-
-export { 
-    loginUser, 
-    deleteUser, 
-    updateUser, 
+export {
+    loginUser,
+    deleteUser,
+    updateUser,
     upload,
     getAllUsers,
     getUserById,
