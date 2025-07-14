@@ -165,43 +165,56 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
     const { email, password, rememberMe } = req.body;
-    console.log("Login attempt:", email, password, rememberMe);
-    console.log("User found:", !!email);
+    console.log("Login attempt for email:", email);
+
     try {
-        const user = await User.findOne({ email }); // Find user by email
+        const user = await User.findOne({ email });
 
-        // If user is found, compare password, and if it matches, return user data
-        if (user && (await user.comparePassword(password))) {
-            console.log("Password match!");
-            // create a JWT Token
-            // a JWT token is used for authenticating the user in subsequent requests to the server
-            // it is needed to access protected routes
-            const token = jwt.sign({ user_id: user.user_id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
-                expiresIn: rememberMe ? "21d" : "1d",
-            });
-
-            // set the token in the response header as a http-only cookie
-            res.cookie("token", token, {
-                httpOnly: true,
-                maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 21 : 1000 * 60 * 60 * 24, // 21 days or 1 day
-                sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
-            });
-
-            res.json({
-                user_id: user.user_id,
-                fname: user.fname,
-                lname: user.lname,
-                email: user.email,
-                role: user.role,
-                token,
-            });
-        } else {
-            res.status(401).json({ message: "Invalid email or password" });
+        // If user not found, return 401 Unauthorized
+        if (!user) {
+            return res.status(401).json({ message: "Invalid email or password" });
         }
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+
+        // If user is inactive, return 403 Forbidden
+        if (user.status === "Inactive") {
+            return res.status(403).json({ message: "Your account is inactive. Contact IT support for help." });
+        }
+
+        // If password is incorrect, return 401 Unauthorized
+        if (!(await user.comparePassword(password))) {
+            return res.status(401).json({ message: "Invalid email or password." });
+        }
+
+        // Create JWT token
+        const token = jwt.sign({ user_id: user.user_id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: rememberMe ? "21d" : "1d",
+        });
+
+        // Set token as a httpOnly cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+            maxAge: rememberMe ? 1000 * 60 * 24 * 21 : 1000 * 60 * 60 * 24, // 21 days or 1 day
+            sameSite: "Strict", // Prevent CSRF attacks
+            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+        });
+
+        // Transform user data to match frontend expectations
+        res.json({
+            user_id: user.user_id,
+            fname: user.fname,
+            lname: user.lname,
+            email: user.email,
+            role: user.role,
+            token,
+        });
+    } catch (err) {
+        // Log the error for debugging
+        console.error("Login error:", err);
+        if (err instanceof TokenExpiredError) {
+            return res.status(401).json({ message: "Token expired. Please log in again." });
+        }
+        res.status(500).json({ message: "Server error", error: err.message });
     }
 };
 
@@ -304,11 +317,7 @@ const deleteUser = async (req, res) => {
         }
 
         // Instead of deleting, update the status to "Inactive"
-        const updatedUser = await User.findOneAndUpdate(
-            { user_id: userId },
-            { status: "Inactive" },
-            { new: true }
-        );
+        const updatedUser = await User.findOneAndUpdate({ user_id: userId }, { status: "Inactive" }, { new: true });
 
         res.json({
             message: "User marked as inactive successfully",
