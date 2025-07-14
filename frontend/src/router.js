@@ -20,6 +20,7 @@ const routes = [
 	{ path: '/technician-landing', component: TechLanding, meta: { requiresAuth: true } },
 	{ path: '/profile', component: Profile_Page, meta: { requiresAuth: true } },
 	{ path: '/reservation/:labId', component: Reservation, meta: { requiresAuth: true } },
+	{ path: '/reservation/:labId/:reservationId', component: Reservation, meta: { requiresAuth: true } },
 	{ path: '/view', component: View, meta: { requiresAuth: true } },
 ]
 
