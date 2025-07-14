@@ -1,34 +1,37 @@
-import User from '../models/User.js';
-import Reservation from '../models/Reservation.js';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import User from "../models/User.js";
+import Reservation from "../models/Reservation.js";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import jwtPkg from "jsonwebtoken";
 
+const jwt = jwtPkg;
+const { TokenExpiredError } = jwtPkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure upload directory exists
-const uploadsDir = path.join(__dirname, '../uploads/profile_pictures')
+const uploadsDir = path.join(__dirname, "../uploads/profile_pictures");
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true })
+    fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../uploads/profile_pictures'));
+        cb(null, path.join(__dirname, "../uploads/profile_pictures"));
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname));
-    }
+    },
 });
 
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 5 * 1024 * 1024, // 5MB limit
     },
     fileFilter: (req, file, cb) => {
         const allowedTypes = /jpeg|jpg|png|gif/;
@@ -38,48 +41,47 @@ const upload = multer({
         if (mimetype && extname) {
             return cb(null, true);
         } else {
-            cb(new Error('Only image files are allowed'));
+            cb(new Error("Only image files are allowed"));
         }
-    }
+    },
 });
-
 
 // @desc    Update user profile picture
 // @route   POST /api/users/:userId/profile-picture
 // @access  Private
 const updateUserProfilePicture = async (req, res) => {
     try {
-        const { userId } = req.params
+        const { userId } = req.params;
 
-        console.log('Controller: Updating profile picture for user:', userId)
+        console.log("Controller: Updating profile picture for user:", userId);
 
-        const numericUserId = parseInt(userId, 10)
+        const numericUserId = parseInt(userId, 10);
 
         if (isNaN(numericUserId)) {
-            return res.status(400).json({ message: 'Invalid user ID' })
+            return res.status(400).json({ message: "Invalid user ID" });
         }
 
-        const user = await User.findOne({ user_id: numericUserId })
+        const user = await User.findOne({ user_id: numericUserId });
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' })
+            return res.status(404).json({ message: "User not found" });
         }
 
         if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' })
+            return res.status(400).json({ message: "No file uploaded" });
         }
 
         // Delete old profile picture if it exists
         if (user.profile_pic_path) {
-            const oldPicPath = path.join(__dirname, '..', user.profile_pic_path)
+            const oldPicPath = path.join(__dirname, "..", user.profile_pic_path);
             if (fs.existsSync(oldPicPath)) {
-                fs.unlinkSync(oldPicPath)
+                fs.unlinkSync(oldPicPath);
             }
         }
 
         // Update profile picture path
-        user.profile_pic_path = `/uploads/profile_pictures/${req.file.filename}`
-        const updatedUser = await user.save()
+        user.profile_pic_path = `/uploads/profile_pictures/${req.file.filename}`;
+        const updatedUser = await user.save();
 
         // Transform data to match frontend expectations
         const transformedUser = {
@@ -88,33 +90,32 @@ const updateUserProfilePicture = async (req, res) => {
             last_name: updatedUser.lname,
             email: updatedUser.email,
             role: updatedUser.role,
-            description: updatedUser.description || '',
+            description: updatedUser.description || "",
             profile_pic_path: updatedUser.profile_pic_path,
-            status: updatedUser.status || 'active',
+            status: updatedUser.status || "active",
             created_at: updatedUser.createdAt,
-            updated_at: updatedUser.updatedAt
-        }
+            updated_at: updatedUser.updatedAt,
+        };
 
-        res.json(transformedUser)
+        res.json(transformedUser);
     } catch (error) {
-        console.error('Profile picture update error:', error)
-        res.status(500).json({ message: 'Server error', error: error.message })
+        console.error("Profile picture update error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
-
 
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = async (req, res) => {
-    const { email, password, fname, lname, mname = '', role = 'Student', status = 'Active' } = req.body;
+    const { email, password, fname, lname, mname = "", role = "Student", status = "Active" } = req.body;
 
-    console.log('Registering user with email:', email);
+    console.log("Registering user with email:", email);
 
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: "User already exists" });
         }
 
         // Get the next available user_id
@@ -130,8 +131,8 @@ const registerUser = async (req, res) => {
             mname,
             role,
             status,
-            profile_pic_path: '',
-            description: ''
+            profile_pic_path: "",
+            description: "",
         });
 
         res.status(201).json({
@@ -142,7 +143,7 @@ const registerUser = async (req, res) => {
             role: user.role,
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -150,25 +151,44 @@ const registerUser = async (req, res) => {
 // @route   POST /api/users/login
 // @access  Public
 const loginUser = async (req, res) => {
-    const { email, password } = req.body;
-
+    const { email, password, rememberMe } = req.body;
+    console.log("Login attempt:", email, password, rememberMe);
+    console.log("User found:", !!email);
     try {
-        // Check if user exists
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }); // Find user by email
 
-        if (user && (password === user.password)) { // Plaintext password comparison for Phase 2
+        // If user is found, compare password, and if it matches, return user data
+        if (user && (await user.comparePassword(password))) {
+            console.log("Password match!");
+            // create a JWT Token
+            // a JWT token is used for authenticating the user in subsequent requests to the server
+            // it is needed to access protected routes
+            const token = jwt.sign({ user_id: user.user_id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+                expiresIn: rememberMe ? "21d" : "1d",
+            });
+
+            // set the token in the response header as a http-only cookie
+            res.cookie("token", token, {
+                httpOnly: true,
+                maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 21 : 1000 * 60 * 60 * 24, // 21 days or 1 day
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+            });
+
             res.json({
                 user_id: user.user_id,
                 fname: user.fname,
                 lname: user.lname,
                 email: user.email,
                 role: user.role,
+                token,
             });
         } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+            res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -178,26 +198,26 @@ const loginUser = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({})
-            .select('-password') // Exclude password field
+            .select("-password") // Exclude password field
             .sort({ createdAt: -1 });
 
         // Transform data to match frontend expectations
-        const transformedUsers = users.map(user => ({
+        const transformedUsers = users.map((user) => ({
             user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
             email: user.email,
             role: user.role,
-            description: user.description || '',
+            description: user.description || "",
             profile_pic_path: user.profile_pic_path || null,
-            status: user.status || 'active',
+            status: user.status || "active",
             created_at: user.createdAt,
-            updated_at: user.updatedAt
+            updated_at: user.updatedAt,
         }));
 
         res.json(transformedUsers);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -207,17 +227,17 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
     try {
         const { userId } = req.params;
-        console.log('Backend received userId:', userId, 'Type:', typeof userId);
+        console.log("Backend received userId:", userId, "Type:", typeof userId);
 
         // Convert userId to number for consistent comparison
         const numericUserId = parseInt(userId, 10);
-        console.log('Converted to numeric userId:', numericUserId);
+        console.log("Converted to numeric userId:", numericUserId);
 
-        const user = await User.findOne({ user_id: numericUserId }).select('-password').lean();
-        console.log('User found in DB:', user ? 'Yes' : 'No');
+        const user = await User.findOne({ user_id: numericUserId }).select("-password").lean();
+        console.log("User found in DB:", user ? "Yes" : "No");
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: "User not found" });
         }
 
         // Transform data to match frontend expectations
@@ -227,16 +247,16 @@ const getUserById = async (req, res) => {
             last_name: user.lname,
             email: user.email,
             role: user.role,
-            description: user.description || '',
+            description: user.description || "",
             profile_pic_path: user.profile_pic_path || null,
-            status: user.status || 'active',
+            status: user.status || "active",
             created_at: user.createdAt,
-            updated_at: user.updatedAt
+            updated_at: user.updatedAt,
         };
 
         res.json(transformedUser);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -248,7 +268,7 @@ const deleteUser = async (req, res) => {
         const user = await User.findOne({ user_id: userId });
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: "User not found" });
         }
 
         // Delete all reservations associated with the user -- to be fixed
@@ -258,9 +278,9 @@ const deleteUser = async (req, res) => {
         // Delete the user using user_id
         await User.findOneAndDelete({ user_id: userId });
 
-        res.json({ message: 'User and associated reservations deleted successfully' });
+        res.json({ message: "User and associated reservations deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -275,7 +295,7 @@ const updateUser = async (req, res) => {
         const user = await User.findOne({ user_id: userId });
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: "User not found" });
         }
 
         // Update fields if provided
@@ -292,26 +312,17 @@ const updateUser = async (req, res) => {
             lname: updatedUser.lname,
             email: updatedUser.email,
             role: updatedUser.role,
-            description: updatedUser.description || '',
+            description: updatedUser.description || "",
             profile_pic_path: updatedUser.profile_pic_path || null,
-            status: updatedUser.status || 'active',
+            status: updatedUser.status || "active",
             created_at: updatedUser.createdAt,
-            updated_at: updatedUser.updatedAt
+            updated_at: updatedUser.updatedAt,
         };
 
         res.json(transformedUser);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
-export {
-    loginUser,
-    deleteUser,
-    updateUser,
-    upload,
-    getAllUsers,
-    getUserById,
-    registerUser,
-    updateUserProfilePicture
-};
+export { loginUser, deleteUser, updateUser, upload, getAllUsers, getUserById, registerUser, updateUserProfilePicture };

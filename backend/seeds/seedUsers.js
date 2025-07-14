@@ -13,7 +13,10 @@ const seedUsers = async () => {
         await User.deleteMany({});
         console.log("🧹 Existing users removed");
 
-        await User.insertMany(users);
+        // Hash passwords by using create (runs pre-save hook)
+        for (const user of users) {
+            await User.create(user);
+        }
         console.log("✅ Users seeded successfully");
     } catch (err) {
         console.error("❌ Seeding users failed:", err);

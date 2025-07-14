@@ -7,9 +7,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUsersStore } from '@/stores/users_store.js'
 
-// This login mechanism will only serve to demonstrate how landing pages can differ depending if logged in or not.
-// This will be changed in the future to use a proper authentication system.
-
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
@@ -31,10 +28,11 @@ async function handleLogin() {
 		const user = await usersStore.loginUser({
 			email: email.value,
 			password: password.value,
-			rememberMe: rememberMe.value
+			rememberMe: rememberMe.value,
 		})
 
 		error.value = ''
+
 		if (user.role === 'Technician') {
 			router.push('/technician-landing')
 		} else if (user.role === 'Student') {
@@ -43,7 +41,7 @@ async function handleLogin() {
 			router.push('/')
 		}
 	} catch (err) {
-		error.value = 'Invalid email or password. Try again.'
+		error.value = usersStore.error || 'Invalid email or password. Try again.'
 	}
 }
 </script>
@@ -74,7 +72,12 @@ async function handleLogin() {
 
 				<div>
 					<label>Password</label>
-					<input v-model="password" type="password" class="login-input" placeholder="••••••••" />
+					<input
+						v-model="password"
+						type="password"
+						class="login-input"
+						placeholder="••••••••"
+					/>
 				</div>
 
 				<div class="login-checkbox">
