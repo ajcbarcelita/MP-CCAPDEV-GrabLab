@@ -202,30 +202,117 @@ export const deleteReservation = async (req, res) => {
 export const updateReservation = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, reservation_date } = req.body;
+    const { user_id, lab_id, reservation_date, slots, anonymous, status } =
+      req.body;
 
+    // Find the existing reservation
+    const existingReservation = await Reservation.findById(id);
+    if (!existingReservation) {
+      return res.status(404).json({ message: "Reservation not found" });
+    }
+
+    // Build update data object
     const updateData = {};
-    if (status) {
+
+    if (user_id !== undefined) {
+      updateData.user_id = parseInt(user_id);
+    }
+
+    if (lab_id !== undefined) {
+      updateData.lab_id = lab_id;
+    }
+
+    if (reservation_date !== undefined) {
+      updateData.reservation_date = new Date(reservation_date);
+    }
+
+    if (slots !== undefined) {
+      if (!Array.isArray(slots) || slots.length === 0) {
+        return res
+          .status(400)
+          .json({ message: "Slots must be a non-empty array" });
+      }
+      updateData.slots = slots;
+    }
+
+    if (anonymous !== undefined) {
+      updateData.anonymous = anonymous;
+    }
+
+    if (status !== undefined) {
       if (!["Active", "Cancelled", "Completed"].includes(status)) {
         return res.status(400).json({ message: "Invalid status value" });
       }
       updateData.status = status;
     }
 
-    if (reservation_date) {
-      updateData.reservation_date = reservation_date;
+    // If we're updating slots, check for conflicts with other reservations
+    if (slots && slots.length > 0) {
+      const conflictDate =
+        reservation_date || existingReservation.reservation_date;
+      const conflictLabId = lab_id || existingReservation.lab_id;
+
+      const existingReservations = await Reservation.find({
+        lab_id: conflictLabId,
+        reservation_date: new Date(conflictDate),
+        status: "Active",
+        _id: { $ne: id }, // Exclude the current reservation being updated
+      });
+
+      for (const slot of slots) {
+        const conflict = existingReservations.find((reservation) =>
+          reservation.slots.some(
+            (existingSlot) =>
+              existingSlot.seat_number === slot.seat_number &&
+              existingSlot.start_time === slot.start_time &&
+              existingSlot.end_time === slot.end_time
+          )
+        );
+
+        if (conflict) {
+          return res.status(409).json({
+            message: `Seat ${slot.seat_number} at ${slot.start_time}-${slot.end_time} is already reserved`,
+          });
+        }
+      }
     }
 
-    const reservation = await Reservation.findByIdAndUpdate(id, updateData, {
-      new: true,
-    }).populate("lab_id", "name display_name building");
+    // Update the reservation
+    const updatedReservation = await Reservation.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+      }
+    ).populate("lab_id", "name display_name building");
 
-    if (!reservation) {
-      return res.status(404).json({ message: "Reservation not found" });
+    // Populate user information
+    const User = mongoose.model("User");
+    const populatedReservation = updatedReservation.toObject();
+
+    if (updatedReservation.anonymous) {
+      populatedReservation.user = {
+        user_id: "Anonymous",
+        email: "Anonymous",
+        fname: "Anonymous",
+        lname: "User",
+      };
+    } else {
+      const user = await User.findOne({ user_id: updatedReservation.user_id });
+      if (user) {
+        populatedReservation.user = {
+          _id: user._id,
+          user_id: user.user_id,
+          email: user.email,
+          fname: user.fname,
+          lname: user.lname,
+        };
+      }
     }
 
-    res.json(reservation);
+    res.json(populatedReservation);
   } catch (error) {
+    console.error("Error updating reservation:", error);
     res.status(500).json({ message: error.message });
   }
 };

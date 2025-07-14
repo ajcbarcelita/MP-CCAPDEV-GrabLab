@@ -25,8 +25,6 @@ export function useProfile() {
 	})
 	const currentUser = ref(null)
 	const profileUser = ref(null)
-	const showEditModal = ref(false)
-	const editingReservation = ref(null)
 
 	// Computed
 	const isOwnProfile = computed(
@@ -117,28 +115,17 @@ export function useProfile() {
 		}
 	}
 	function editReservation(reservationId) {
-		const reservation = userReservations.value.find((r) => r.reservation_id === reservationId)
+		// Find the reservation in the store
+		const reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
 		if (reservation) {
-			editingReservation.value = { ...reservation }
-			showEditModal.value = true
+			// Get the lab ID (handle both string and object cases)
+			const labId =
+				typeof reservation.lab_id === 'object' ? reservation.lab_id._id : reservation.lab_id
+			// Navigate to the reservation page with both lab ID and reservation ID for editing
+			router.push(`/reservation/${labId}/${reservationId}`)
 		}
 	}
-	async function saveReservation() {
-		if (editingReservation.value) {
-			try {
-				await reservationsStore.updateReservation(editingReservation.value.reservation_id, {
-					reservation_date: editingReservation.value.reservation_date,
-				})
-				closeEditModal()
-			} catch (error) {
-				alert('Failed to update reservation. Please try again.')
-			}
-		}
-	}
-	function closeEditModal() {
-		showEditModal.value = false
-		editingReservation.value = null
-	}
+
 	function handleEditForm() {
 		if (profileUser.value) {
 			editForm.value = {
@@ -278,8 +265,6 @@ export function useProfile() {
 		editForm,
 		currentUser,
 		profileUser,
-		showEditModal,
-		editingReservation,
 		isOwnProfile,
 		showEditButton,
 		showSaveCancel,
@@ -295,8 +280,6 @@ export function useProfile() {
 		handleLogout,
 		handleHome,
 		editReservation,
-		saveReservation,
-		closeEditModal,
 		handleEditForm,
 		handleEditProfile,
 		handleSaveChanges,

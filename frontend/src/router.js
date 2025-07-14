@@ -19,6 +19,7 @@ const routes = [
 	{ path: '/login', component: Login },
 	{ path: '/register', component: Register },
 	{ path: '/reservation/:labId', component: Reservation },
+	{ path: '/reservation/:labId/:reservationId', component: Reservation }, // For editing specific reservations
 	{ path: '/view', component: View }, // Assuming this is for viewing reservations
 ]
 
