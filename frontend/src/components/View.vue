@@ -172,7 +172,7 @@
 						<div>
 							<span class="reservation-info-label">Reservation Date: </span>
 							<span class="reservation-info-value">{{
-								formatDate(reservation.reservation_date)
+								formatDateTime(reservation.reservation_date)
 							}}</span>
 						</div>
 					</div>
@@ -347,17 +347,6 @@ export default {
 
 		const formatDateTime = (dateTime) => {
 			return new Date(dateTime).toLocaleString()
-		}
-
-		const formatDate = (dateStr) => {
-			if (!dateStr) return 'Invalid Date'
-			const date = new Date(dateStr)
-			if (isNaN(date)) return 'Invalid Date'
-			return date.toLocaleDateString('en-US', {
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric',
-			})
 		}
 
 		// Function to format time slots

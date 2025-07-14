@@ -301,7 +301,7 @@
 						<p class="text-sm text-gray-600">
 							<strong>Reservation Date:</strong>
 							{{
-								formatDate(
+								formatDateTime(
 									reservationDetails.reservation_date || reservationDetails.date,
 								)
 							}}
@@ -957,6 +957,19 @@ const formatDate = (dateStr) => {
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric',
+	})
+}
+
+const formatDateTime = (dateStr) => {
+	if (!dateStr) return 'Invalid Date'
+	const date = new Date(dateStr)
+	if (isNaN(date)) return 'Invalid Date'
+	return date.toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'numeric',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: 'numeric',
 	})
 }
 

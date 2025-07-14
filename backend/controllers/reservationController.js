@@ -2,22 +2,11 @@ import Reservation from "../models/Reservation.js";
 import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
-<<<<<<< Updated upstream
-
-/**
- * @desc    Update user profile (name, description)
- * @route   PUT /api/users/:userId
- * @access  Private
- * @param   req.params.userId - User ID
- * @param   req.body.fname, lname, description
- * @returns Updated user object (transformed)
-=======
 /**
  * Create a new reservation.
  * Prevents booking time slots that end before the current time (for today).
  * @route POST /api/reservations
  * @access Private
->>>>>>> Stashed changes
  */
 export const createReservation = async (req, res) => {
   const { user_id, lab_id, reservation_date, slots, anonymous } = req.body;
@@ -58,11 +47,9 @@ export const createReservation = async (req, res) => {
         const [endHour, endMinute] = slot.end_time.split(":").map(Number);
         const slotEndMinutes = endHour * 60 + endMinute;
         if (slotEndMinutes <= nowMinutes) {
-          return res
-            .status(400)
-            .json({
-              message: `Cannot book slot ending before current time: ${slot.start_time}-${slot.end_time}`,
-            });
+          return res.status(400).json({
+            message: `Cannot book slot ending before current time: ${slot.start_time}-${slot.end_time}`,
+          });
         }
       }
     }
@@ -129,7 +116,6 @@ export const createReservation = async (req, res) => {
   }
 };
 
-
 /**
  * @desc    Get all reservations
  * @route   GET /api/reservations
@@ -177,7 +163,6 @@ export const getReservations = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 /**
  * @desc    Get all reservations
@@ -250,19 +235,10 @@ export const deleteReservation = async (req, res) => {
 };
 
 /**
-<<<<<<< Updated upstream
- * @desc    Update a reservation (slots, status, etc.)
- * @route   PATCH /api/reservations/:id
- * @access  Public/Private
- * @param   req.params.id - Reservation ID
- * @param   req.body - Fields to update (user_id, lab_id, reservation_date, slots, anonymous, status)
- * @returns Updated reservation object (populated with lab and user info)
-=======
  * Update an existing reservation.
  * Prevents updating to time slots that end before the current time (for today).
  * @route PUT /api/reservations/:id
  * @access Private
->>>>>>> Stashed changes
  */
 export const updateReservation = async (req, res) => {
   try {
@@ -288,11 +264,9 @@ export const updateReservation = async (req, res) => {
         const [endHour, endMinute] = slot.end_time.split(":").map(Number);
         const slotEndMinutes = endHour * 60 + endMinute;
         if (slotEndMinutes <= nowMinutes) {
-          return res
-            .status(400)
-            .json({
-              message: `Cannot update to slot ending before current time: ${slot.start_time}-${slot.end_time}`,
-            });
+          return res.status(400).json({
+            message: `Cannot update to slot ending before current time: ${slot.start_time}-${slot.end_time}`,
+          });
         }
       }
     }
