@@ -1,216 +1,280 @@
 import Reservation from "../models/Reservation.js";
 import LabSlot from "../models/LabSlot.js";
+import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
 export const createReservation = async (req, res) => {
-    const { user_id, lab_slot, time_slots } = req.body;
+  const { user_id, lab_id, reservation_date, slots, anonymous } = req.body;
 
-    if (!user_id || !lab_slot || !Array.isArray(time_slots) || time_slots.length === 0) {
-        return res.status(400).json({ message: "Missing required fields or invalid time_slots format" });
+  if (
+    !user_id ||
+    !lab_id ||
+    !reservation_date ||
+    !Array.isArray(slots) ||
+    slots.length === 0
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Missing required fields or invalid slots format" });
+  }
+
+  try {
+    // Check if the user exists
+    const User = mongoose.model("User");
+    const user = await User.findOne({ user_id: parseInt(user_id) });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    try {
-        // Use 'user' field name as per schema instead of 'user_id'
-        const reservation = await Reservation.create({
-            user: user_id, // This matches the schema field name
-            lab_slot,
-            time_slots,
+    // Check if the lab exists
+    const lab = await Lab.findById(lab_id);
+    if (!lab) {
+      return res.status(404).json({ message: "Lab not found" });
+    }
+
+    // Check for conflicts with existing reservations
+    const existingReservations = await Reservation.find({
+      lab_id,
+      reservation_date: new Date(reservation_date),
+      status: "Active",
+    });
+
+    for (const slot of slots) {
+      const conflict = existingReservations.find((reservation) =>
+        reservation.slots.some(
+          (existingSlot) =>
+            existingSlot.seat_number === slot.seat_number &&
+            existingSlot.start_time === slot.start_time &&
+            existingSlot.end_time === slot.end_time
+        )
+      );
+
+      if (conflict) {
+        return res.status(409).json({
+          message: `Seat ${slot.seat_number} at ${slot.start_time}-${slot.end_time} is already reserved`,
         });
-
-        res.status(201).json(reservation);
-    } catch (error) {
-        console.error("Error creating reservation:", error);
-        res.status(500).json({ message: error.message });
+      }
     }
+
+    // Create the reservation
+    const reservation = await Reservation.create({
+      user_id: parseInt(user_id),
+      lab_id,
+      reservation_date: new Date(reservation_date),
+      slots,
+      anonymous: anonymous || false,
+    });
+
+    // Populate lab and user information
+    const populatedReservation = await Reservation.findById(reservation._id)
+      .populate("lab_id", "name display_name building")
+      .lean();
+
+    // Add user information only if not anonymous
+    if (!anonymous) {
+      populatedReservation.user = {
+        user_id: user.user_id,
+        email: user.email,
+        fname: user.fname,
+        lname: user.lname,
+      };
+    } else {
+      populatedReservation.user = {
+        user_id: "Anonymous",
+        email: "Anonymous",
+        fname: "Anonymous",
+        lname: "User",
+      };
+    }
+
+    res.status(201).json(populatedReservation);
+  } catch (error) {
+    console.error("Error creating reservation:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const getReservations = async (req, res) => {
-    try {
-        const reservations = await Reservation.find({})
-            .populate("user", "email fname lname") // Populate user details
-            .populate({
-                path: "lab_slot",
-                populate: {
-                    path: "lab", // Populate the lab reference inside lab_slot
-                    select: "name display_name building",
-                },
-            })
-            .populate("time_slots") // Populate time_slots
-            .sort({ createdAt: -1 }); // Sort by newest first
+  try {
+    const reservations = await Reservation.find({})
+      .populate("lab_id", "name display_name building")
+      .sort({ createdAt: -1 });
 
-        res.json(reservations);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    // Populate user details for each reservation
+    const User = mongoose.model("User");
+    const populatedReservations = await Promise.all(
+      reservations.map(async (reservation) => {
+        const reservationObj = reservation.toObject();
+
+        // Handle anonymous reservations
+        if (reservation.anonymous) {
+          reservationObj.user = {
+            user_id: "Anonymous",
+            email: "Anonymous",
+            fname: "Anonymous",
+            lname: "User",
+          };
+        } else {
+          const user = await User.findOne({ user_id: reservation.user_id });
+          if (user) {
+            reservationObj.user = {
+              _id: user._id,
+              user_id: user.user_id,
+              email: user.email,
+              fname: user.fname,
+              lname: user.lname,
+            };
+          }
+        }
+        return reservationObj;
+      })
+    );
+
+    res.json(populatedReservations);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const getReservationsByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        console.log("Fetching reservations for user ID:", userId); // Log the userId being queried
+  try {
+    const { userId } = req.params;
+    console.log("Fetching reservations for user ID:", userId);
 
-        // Query directly by user_id field
-        let reservations = await Reservation.find({ user_id: parseInt(userId) })
-            .populate({
-                path: "lab_slot",
-                populate: {
-                    path: "lab",
-                    select: "name display_name building",
-                },
-            })
-            .sort({ createdAt: -1 });
+    // Query by user_id field with the new schema
+    let reservations = await Reservation.find({ user_id: parseInt(userId) })
+      .populate("lab_id", "name display_name building")
+      .sort({ createdAt: -1 });
 
-        // For each reservation, find the time slot details
-        // Time slots might be embedded in the lab_slot document
-        for (let i = 0; i < reservations.length; i++) {
-            if (reservations[i].time_slots && reservations[i].time_slots.length > 0) {
-                const labSlot = await LabSlot.findById(reservations[i].lab_slot._id);
-                if (labSlot && labSlot.time_slots) {
-                    // Match the time slot IDs from the reservation with the time slots in the lab slot
-                    const timeSlotDetails = [];
-                    for (const timeSlotId of reservations[i].time_slots) {
-                        // Find matching time slot in the lab slot
-                        const foundTimeSlot = labSlot.time_slots.find(slot =>
-                            slot._id.toString() === timeSlotId.toString()
-                        );
+    // Find the user separately to ensure we have user details
+    const User = mongoose.model("User");
+    const user = await User.findOne({ user_id: parseInt(userId) });
 
-                        if (foundTimeSlot) {
-                            timeSlotDetails.push({
-                                _id: foundTimeSlot._id,
-                                startTime: foundTimeSlot.startTime,
-                                endTime: foundTimeSlot.endTime
-                            });
-                        }
-                    }
-
-                    // Replace the time_slots array with the detailed time slots
-                    reservations[i] = reservations[i].toObject();
-                    reservations[i].time_slots = timeSlotDetails;
-                }
-            }
-        }
-
-        // Find the user separately to ensure we have user details
-        const User = mongoose.model('User');
-        const user = await User.findOne({ user_id: parseInt(userId) });
-
-        if (user) {
-            // Attach user details to each reservation
-            reservations = reservations.map(reservation => {
-                // If reservation is already a plain object, don't convert it again
-                const reservationObj = typeof reservation.toObject === 'function'
-                    ? reservation.toObject()
-                    : reservation;
-
-                reservationObj.user = {
-                    _id: user._id,
-                    email: user.email,
-                    fname: user.fname,
-                    lname: user.lname
-                };
-                return reservationObj;
-            });
-        }
-
-        // console.log("Reservations fetched successfully:", reservations); // Log the fetched reservations
-        res.json(reservations);
-    } catch (error) {
-        console.error("Error fetching reservations by user ID:", error); // Log the full error object
-        res.status(500).json({ message: error.message });
+    if (user) {
+      // Attach user details to each reservation
+      reservations = reservations.map((reservation) => {
+        const reservationObj = reservation.toObject();
+        reservationObj.user = {
+          _id: user._id,
+          user_id: user.user_id,
+          email: user.email,
+          fname: user.fname,
+          lname: user.lname,
+        };
+        return reservationObj;
+      });
     }
+
+    console.log("Reservations fetched successfully:", reservations);
+    res.json(reservations);
+  } catch (error) {
+    console.error("Error fetching reservations by user ID:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const deleteReservation = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const reservation = await Reservation.findById(id);
+  try {
+    const { id } = req.params;
+    const reservation = await Reservation.findById(id);
 
-        if (!reservation) {
-            return res.status(404).json({ message: "Reservation not found" });
-        }
-
-        // Instead of deleting, update the status to "Deleted"
-        const updatedReservation = await Reservation.findByIdAndUpdate(
-            id,
-            { status: "Deleted" },
-            { new: true }
-        );
-
-        res.json({
-            message: "Reservation marked as deleted successfully",
-            reservation: updatedReservation
-        });
-    } catch (error) {
-        console.error("Error marking reservation as deleted:", error);
-        res.status(500).json({ message: error.message });
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found" });
     }
+
+    // Instead of deleting, update the status to "Deleted"
+    const updatedReservation = await Reservation.findByIdAndUpdate(
+      id,
+      { status: "Deleted" },
+      { new: true }
+    );
+
+    res.json({
+      message: "Reservation marked as deleted successfully",
+      reservation: updatedReservation,
+    });
+  } catch (error) {
+    console.error("Error marking reservation as deleted:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const updateReservation = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status, reservation_date } = req.body;
+  try {
+    const { id } = req.params;
+    const { status, reservation_date } = req.body;
 
-        const updateData = {};
-        if (status) {
-            if (!["Active", "Cancelled", "Completed"].includes(status)) {
-                return res.status(400).json({ message: "Invalid status value" });
-            }
-            updateData.status = status;
-        }
-
-        if (reservation_date) {
-            updateData.reservation_date = reservation_date;
-        }
-
-        const reservation = await Reservation.findByIdAndUpdate(id, updateData, { new: true })
-            .populate("user", "email fname lname")
-            .populate({
-                path: "lab_slot",
-                populate: {
-                    path: "lab",
-                    select: "name display_name building",
-                },
-            });
-
-        if (!reservation) {
-            return res.status(404).json({ message: "Reservation not found" });
-        }
-
-        res.json(reservation);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const updateData = {};
+    if (status) {
+      if (!["Active", "Cancelled", "Completed"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      updateData.status = status;
     }
+
+    if (reservation_date) {
+      updateData.reservation_date = reservation_date;
+    }
+
+    const reservation = await Reservation.findByIdAndUpdate(id, updateData, {
+      new: true,
+    }).populate("lab_id", "name display_name building");
+
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found" });
+    }
+
+    res.json(reservation);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // New endpoint to get reservations by lab
 export const getReservationsByLab = async (req, res) => {
-    try {
-        const { labId } = req.params;
+  try {
+    const { labId } = req.params;
 
-        // First, find all lab slots for this lab
-        const labSlots = await LabSlot.find({ lab: labId });
+    const reservations = await Reservation.find({
+      lab_id: labId,
+      status: "Active",
+    })
+      .populate("lab_id", "name display_name building")
+      .sort({ createdAt: -1 });
 
-        // Then find reservations that use any of these lab slots
-        const labSlotIds = labSlots.map(slot => slot._id);
+    // Populate user details for each reservation
+    const User = mongoose.model("User");
+    const populatedReservations = await Promise.all(
+      reservations.map(async (reservation) => {
+        const reservationObj = reservation.toObject();
 
-        const reservations = await Reservation.find({
-            lab_slot: { $in: labSlotIds },
-            status: "Active",
-        })
-            .populate("user", "email fname lname")
-            .populate({
-                path: "lab_slot",
-                populate: {
-                    path: "lab",
-                    select: "name display_name building",
-                },
-            })
-            .sort({ createdAt: -1 });
+        // Handle anonymous reservations
+        if (reservation.anonymous) {
+          reservationObj.user = {
+            user_id: "Anonymous",
+            email: "Anonymous",
+            fname: "Anonymous",
+            lname: "User",
+          };
+        } else {
+          const user = await User.findOne({ user_id: reservation.user_id });
+          if (user) {
+            reservationObj.user = {
+              _id: user._id,
+              user_id: user.user_id,
+              email: user.email,
+              fname: user.fname,
+              lname: user.lname,
+            };
+          }
+        }
+        return reservationObj;
+      })
+    );
 
-        res.json(reservations);
-    } catch (error) {
-        console.error("Error fetching reservations by lab:", error);
-        res.status(500).json({ message: error.message });
-    }
+    res.json(populatedReservations);
+  } catch (error) {
+    console.error("Error fetching reservations by lab:", error);
+    res.status(500).json({ message: error.message });
+  }
 };

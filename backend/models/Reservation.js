@@ -1,34 +1,47 @@
 import mongoose from "mongoose";
 
 const reservationSchema = new mongoose.Schema(
-    {
-        user_id: {
-            type: Number,
-            required: true,
-        },
-        user_id: {
-            type: Number,
-            required: false, // Making it optional since we have the user ObjectId
-        },
-        lab_slot: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "LabSlot",
-            required: true,
-        },
-        time_slots: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "TimeSlot", // Ensure this references the correct subdocument
-                required: true,
-            },
-        ],
-        status: {
-            type: String,
-            enum: ["Active", "Cancelled", "Completed", "Deleted"],
-            default: "Active",
-        },
+  {
+    user_id: {
+      type: Number,
+      required: true,
     },
-    { timestamps: true }
+    lab_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Lab",
+      required: true,
+    },
+    reservation_date: {
+      type: Date,
+      required: true,
+    },
+    slots: [
+      {
+        seat_number: {
+          type: Number,
+          required: true,
+        },
+        start_time: {
+          type: String,
+          required: true,
+        },
+        end_time: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    anonymous: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["Active", "Cancelled", "Completed", "Deleted"],
+      default: "Active",
+    },
+  },
+  { timestamps: true }
 );
 
 export default mongoose.model("Reservation", reservationSchema);
