@@ -119,23 +119,6 @@ async function handleRegister() {
 				</div>
 
 				<div>
-					<label class="form-label">Role</label>
-					<div class="role-radio-group">
-						<!-- Radio buttons for role selection -->
-						<label>
-							<label>
-								<input type="radio" value="Student" v-model="role" />
-								Student
-							</label>
-							<label style="margin-left: 1em">
-								<input type="radio" value="Technician" v-model="role" />
-								Technician
-							</label>
-						</label>
-					</div>
-				</div>
-
-				<div>
 					<label class="form-label">Password</label>
 					<input
 						v-model="password"
