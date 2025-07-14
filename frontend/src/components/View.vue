@@ -228,6 +228,32 @@ export default {
 			} finally {
 				isLoading.value = false
 			}
+
+			// Explanation of how Promise works:
+			// A Promise in JavaScript represents a value that may be available now, or in the future, or never.
+			// It is used to handle asynchronous operations, such as fetching data or performing time-based tasks.
+			//
+			// Example:
+			// const promise = new Promise((resolve, reject) => {
+			//   const success = true; // Simulate success or failure
+			//   if (success) {
+			//     resolve('Operation succeeded!');
+			//   } else {
+			//     reject('Operation failed!');
+			//   }
+			// });
+			//
+			// promise
+			//   .then((result) => {
+			//     console.log(result); // Output: 'Operation succeeded!'
+			//   })
+			//   .catch((error) => {
+			//     console.error(error); // Output: 'Operation failed!'
+			//   });
+			//
+			// In this code, Promise.all is used to wait for multiple asynchronous operations to complete.
+			// If all promises resolve, Promise.all resolves with an array of results.
+			// If any promise rejects, Promise.all rejects with the reason of the first rejected promise.
 		})
 
 		// Watch for route changes to refresh data when returning from editing
