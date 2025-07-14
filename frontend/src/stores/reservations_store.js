@@ -114,6 +114,27 @@ export const useReservationsStore = defineStore('reservations', {
 				this.loading = false
 			}
 		},
+		async updateReservation(reservationId, updateData) {
+			this.loading = true
+			try {
+				const response = await axios.patch(
+					`${API_URL}/reservations/${reservationId}`,
+					updateData,
+				)
+				const index = this.reservations.findIndex((res) => res._id === reservationId)
+				if (index !== -1) {
+					this.reservations[index] = response.data
+				}
+				this.error = null
+				return response.data
+			} catch (error) {
+				this.error = error.message
+				console.error('Error updating reservation:', error)
+				throw error
+			} finally {
+				this.loading = false
+			}
+		},
 	},
 	getters: {
 		getReservationById: (state) => (id) => {

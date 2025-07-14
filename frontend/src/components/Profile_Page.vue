@@ -200,9 +200,9 @@
 								<div class="text-forest-dark text-sm space-y-1 font-karma">
 									<p>
 										<strong>Time Slots:</strong>
-									<div v-if="reservation.time_slots && reservation.time_slots.length > 0">
-										<div v-for="(slot, index) in reservation.time_slots" :key="index">
-											{{ formatTimeSlot(slot) }}
+									<div v-if="reservation.slots && reservation.slots.length > 0">
+										<div v-for="(slot, index) in reservation.slots" :key="index">
+											Seat {{ slot.seat_number }}: {{ slot.start_time }} - {{ slot.end_time }}
 										</div>
 									</div>
 									<div v-else>No time slots available</div>
