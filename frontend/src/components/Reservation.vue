@@ -95,7 +95,11 @@
 								@click="reserveSlot"
 								class="w-full grablab-primary text-white py-3 rounded-lg font-medium hover:opacity-90"
 							>
-								Reserve Slot
+								{{
+									route.params.reservationId
+										? 'Update Reservation'
+										: 'Reserve Slot'
+								}}
 							</button>
 							<button
 								@click="clearSelection"
@@ -112,6 +116,7 @@
 					<div class="bg-white rounded-lg shadow-sm p-6">
 						<h2 class="font-jersey text-xl text-grablab-primary mb-4">
 							{{ selectedLab ? getLabName(selectedLab) : 'Select a Lab' }} Schedule
+							{{ route.params.reservationId ? ' (Editing)' : '' }}
 						</h2>
 
 						<!-- Loading indicator -->
@@ -598,10 +603,18 @@ onMounted(async () => {
 
 		// Check if lab ID is provided in route params
 		const labId = route.params.labId
+		const reservationId = route.params.reservationId
+
 		if (labId) {
 			const lab = allLabs.value.find((l) => l._id === labId)
+
 			if (lab) {
 				selectedLab.value = labId
+
+				// If reservation ID is provided, load the reservation for editing
+				if (reservationId) {
+					await loadReservationForEditing(reservationId)
+				}
 			}
 		}
 	} catch (error) {
@@ -644,8 +657,11 @@ const loadLabSchedule = async () => {
 		// Load ALL reservations for the selected lab (not just the user's)
 		await reservationsStore.fetchReservationsByLab(selectedLab.value)
 
-		// Clear current selection
-		clearSelection()
+		// Clear current selection only if not editing
+		const reservationId = route.params.reservationId
+		if (!reservationId) {
+			clearSelection()
+		}
 		currentPage.value = 1
 
 		// Scroll to schedule
@@ -813,6 +829,12 @@ const isSlotOccupied = (seatNumber, timeSlot) => {
 			return false
 		}
 
+		// If we're editing a reservation, don't count slots from the current reservation as occupied
+		const reservationId = route.params.reservationId
+		if (reservationId && reservation._id === reservationId) {
+			return false
+		}
+
 		return reservation.slots.some(
 			(slot) =>
 				slot.seat_number === seatNumber &&
@@ -826,7 +848,21 @@ const isSlotOccupied = (seatNumber, timeSlot) => {
 
 // Slot interaction functions
 const toggleSlotSelection = (seat, timeSlot) => {
-	if (isSlotOccupied(seat, timeSlot)) return
+	const reservationId = route.params.reservationId
+	const isEditing = !!reservationId
+
+	// Check if this slot is part of the current reservation being edited
+	const isCurrentReservationSlot =
+		isEditing &&
+		selectedSlots.value.some(
+			(slot) =>
+				slot.seat === seat &&
+				slot.timeSlot.startTime === timeSlot.startTime &&
+				slot.timeSlot.endTime === timeSlot.endTime,
+		)
+
+	// Allow deselection of current reservation slots even if they appear occupied
+	if (isSlotOccupied(seat, timeSlot) && !isCurrentReservationSlot) return
 
 	const slotIdentifier = `${seat}-${timeSlot.startTime}`
 	const index = selectedSlots.value.findIndex((s) => s.identifier === slotIdentifier)
@@ -844,7 +880,20 @@ const toggleSlotSelection = (seat, timeSlot) => {
 }
 
 const handleSlotClick = (seat, timeSlot) => {
-	if (isSlotOccupied(seat, timeSlot)) {
+	const reservationId = route.params.reservationId
+	const isEditing = !!reservationId
+
+	// Check if this slot is part of the current reservation being edited
+	const isCurrentReservationSlot =
+		isEditing &&
+		selectedSlots.value.some(
+			(slot) =>
+				slot.seat === seat &&
+				slot.timeSlot.startTime === timeSlot.startTime &&
+				slot.timeSlot.endTime === timeSlot.endTime,
+		)
+
+	if (isSlotOccupied(seat, timeSlot) && !isCurrentReservationSlot) {
 		showReservationDetails(seat, timeSlot)
 	} else {
 		toggleSlotSelection(seat, timeSlot)
@@ -855,6 +904,8 @@ const getSlotClass = (seat, timeSlot) => {
 	const slotIdentifier = `${seat}-${timeSlot.startTime}`
 	const isSelected = selectedSlots.value.some((s) => s.identifier === slotIdentifier)
 	const isOccupied = isSlotOccupied(seat, timeSlot)
+	const reservationId = route.params.reservationId
+	const isEditing = !!reservationId
 
 	if (isOccupied) {
 		return 'bg-gray-400 text-white cursor-pointer'
@@ -869,11 +920,13 @@ const getSlotText = (seat, timeSlot) => {
 	const isOccupied = isSlotOccupied(seat, timeSlot)
 	const slotIdentifier = `${seat}-${timeSlot.startTime}`
 	const isSelected = selectedSlots.value.some((s) => s.identifier === slotIdentifier)
+	const reservationId = route.params.reservationId
+	const isEditing = !!reservationId
 
 	if (isOccupied) {
 		return 'Occupied'
 	} else if (isSelected) {
-		return 'Selected'
+		return isEditing ? 'Current' : 'Selected'
 	} else {
 		return 'Available'
 	}
@@ -907,6 +960,45 @@ const goBack = () => {
 	router.push('/view')
 }
 
+// Load existing reservation for editing
+const loadReservationForEditing = async (reservationId) => {
+	try {
+		// Find the reservation in the store or fetch it
+		let reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
+
+		if (!reservation) {
+			// If not in store, fetch all reservations to find it
+			await reservationsStore.fetchReservations()
+			reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
+		}
+
+		if (reservation) {
+			// Set the date to the reservation date
+			selectedDate.value = new Date(reservation.reservation_date).toISOString().split('T')[0]
+
+			// Wait for lab schedule to load
+			await loadLabSchedule()
+
+			// Pre-select the existing slots
+			if (reservation.slots && reservation.slots.length > 0) {
+				selectedSlots.value = reservation.slots.map((slot) => ({
+					seat: slot.seat_number,
+					timeSlot: {
+						startTime: slot.start_time,
+						endTime: slot.end_time,
+					},
+					identifier: `${slot.seat_number}-${slot.start_time}`,
+					time: slot.start_time,
+				}))
+			}
+		} else {
+			console.error('Reservation not found:', reservationId)
+		}
+	} catch (error) {
+		console.error('Error loading reservation for editing:', error)
+	}
+}
+
 // Pagination
 const nextPage = () => {
 	if (currentPage.value < totalPages.value) {
@@ -937,12 +1029,28 @@ const reserveSlot = async () => {
 		return
 	}
 
+	const reservationId = route.params.reservationId
+	const isEditing = !!reservationId
+
 	try {
-		const payload = {
-			user_id:
+		// When editing, preserve the original user_id unless it's being explicitly changed
+		let user_id
+		if (isEditing) {
+			// For editing, only change user_id if technician is explicitly setting it
+			if (currentUser.value?.user_type === 'technician' && studentIdForReservation.value) {
+				user_id = studentIdForReservation.value
+			}
+			// Otherwise, don't include user_id in the update (preserve original)
+		} else {
+			// For new reservations, use the current user's ID
+			user_id =
 				currentUser.value?.user_type === 'technician'
 					? studentIdForReservation.value
-					: currentUser.value?.user_id,
+					: currentUser.value?.user_id
+		}
+
+		const payload = {
+			...(user_id !== undefined && { user_id }), // Only include user_id if it's defined
 			lab_id: selectedLab.value,
 			reservation_date: selectedDate.value,
 			slots: selectedSlots.value.map((slot) => ({
@@ -953,14 +1061,24 @@ const reserveSlot = async () => {
 			anonymous: reserveAnonymously.value,
 		}
 
-		// Create reservation using the store
-		await reservationsStore.createReservation(payload)
-		await reservationsStore.fetchReservationsByUserId(currentUser.value?.user_id || '')
-		await loadLabSchedule() // Refresh the schedule
+		if (isEditing) {
+			// Update existing reservation
+			await reservationsStore.updateReservation(reservationId, payload)
+			alert('Reservation updated successfully!')
 
-		clearSelection()
-		alert('Reservation created successfully!')
+			// After successful update, navigate back to view page
+			router.push('/view')
+		} else {
+			// Create new reservation
+			await reservationsStore.createReservation(payload)
+			alert('Reservation created successfully!')
+
+			await reservationsStore.fetchReservationsByUserId(currentUser.value?.user_id || '')
+			await loadLabSchedule() // Refresh the schedule
+			clearSelection()
+		}
 	} catch (error) {
+		console.error('Error in reserveSlot:', error)
 		// Show backend error message if available
 		let message = 'Failed to create reservation. Please try again.'
 		if (error.response && error.response.data && error.response.data.message) {

@@ -246,6 +246,25 @@ export default {
 			}
 		})
 
+		// Watch for route changes to refresh data when returning from editing
+		watch(
+			() => router.currentRoute.value.path,
+			async (newPath) => {
+				if (newPath === '/view' && isTechnician.value && userIdFilter.value) {
+					isLoading.value = true
+					error.value = null
+					try {
+						await reservationsStore.fetchReservationsByUserId(userIdFilter.value)
+					} catch (err) {
+						console.error('Error refreshing reservations:', err)
+						error.value = 'Failed to refresh reservations. Please try again later.'
+					} finally {
+						isLoading.value = false
+					}
+				}
+			},
+		)
+
 		// Watch for building selection changes - only fetch all labs when needed
 		// Watch makes it reactive to changes in selectedBuilding
 		watch(selectedBuilding, async (newValue) => {
@@ -365,14 +384,14 @@ export default {
 
 		// Handle editing a reservation
 		const editReservation = async (reservationId) => {
-			// Navigate to reservation page with the lab ID
+			// Navigate to reservation page with both lab ID and reservation ID
 			const reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
 			if (reservation) {
 				const labId =
 					typeof reservation.lab_id === 'object'
 						? reservation.lab_id._id
 						: reservation.lab_id
-				router.push(`/reservation/${labId}`)
+				router.push(`/reservation/${labId}/${reservationId}`)
 			}
 		}
 
