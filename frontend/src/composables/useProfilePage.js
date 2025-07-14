@@ -63,8 +63,10 @@ export function useProfile() {
 
 	// Utility
 	const getLabName = (labId) => {
-		const lab = labsStore.getLabById(labId)
-		return lab ? lab.name : 'Unknown Lab'
+		// Handle both string and object lab_id
+		const id = typeof labId === 'object' ? labId._id : labId
+		const lab = labsStore.labs.find((lab) => lab._id === id)
+		return lab ? lab.display_name || lab.name : 'Unknown Lab'
 	}
 	const getProfilePicUrl = (profilePicPath) => {
 		if (!profilePicPath) return null

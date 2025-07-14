@@ -132,7 +132,9 @@
 						<div>
 							<span class="reservation-info-label">Lab: </span>
 							<span class="reservation-info-value">{{
-								reservation.lab_slot?.lab?.display_name || 'Unknown Lab'
+								reservation.lab_id?.display_name ||
+								reservation.lab_id?.name ||
+								'Unknown Lab'
 							}}</span>
 						</div>
 						<div>
@@ -300,7 +302,14 @@ export default {
 			} else {
 				// Filter reservations by the selected building
 				return activeReservations.filter((reservation) => {
-					return reservation.lab_slot?.lab?.building === selectedBuilding.value
+					const building = reservation.lab_id?.building
+					console.log(
+						'Reservation lab building:',
+						building,
+						'Selected building:',
+						selectedBuilding.value,
+					)
+					return building === selectedBuilding.value
 				})
 			}
 		})
