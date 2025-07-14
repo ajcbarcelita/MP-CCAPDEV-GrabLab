@@ -1041,6 +1041,8 @@ const loadReservationForEditing = async (reservationId) => {
 			if (currentUser.value?.user_type === 'technician') {
 				studentIdForReservation.value = reservation.user_id
 			}
+			// Set reserveAnonymously.value to true if the reservation is anonymous
+			reserveAnonymously.value = !!reservation.anonymous
 			// Store the original state for cancel
 			originalReservationState.value = {
 				selectedDate: selectedDate.value,
