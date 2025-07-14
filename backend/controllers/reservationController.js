@@ -2,6 +2,7 @@ import Reservation from "../models/Reservation.js";
 import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
+<<<<<<< Updated upstream
 
 /**
  * @desc    Update user profile (name, description)
@@ -10,6 +11,13 @@ import mongoose from "mongoose";
  * @param   req.params.userId - User ID
  * @param   req.body.fname, lname, description
  * @returns Updated user object (transformed)
+=======
+/**
+ * Create a new reservation.
+ * Prevents booking time slots that end before the current time (for today).
+ * @route POST /api/reservations
+ * @access Private
+>>>>>>> Stashed changes
  */
 export const createReservation = async (req, res) => {
   const { user_id, lab_id, reservation_date, slots, anonymous } = req.body;
@@ -38,6 +46,25 @@ export const createReservation = async (req, res) => {
     const lab = await Lab.findById(lab_id);
     if (!lab) {
       return res.status(404).json({ message: "Lab not found" });
+    }
+
+    // Prevent booking time slots in the past (for today)
+    const today = new Date();
+    const resDate = new Date(reservation_date);
+    const isToday = today.toDateString() === resDate.toDateString();
+    if (isToday) {
+      const nowMinutes = today.getHours() * 60 + today.getMinutes();
+      for (const slot of slots) {
+        const [endHour, endMinute] = slot.end_time.split(":").map(Number);
+        const slotEndMinutes = endHour * 60 + endMinute;
+        if (slotEndMinutes <= nowMinutes) {
+          return res
+            .status(400)
+            .json({
+              message: `Cannot book slot ending before current time: ${slot.start_time}-${slot.end_time}`,
+            });
+        }
+      }
     }
 
     // Check for conflicts with existing reservations
@@ -223,12 +250,19 @@ export const deleteReservation = async (req, res) => {
 };
 
 /**
+<<<<<<< Updated upstream
  * @desc    Update a reservation (slots, status, etc.)
  * @route   PATCH /api/reservations/:id
  * @access  Public/Private
  * @param   req.params.id - Reservation ID
  * @param   req.body - Fields to update (user_id, lab_id, reservation_date, slots, anonymous, status)
  * @returns Updated reservation object (populated with lab and user info)
+=======
+ * Update an existing reservation.
+ * Prevents updating to time slots that end before the current time (for today).
+ * @route PUT /api/reservations/:id
+ * @access Private
+>>>>>>> Stashed changes
  */
 export const updateReservation = async (req, res) => {
   try {
@@ -240,6 +274,27 @@ export const updateReservation = async (req, res) => {
     const existingReservation = await Reservation.findById(id);
     if (!existingReservation) {
       return res.status(404).json({ message: "Reservation not found" });
+    }
+
+    // Prevent updating to time slots in the past (for today)
+    const today = new Date();
+    const resDate = new Date(
+      reservation_date || existingReservation.reservation_date
+    );
+    const isToday = today.toDateString() === resDate.toDateString();
+    if (isToday && slots && slots.length > 0) {
+      const nowMinutes = today.getHours() * 60 + today.getMinutes();
+      for (const slot of slots) {
+        const [endHour, endMinute] = slot.end_time.split(":").map(Number);
+        const slotEndMinutes = endHour * 60 + endMinute;
+        if (slotEndMinutes <= nowMinutes) {
+          return res
+            .status(400)
+            .json({
+              message: `Cannot update to slot ending before current time: ${slot.start_time}-${slot.end_time}`,
+            });
+        }
+      }
     }
 
     // Build update data object

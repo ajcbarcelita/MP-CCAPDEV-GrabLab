@@ -209,6 +209,10 @@
 									<div v-else>No time slots available</div>
 									</p>
 									<p>
+										<strong>Reservation Date:</strong>
+										{{ formatDateTime(reservation.reservation_date) }}
+									</p>
+									<p>
 										<strong>Created At:</strong>
 										{{ formatDateTime(reservation.createdAt || reservation.reservation_date) }}
 									</p>

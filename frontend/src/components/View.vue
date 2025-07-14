@@ -8,8 +8,11 @@
 		<div id="navbar">
 			<span id="navbar-brand">GrabLab</span>
 			<div id="links">
-				<router-link id="home"
-					:to="isTechnician ? '/technician-landing' : '/student-landing'">Home</router-link>
+				<router-link
+					id="home"
+					:to="isTechnician ? '/technician-landing' : '/student-landing'"
+					>Home</router-link
+				>
 				<router-link id="profile" to="/profile">Profile</router-link>
 				<router-link id="logout" to="/" @click="handleLogout">Log Out</router-link>
 			</div>
@@ -35,8 +38,13 @@
 				<!-- Conditional ID number input -->
 				<div v-if="isTechnician" id="ID" class="filter-row">
 					<label for="number" class="search-label">ID number: </label>
-					<input type="number" id="number" class="search-input" placeholder="Enter User ID number"
-						v-model="userIdFilter" />
+					<input
+						type="number"
+						id="number"
+						class="search-input"
+						placeholder="Enter User ID number"
+						v-model="userIdFilter"
+					/>
 				</div>
 			</div>
 		</div>
@@ -60,10 +68,14 @@
 						<span id="buildingName" class="lab-info-label">Building: </span>
 						<span class="lab-info-value">{{ lab.building }}<br /></span>
 						<span class="lab-info-label">Capacity: </span>
-						<span id="CapacityNum" class="lab-info-value">{{ lab.capacity }}<br /></span>
+						<span id="CapacityNum" class="lab-info-value"
+							>{{ lab.capacity }}<br
+						/></span>
 						<span id="operatingHours" class="lab-info-label">Operating Hours: </span>
-						<span id="OperatingHours" class="lab-info-value">{{ lab.operating_hours?.open || 'N/A' }} -
-							{{ lab.operating_hours?.close || 'N/A' }}<br /></span>
+						<span id="OperatingHours" class="lab-info-value"
+							>{{ lab.operating_hours?.open || 'N/A' }} -
+							{{ lab.operating_hours?.close || 'N/A' }}<br
+						/></span>
 						<span id="labStatus" class="lab-info-label">Status: </span>
 						<span id="LabStatus" class="lab-info-value">{{ lab.status }}<br /></span>
 					</div>
@@ -77,7 +89,11 @@
 		</section>
 
 		<!-- Reservations Section -->
-		<section id="reservations" class="mb-16 mt-10" v-else-if="isTechnician && userIdFilter !== ''">
+		<section
+			id="reservations"
+			class="mb-16 mt-10"
+			v-else-if="isTechnician && userIdFilter !== ''"
+		>
 			<!-- No Reservations Message -->
 			<div v-if="!isLoading && filteredReservations.length === 0" class="no-data-message">
 				<p class="text-center error-message">
@@ -89,15 +105,23 @@
 			</div>
 
 			<!-- Reservations Grid -->
-			<div v-else class="reservations-grid flex flex-col items-center max-w-60 mx-w-4xl mx-auto">
-				<div class="reservation-card align-middle reservation-card-scrollable"
-					v-for="reservation in filteredReservations" :key="reservation._id">
+			<div
+				v-else
+				class="reservations-grid flex flex-col items-center max-w-60 mx-w-4xl mx-auto"
+			>
+				<div
+					class="reservation-card align-middle reservation-card-scrollable"
+					v-for="reservation in filteredReservations"
+					:key="reservation._id"
+				>
 					<div class="reservation-card-header">Reservation #{{ reservation._id }}</div>
 					<div class="reservation-info">
 						<div>
 							<span class="reservation-info-label">User Name: </span>
-							<span class="reservation-info-value">{{ reservation.user?.fname || 'Unknown' }}
-								{{ reservation.user?.lname || '' }}</span>
+							<span class="reservation-info-value"
+								>{{ reservation.user?.fname || 'Unknown' }}
+								{{ reservation.user?.lname || '' }}</span
+							>
 						</div>
 						<div>
 							<span class="reservation-info-label">User Email: </span>
@@ -117,7 +141,11 @@
 							<span class="reservation-info-label">Time Slots: </span>
 							<span class="reservation-info-value">
 								<div v-if="reservation.slots && reservation.slots.length > 0">
-									<div v-for="(slot, index) in reservation.slots" :key="index" class="text-center">
+									<div
+										v-for="(slot, index) in reservation.slots"
+										:key="index"
+										class="text-center"
+									>
 										Seat {{ slot.seat_number }}: {{ slot.start_time }} -
 										{{ slot.end_time }}
 									</div>
@@ -141,14 +169,24 @@
 								formatDateTime(reservation.updatedAt)
 							}}</span>
 						</div>
+						<div>
+							<span class="reservation-info-label">Reservation Date: </span>
+							<span class="reservation-info-value">{{
+								formatDate(reservation.reservation_date)
+							}}</span>
+						</div>
 					</div>
 					<div class="reservation-card-actions flex justify-center items-center gap-4">
-						<button class="edit-btn btn-primary bg-blue-500 text-white px-4 py-2"
-							@click="editReservation(reservation._id)">
+						<button
+							class="edit-btn btn-primary bg-blue-500 text-white px-4 py-2"
+							@click="editReservation(reservation._id)"
+						>
 							Edit
 						</button>
-						<button class="delete-btn btn-danger bg-red-500 px-4 py-2"
-							@click="deleteReservation(reservation._id)">
+						<button
+							class="delete-btn btn-danger bg-red-500 px-4 py-2"
+							@click="deleteReservation(reservation._id)"
+						>
 							Delete
 						</button>
 					</div>
@@ -309,6 +347,17 @@ export default {
 
 		const formatDateTime = (dateTime) => {
 			return new Date(dateTime).toLocaleString()
+		}
+
+		const formatDate = (dateStr) => {
+			if (!dateStr) return 'Invalid Date'
+			const date = new Date(dateStr)
+			if (isNaN(date)) return 'Invalid Date'
+			return date.toLocaleDateString('en-US', {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			})
 		}
 
 		// Function to format time slots
