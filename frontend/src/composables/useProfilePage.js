@@ -226,7 +226,7 @@ export function useProfile() {
 	}
 	async function handleView() {
 		try {
-			const user = sessionStorage.getItem('user') // Get user from sessionStorage
+			let user = sessionStorage.getItem('user') // Get user from sessionStorage
 			if (!user) {
 				// if not found, check localStorage
 				user = localStorage.getItem('user')
