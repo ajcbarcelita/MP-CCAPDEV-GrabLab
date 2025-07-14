@@ -190,10 +190,18 @@ export const useUsersStore = defineStore('users', {
 			console.log('Deleting user with ID:', userId)
 			this.loading = true
 			try {
-				await axios.delete(`${API_URL}/users/${userId}`)
+				const response = await axios.delete(`${API_URL}/users/${userId}`)
 
-				// Remove user from users array
-				this.users = this.users.filter((u) => u.user_id !== userId)
+				// Find the index of the user in the local array by user_id
+				const index = this.users.findIndex((u) => u.user_id === userId)
+				if (index !== -1) {
+					this.users[index] = {
+						// Merge existing data with the inactive status
+						...this.users[index],  // Keep all existing user data
+						status: 'Inactive',
+						...response.data.user, // Update with response data if provided
+					}
+				}
 
 				// Clear current user if it's the same user
 				if (this.currentUser && this.currentUser.user_id === userId) {
@@ -201,6 +209,7 @@ export const useUsersStore = defineStore('users', {
 				}
 
 				this.error = null
+				return response.data // Return the updated user data
 			} catch (error) {
 				this.error = error.message
 				console.error('Error deleting user account:', error)

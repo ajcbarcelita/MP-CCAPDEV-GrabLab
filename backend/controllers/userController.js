@@ -287,9 +287,15 @@ const getUserById = async (req, res) => {
  * @param   req.params.userId - User ID
  * @returns Success message
  */
+/**
+ * @desc    Soft delete user (set status to 'Inactive')
+ * @route   DELETE /api/users/:userId
+ * @access  Private
+ * @param   req.params.userId - User ID
+ * @returns Success message and updated user object
+ */
 const deleteUser = async (req, res) => {
     try {
-        // Find User
         const { userId } = req.params;
         const user = await User.findOne({ user_id: userId });
 
@@ -297,13 +303,20 @@ const deleteUser = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Set status to inactive
-        user.status = "Inactive";
-        await user.save();
+        // Instead of deleting, update the status to "Inactive"
+        const updatedUser = await User.findOneAndUpdate(
+            { user_id: userId },
+            { status: "Inactive" },
+            { new: true }
+        );
 
-        res.json({ message: "User and associated reservations soft deleted successfully" });
+        res.json({
+            message: "User marked as inactive successfully",
+            user: updatedUser,
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        console.error("Error marking user as inactive:", error);
+        res.status(500).json({ message: error.message });
     }
 };
 
