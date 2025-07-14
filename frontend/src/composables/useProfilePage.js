@@ -6,46 +6,50 @@ import { useReservationsStore } from '@/stores/reservations_store'
 
 export function useProfile() {
 	// Stores
+	// Importing Pinia stores for managing users, reservations, and labs data
 	const usersStore = useUsersStore()
 	const reservationsStore = useReservationsStore()
 	const labsStore = useLabsStore()
 
 	// Router & Route
+	// Vue Router instances for navigation and accessing route parameters
 	const router = useRouter()
 	const route = useRoute()
 
 	// State
-	const selectedBuilding = ref('All')
-	const isEditing = ref(false)
-	const isLoading = ref(true)
+	// Reactive references for managing UI state and form data
+	const selectedBuilding = ref('All') // Currently selected building filter
+	const isEditing = ref(false) // Tracks if the profile is in edit mode
+	const isLoading = ref(true) // Tracks loading state
 	const editForm = ref({
 		first_name: '',
 		last_name: '',
 		description: '',
-	})
-	const currentUser = ref(null)
-	const profileUser = ref(null)
+	}) // Form data for editing profile
+	const currentUser = ref(null) // Currently logged-in user
+	const profileUser = ref(null) // User whose profile is being viewed
 
 	// Computed
+	// Derived state based on reactive references
 	const isOwnProfile = computed(
 		() =>
 			currentUser.value &&
 			profileUser.value &&
 			currentUser.value.user_id === profileUser.value.user_id,
-	)
-	const showEditButton = computed(() => isOwnProfile.value && !isEditing.value)
-	const showSaveCancel = computed(() => isOwnProfile.value && isEditing.value)
-	const showDeleteAccount = computed(() => isOwnProfile.value)
+	) // Checks if the profile belongs to the logged-in user
+	const showEditButton = computed(() => isOwnProfile.value && !isEditing.value) // Show edit button if user owns the profile and is not editing
+	const showSaveCancel = computed(() => isOwnProfile.value && isEditing.value) // Show save/cancel buttons if user owns the profile and is editing
+	const showDeleteAccount = computed(() => isOwnProfile.value) // Show delete account button if user owns the profile
 	const showReservations = computed(
 		() => isOwnProfile.value && currentUser.value && currentUser.value.role === 'Student',
-	)
-	const inputReadonly = computed(() => !isOwnProfile.value || !isEditing.value)
+	) // Show reservations if user is a student and owns the profile
+	const inputReadonly = computed(() => !isOwnProfile.value || !isEditing.value) // Make input fields readonly if not editing or not the owner
 	const userReservations = computed(() => {
 		if (!currentUser.value) return []
 		return reservationsStore.reservations
 			.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'Active')
 			.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
-	})
+	}) // Active reservations of the logged-in user
 	const filteredReservations = computed(() => {
 		const activeReservations = reservationsStore.reservations.filter(
 			(res) => res.status !== 'Deleted',
@@ -57,27 +61,27 @@ export function useProfile() {
 				(reservation) => reservation.lab_slot?.lab?.building === selectedBuilding.value,
 			)
 		}
-	})
+	}) // Reservations filtered by building
 
 	// Utility
+	// Helper functions for formatting and retrieving data
 	const getLabName = (labId) => {
 		// Handle both string and object lab_id
 		const id = typeof labId === 'object' ? labId._id : labId
 		const lab = labsStore.labs.find((lab) => lab._id === id)
 		return lab ? lab.display_name || lab.name : 'Unknown Lab'
-	}
+	} // Get lab name by ID
 	const getProfilePicUrl = (profilePicPath) => {
 		if (!profilePicPath) return null
 		// Assuming profilePicPath is a relative path
-		// Only works 
 		if (process.env.NODE_ENV === 'development') {
 			return `http://localhost:3000${profilePicPath}`
 		}
 		return profilePicPath
-	}
+	} // Get full URL for profile picture
 	const formatDateTime = (dateTime) => {
 		return new Date(dateTime).toLocaleString()
-	}
+	} // Format date and time to a readable string
 	const formatTimeSlot = (slot) => {
 		if (slot && slot.startTime && slot.endTime) {
 			const formatTime = (timeStr) => {
@@ -98,15 +102,16 @@ export function useProfile() {
 		} else {
 			return 'Time slot details not available'
 		}
-	}
+	} // Format time slot details
 
 	// Actions
+	// Functions for handling user interactions and API calls
 	const handleLogout = () => {
 		usersStore.clearUserSession()
 		currentUser.value = null
 		profileUser.value = null
 		router.push('/login')
-	}
+	} // Log out the user and redirect to login page
 	const handleHome = () => {
 		if (currentUser.value?.role === 'Technician') {
 			router.push('/technician-landing')
@@ -115,7 +120,7 @@ export function useProfile() {
 		} else {
 			router.push('/')
 		}
-	}
+	} // Navigate to the appropriate home page based on user role
 	function editReservation(reservationId) {
 		// Find the reservation in the store
 		const reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
@@ -126,7 +131,7 @@ export function useProfile() {
 			// Navigate to the reservation page with both lab ID and reservation ID for editing
 			router.push(`/reservation/${labId}/${reservationId}`)
 		}
-	}
+	} // Edit a specific reservation
 
 	function handleEditForm() {
 		if (profileUser.value) {
@@ -136,11 +141,11 @@ export function useProfile() {
 				description: profileUser.value.description || '',
 			}
 		}
-	}
+	} // Populate the edit form with profile data
 	function handleEditProfile() {
 		if (!isOwnProfile.value) return
 		isEditing.value = true
-	}
+	} // Enable edit mode for the profile
 	async function handleSaveChanges() {
 		if (!isOwnProfile.value) return
 		try {
@@ -158,14 +163,14 @@ export function useProfile() {
 		} catch (error) {
 			alert(error.message || 'Failed to update profile')
 		}
-	}
+	} // Save changes to the profile
 	function handleCancelEdit() {
 		isEditing.value = false
 		resetEditForm()
-	}
+	} // Cancel edit mode and reset the form
 	function resetEditForm() {
 		handleEditForm()
-	}
+	} // Reset the edit form to its initial state
 	async function handleDeleteAccount() {
 		if (!isOwnProfile.value) return
 		if (
@@ -183,7 +188,7 @@ export function useProfile() {
 				alert('Failed to delete account. Please try again.')
 			}
 		}
-	}
+	} // Delete the user account and associated reservations
 	async function deleteAllUserReservations(userId) {
 		// Filter reservations belonging to the user
 		const userReservations = reservationsStore.reservations.filter(
@@ -193,7 +198,7 @@ export function useProfile() {
 		for (const reservation of userReservations) {
 			await reservationsStore.deleteReservation(reservation._id)
 		}
-	}
+	} // Delete all reservations for a specific user
 	async function handleChangePicture(event) {
 		if (!isOwnProfile.value) return
 		const file = event.target.files[0]
@@ -207,7 +212,7 @@ export function useProfile() {
 		} catch (error) {
 			alert('Failed to update profile picture. Please try again.')
 		}
-	}
+	} // Change the profile picture
 	// Handle reserving view
 	async function cancelReservation(reservationId) {
 		if (!isOwnProfile.value) return
@@ -225,7 +230,7 @@ export function useProfile() {
 				alert('Failed to cancel reservation. Please try again.')
 			}
 		}
-	}
+	} // Cancel a specific reservation
 	async function handleView() {
 		try {
 			let user = sessionStorage.getItem('user') // Get user from sessionStorage
@@ -259,11 +264,11 @@ export function useProfile() {
 		} finally {
 			isLoading.value = false
 		}
-	}
+	} // Fetch and display the profile view
 
 	onMounted(() => {
 		handleView()
-	})
+	}) // Lifecycle hook to initialize the component
 
 	// Return all state, computed, and actions needed in your component
 	return {
