@@ -185,12 +185,16 @@
 						</button>
 						<button
 							class="delete-btn btn-danger bg-red-500 px-4 py-2"
-							:class="{ 'opacity-50 cursor-not-allowed': !canDeleteReservation(reservation) }"
+							:class="{
+								'opacity-50 cursor-not-allowed': !canDeleteReservation(reservation),
+							}"
 							:disabled="!canDeleteReservation(reservation)"
 							@click="deleteReservation(reservation._id)"
-							:title="!canDeleteReservation(reservation) ?
-                'Reservations can only be deleted within 10 minutes of the scheduled time' :
-                'Delete this reservation'"
+							:title="
+								!canDeleteReservation(reservation)
+									? 'Reservations can only be deleted within 10 minutes of the scheduled time'
+									: 'Delete this reservation'
+							"
 						>
 							Delete
 						</button>
@@ -220,6 +224,7 @@ export default {
 		const router = useRouter()
 		const labsStore = useLabsStore()
 		const reservationsStore = useReservationsStore()
+		const usersStore = useUsersStore()
 
 		const selectedBuilding = ref('All')
 		const userIdFilter = ref('')
@@ -230,10 +235,8 @@ export default {
 		})
 
 		// Check if user is technician based on session storage
-		const isTechnician = computed(() => {
-			const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-			return user?.role === 'Technician'
-		})
+		const isTechnician = computed(() => usersStore.currentUser?.role === 'Technician')
+
 		// Reactive state for loading and error handling
 		const isLoading = ref(false)
 		const error = ref(null)
@@ -242,8 +245,7 @@ export default {
 		// This works by checking if the user is logged in and then fetching labs and reservations
 		onMounted(async () => {
 			// Check if user is logged in
-			const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-			if (!user.role) {
+			if (!currentUser.value) {
 				router.push('/')
 				return
 			}
@@ -418,7 +420,8 @@ export default {
 
 			// Check if the reservation can be deleted based on time constraints
 			if (!canDeleteReservation(reservation)) {
-				error.value = 'Reservations can only be deleted within 10 minutes of the reservation time.'
+				error.value =
+					'Reservations can only be deleted within 10 minutes of the reservation time.'
 				setTimeout(() => {
 					error.value = null
 				}, 3000) // Clear error after 3 seconds

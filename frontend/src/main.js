@@ -10,10 +10,10 @@ app.config.devtools = true
 
 const pinia = createPinia()
 app.use(pinia)
-app.use(router)
 
 // Initialize user session BEFORE mounting the app
 const usersStore = useUsersStore()
 usersStore.initUserSession()
 
+app.use(router)
 app.mount('#app')

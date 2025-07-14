@@ -549,7 +549,7 @@ const reservationDetails = reactive({
 })
 
 // User data
-const currentUser = ref(null)
+const currentUser = computed(() => usersStore.currentUser)
 
 // Pagination and filtering
 const seatsPerPage = 7
@@ -592,6 +592,12 @@ watch(selectedDate, (newDate) => {
 // Component initialization
 onMounted(async () => {
 	try {
+		// check if logged in
+		if (!currentUser.value) {
+			router.push('/login')
+			return
+		}
+
 		// Initialize user
 		currentUser.value =
 			usersStore.currentUser || JSON.parse(sessionStorage.getItem('user') || '{}')
