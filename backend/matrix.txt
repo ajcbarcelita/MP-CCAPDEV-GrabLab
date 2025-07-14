@@ -1,0 +1,146 @@
+export const getLabSlotsByLabAndDate = async (req, res) => {                                       │
+ │    219  +     try {                                                                                          │
+ │    220  +         const { labId, date } = req.params;                                                        │
+ │    221  +                                                                                                    │
+ │    222  +         // Validate the date format                                                                │
+ │    223  +         const queryDate = new Date(date);                                                          │
+ │    224  +         if (isNaN(queryDate)) {                                                                    │
+ │    225  +             return res.status(400).json({ message: "Invalid date format" });                       │
+ │    226  +         }                                                                                          │
+ │    227  +                                                                                                    │
+ │    228  +         // Set the time to the beginning of the day for the start of the range                     │
+ │    229  +         const startOfDay = new Date(queryDate);                                                    │
+ │    230  +         startOfDay.setUTCHours(0, 0, 0, 0);                                                        │
+ │    231  +                                                                                                    │
+ │    232  +         // Set the time to the end of the day for the end of the range                             │
+ │    233  +         const endOfDay = new Date(queryDate);                                                      │
+ │    234  +         endOfDay.setUTCHours(23, 59, 59, 999);                                                     │
+ │    235  +                                                                                                    │
+ │    236  +         const labSlots = await LabSlot.find({                                                      │
+ │    237  +             lab: labId,                                                                            │
+ │    238  +             date: {                                                                                │
+ │    239  +                 $gte: startOfDay,                                                                  │
+ │    240  +                 $lte: endOfDay,                                                                    │
+ │    241  +             },                                                                                     │
+ │    242  +         }).populate({                                                                              │
+ │    243  +             path: 'time_slots.reserved',                                                           │
+ │    244  +             select: 'user status',                                                                 │
+ │    245  +             populate: {                                                                            │
+ │    246  +                 path: 'user',                                                                      │
+ │    247  +                 select: 'fname lname email'                                                        │
+ │    248  +             }                                                                                      │
+ │    249  +         });                                                                                        │
+ │    250  +                                                                                                    │
+ │    251  +         if (!labSlots || labSlots.length === 0) {                                                  │
+ │    252  +             // This is not an error, it just means no slots are created yet for this               │
+ │           day.                                                                                               │
+ │    253  +             // The frontend will handle creating them.                                             │
+ │    254  +             return res.status(404).json({ message: "No lab slots found for this lab                │
+ │           and date" });                                                                                      │
+ │    255  +         }                                                                                          │
+ │    256  +                                                                                                    │
+ │    257  +         res.json(labSlots);                                                                        │
+ │    258  +     } catch (error) {                                                                              │
+ │    259  +         console.error("Error fetching lab slots by lab and date:", error);                         │
+ │    260  +         res.status(500).json({ message: error.message });                                          │
+ │    261  +     }                                                                                              │
+ │    262  + };                                                                                                 │
+ │    263  +                                                                                                    │
+ │    264  + export const createBatchLabSlots = async (req, res) => {                                           │
+ │    265  +     try {                                                                                          │
+ │    266  +         const { slots } = req.body;                                                                │
+ │    267  +                                                                                                    │
+ │    268  +         if (!slots || !Array.isArray(slots) || slots.length === 0) {                               │
+ │    269  +             return res.status(400).json({ message: "Invalid or empty slots array                   │
+ │           provided" });                                                                                      │
+ │    270  +         }                                                                                          │
+ │    271  +                                                                                                    │
+ │    272  +         const createdSlots = await LabSlot.insertMany(slots, { ordered: false });                  │
+ │    273  +                                                                                                    │
+ │    274  +         res.status(201).json(createdSlots);                                                        │
+ │    275  +     } catch (error) {                                                                              │
+ │    276  +         console.error("Error creating batch lab slots:", error);                                   │
+ │    277  +         if (error.code === 11000) {                                                                │
+ │    278  +             // This can happen if the frontend tries to create slots that already                  │
+ │           exist.                                                                                             │
+ │    279  +             // We can fetch the existing slots and return them.                                    │
+ │    280  +             const existingSlots = await LabSlot.find({                                             │
+ │    281  +                 lab: slots[0].lab,                                                                 │
+ │    282  +                 date: slots[0].date,                                                               │
+ │    283  +             });                                                                                    │
+ │    284  +             return res.status(200).json(existingSlots);                                            │
+ │    285  +         }                                                                                          │
+ │    286  +         res.status(500).json({ message: error.message });                                          │
+ │    287  +     }                                                                                              │
+ │    288  + };              
+
+✦ I understand. It seems my previous fix was incomplete. I'll examine the notes.txt file and the PNG to
+  diagnose the problem. First, I'll read the logs.
+ ╭────────────────────────────────╮
+ │ ✔  ReadFile backend\notes.txt  │
+ ╰────────────────────────────────╯
+✦ I see. The notes.txt file seems to be for backend setup, so it's not relevant to this frontend issue. Since
+  I cannot view the PNG you mentioned, I'll proceed by examining the code that handles the fetching and
+  creation of lab slots on the backend. The problem likely lies in the data being returned to the
+  Reservation.vue component.
+
+
+  I'll start by inspecting backend/controllers/labController.js to see how the lab slot data is handled.
+ ╭──────────────────────────────────────────────────────╮
+ │ ✔  ReadFile ...backend\controllers\labController.js  │
+ ╰──────────────────────────────────────────────────────╯
+✦ I see that labController.js doesn't have any functions for handling lab slots. This suggests that there must
+   be another controller file responsible for this logic. Based on the file structure, it's likely that the
+  relevant code is in a file named labSlotController.js.
+
+
+  To investigate further, I'll check for the existence of this file.
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ✔  FindFiles 'backend/controllers/labSlotController.js'                                           │
+ │                                                                                                   │
+ │    No files found                                                                                 │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
+✦ That's unexpected. It seems there is no labSlotController.js file. The frontend is trying to fetch from
+  http://localhost:3000/api/labslots/..., which implies a labslots route. I'll check the routes to see where
+  it leads. I'll start by examining backend/routes/labRoutes.js.
+ ╭──────────────────────────────────────────╮
+ │ ✔  ReadFile backend\routes\labRoutes.js  │
+ ╰──────────────────────────────────────────╯
+✦ Okay, the labRoutes.js file doesn't have any routes related to lab slots. This confirms that the lab slot
+  logic is handled elsewhere. Given the frontend's API calls to /api/labslots, there must be a corresponding
+  route and controller for it.
+
+
+  I'll now examine the main application file, backend/app.js, to see how the routes are registered. This
+  should reveal the file that handles the /api/labslots path.
+ ╭─────────────────────────────╮
+ │ ✔  ReadFile backend\app.js  │
+ ╰─────────────────────────────╯
+✦ The app.js file shows that the routes are split between userRoutes.js, labRoutes.js, and
+  reservationRoutes.js. Since we've already ruled out labRoutes.js, and userRoutes.js is unlikely to contain
+  the lab slot logic, the problem must be in reservationRoutes.js.
+
+
+  I'll now examine backend/routes/reservationRoutes.js to find the code that handles the /api/labslots path.
+ ╭──────────────────────────────────────────────────╮
+ │ ✔  ReadFile backend\routes\reservationRoutes.js  │
+ ╰──────────────────────────────────────────────────╯
+✦ I've found the issue. The reservationRoutes.js file is importing its functions from
+  reservationController.js, but there are no routes that match the /api/labslots path used by the frontend.
+  This means the frontend is making requests to an endpoint that doesn't exist, which is why the slots aren't
+  loading.
+
+
+  To fix this, I will add the necessary routes to reservationRoutes.js and implement the corresponding
+  controller functions in reservationController.js. I'll start by adding the routes to reservationRoutes.js.
+
+
+
+           
+
+const response = await                                                                             │
+ │           fetch(`http://localhost:3000/api/reservations/labslots/lab/${selectedLab.value}/date/$             │
+ │           {selectedDate.value}`)     
+
++ const response = await fetch('http://localhost:3000/api/reservations/labslots/batch',              │
+ │           {  
