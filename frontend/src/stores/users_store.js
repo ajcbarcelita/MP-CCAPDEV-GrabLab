@@ -1,81 +1,89 @@
-import { defineStore } from 'pinia'
-import axios from 'axios'
+import { defineStore } from 'pinia' // Importing Pinia for state management
+import axios from 'axios' // Importing Axios for making HTTP requests
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = 'http://localhost:3000/api' // Base URL for the backend API
 
 export const useUsersStore = defineStore('users', {
+	// State: Defines the reactive state for the store
 	state: () => ({
-		users: [],
-		currentUser: null,
-		profileUser: null,
-		loading: false,
-		error: null,
+		users: [], // Array to store user data fetched from the API
+		currentUser: null, // Object to store the currently logged-in user
+		profileUser: null, // Object to store the user profile being viewed
+		loading: false, // Boolean flag to indicate loading state for API calls
+		error: null, // Stores error messages from failed API calls
 	}),
+
+	// Actions: Methods to modify the state or perform asynchronous operations
 	actions: {
-		// Fetch all users
+		// Fetches all users from the API
+		// @returns {Promise<void>} - Updates the users state with the fetched data
 		async fetchUsers() {
-			this.loading = true
+			this.loading = true // Set loading state to true
 			try {
-				const response = await axios.get(`${API_URL}/users`)
-				this.users = response.data
-				this.error = null
+				const response = await axios.get(`${API_URL}/users`) // API call to fetch all users
+				this.users = response.data // Update state with fetched data
+				this.error = null // Clear any previous errors
 			} catch (error) {
-				this.error = error.message
-				console.error('Error fetching users:', error)
+				this.error = error.message // Store error message in state
+				console.error('Error fetching users:', error) // Log error to console
 			} finally {
-				this.loading = false
+				this.loading = false // Reset loading state
 			}
 		},
 
+		// Fetches a specific user by their ID from the API
+		// @param {string|number} userId - The ID of the user to fetch
+		// @returns {Promise<Object|null>} - Resolves with the fetched user data or null if not found
 		async fetchUserById(userId) {
-			this.loading = true
+			this.loading = true // Set loading state to true
 			try {
-				console.log('Store: Fetching user with ID:', userId, 'Type:', typeof userId)
-				const response = await axios.get(`${API_URL}/users/${userId}`)
-				console.log('Store: API response:', response.data)
+				console.log('Store: Fetching user with ID:', userId, 'Type:', typeof userId) // Debug log
+				const response = await axios.get(`${API_URL}/users/${userId}`) // API call to fetch user by ID
+				console.log('Store: API response:', response.data) // Debug log
 
 				// Check if user was found
 				if (!response.data || Object.keys(response.data).length === 0) {
-					console.error('Store: User not found')
-					this.error = 'User not found'
-					return null
+					this.error = 'User not found' // Set error message
+					return null // Return null if user not found
 				}
 
-				const user = response.data
-				console.log('Store: Processed user data:', user)
+				const user = response.data // Extract user data from response
+				console.log('Store: Processed user data:', user) // Debug log
 
-				// Store now expects and uses user_id exclusively
-				const existingIndex = this.users.findIndex((u) => u.user_id === userId)
-				console.log('Store: Existing index:', existingIndex)
-
+				// Update local users array
+				const existingIndex = this.users.findIndex((u) => u.user_id === userId) // Find user index
 				if (existingIndex !== -1) {
-					this.users[existingIndex] = user
+					this.users[existingIndex] = user // Update existing user
 				} else {
-					this.users.push(user)
+					this.users.push(user) // Add new user
 				}
 
-				this.error = null
-				return user
+				this.error = null // Clear any previous errors
+				return user // Return the fetched user
 			} catch (error) {
-				console.error('Error fetching user by ID:', error)
-				this.error = error.response?.data?.message || 'User not found'
-				return null
+				console.error('Error fetching user by ID:', error) // Log error to console
+				this.error = error.response?.data?.message || 'User not found' // Set error message
+				return null // Return null if an error occurs
 			} finally {
-				this.loading = false
+				this.loading = false // Reset loading state
 			}
 		},
 
+		// Logs in a user with the provided credentials
+		// @param {Object} credentials - The login credentials (email, password, rememberMe)
+		// @returns {Promise<Object>} - Resolves with the logged-in user data
 		async loginUser(credentials) {
-			this.loading = true
+			this.loading = true // Set loading state to true
 			try {
 				const response = await axios.post(`${API_URL}/users/login`, {
 					email: credentials.email,
 					password: credentials.password,
 					rememberMe: credentials.rememberMe,
-				})
+				}) // API call to log in user
 
-				const user = response.data
+				const user = response.data // Extract user data from response
 
+				// Set current user state
 				this.currentUser = {
 					user_id: user.user_id,
 					fname: user.fname,
@@ -84,54 +92,57 @@ export const useUsersStore = defineStore('users', {
 					role: user.role,
 				}
 
-				// Set current user in session or local storage based on rememberMe
+				// Store current user in session or local storage based on rememberMe
 				this.setCurrentUser(this.currentUser, credentials.rememberMe, user.token)
-				this.error = null
-				return user
+				this.error = null // Clear any previous errors
+				return user // Return the logged-in user
 			} catch (error) {
-				this.error = error.response?.data?.message || 'Login failed'
-				throw error
+				this.error = error.response?.data?.message || 'Login failed' // Set error message
+				throw error // Re-throw error for further handling
 			} finally {
-				this.loading = false
+				this.loading = false // Reset loading state
 			}
 		},
 
-		// Update user profile
+		// Updates a user's profile with the provided data
+		// @param {string|number} userId - The ID of the user to update
+		// @param {Object} updateData - The data to update the user's profile with
+		// @returns {Promise<Object>} - Resolves with the updated user data
 		async updateUserProfile(userId, updateData) {
-			this.loading = true
+			this.loading = true // Set loading state to true
 			try {
-				// Ensure we're only sending allowed fields
+				// Prepare payload with allowed fields
 				const payload = {
 					fname: updateData.fname,
 					lname: updateData.lname,
 					description: updateData.description || '',
 				}
 
-				const response = await axios.put(`${API_URL}/users/${userId}`, payload)
-				const updatedUser = response.data
+				const response = await axios.put(`${API_URL}/users/${userId}`, payload) // API call to update user profile
+				const updatedUser = response.data // Extract updated user data from response
 
-				// Update local state
-				const index = this.users.findIndex((u) => u.user_id === userId)
+				// Update local users array
+				const index = this.users.findIndex((u) => u.user_id === userId) // Find user index
 				if (index !== -1) {
-					this.users[index] = { ...this.users[index], ...updatedUser }
+					this.users[index] = { ...this.users[index], ...updatedUser } // Update user in state
 				}
 
 				// Update currentUser if it's the same user
 				if (this.currentUser?.user_id === userId) {
-					this.currentUser = { ...this.currentUser, ...updatedUser }
+					this.currentUser = { ...this.currentUser, ...updatedUser } // Update currentUser state
 					if (localStorage.getItem('user')) {
-						localStorage.setItem('user', JSON.stringify(this.currentUser))
+						localStorage.setItem('user', JSON.stringify(this.currentUser)) // Update local storage
 					} else {
-						sessionStorage.setItem('user', JSON.stringify(this.currentUser))
+						sessionStorage.setItem('user', JSON.stringify(this.currentUser)) // Update session storage
 					}
 				}
 
-				return updatedUser
+				return updatedUser // Return the updated user
 			} catch (error) {
-				console.error('Update error:', error.response?.data || error.message)
-				throw new Error(error.response?.data?.message || 'Failed to update profile')
+				console.error('Update error:', error.response?.data || error.message) // Log error to console
+				throw new Error(error.response?.data?.message || 'Failed to update profile') // Throw error
 			} finally {
-				this.loading = false
+				this.loading = false // Reset loading state
 			}
 		},
 
