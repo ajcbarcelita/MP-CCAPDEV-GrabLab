@@ -81,8 +81,8 @@ async function handleLogin() {
 				</div>
 
 				<div class="login-checkbox">
-					<input type="checkbox" id="remember" class="mr-2" v-model="rememberMe" />
-					<label for="remember">Remember Me</label>
+					<input type="checkbox" id="rememberMe" class="mr-2" v-model="rememberMe" />
+					<label for="rememberMe">Remember Me</label>
 				</div>
 
 				<button type="submit" class="login-button">

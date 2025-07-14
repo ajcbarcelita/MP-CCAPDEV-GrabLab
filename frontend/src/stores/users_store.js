@@ -84,24 +84,10 @@ export const useUsersStore = defineStore('users', {
 					role: user.role,
 				}
 
-				// Store token
-				if (user.token) {
-					if (credentials.rememberMe) {
-						localStorage.setItem('token', user.token)
-					} else {
-						sessionStorage.setItem('token', user.token)
-					}
-				}
-
-				// Store user info
-				if (credentials.rememberMe) {
-					localStorage.setItem('user', JSON.stringify(this.currentUser))
-				} else {
-					sessionStorage.setItem('user', JSON.stringify(this.currentUser))
-				}
-
+				// Set current user in session or local storage based on rememberMe
+				this.setCurrentUser(this.currentUser, credentials.rememberMe, user.token)
 				this.error = null
-				return this.currentUser
+				return user
 			} catch (error) {
 				this.error = error.response?.data?.message || 'Login failed'
 				throw error
@@ -133,7 +119,11 @@ export const useUsersStore = defineStore('users', {
 				// Update currentUser if it's the same user
 				if (this.currentUser?.user_id === userId) {
 					this.currentUser = { ...this.currentUser, ...updatedUser }
-					sessionStorage.setItem('user', JSON.stringify(this.currentUser))
+					if (localStorage.getItem('user')) {
+						localStorage.setItem('user', JSON.stringify(this.currentUser))
+					} else {
+						sessionStorage.setItem('user', JSON.stringify(this.currentUser))
+					}
 				}
 
 				return updatedUser
@@ -172,10 +162,14 @@ export const useUsersStore = defineStore('users', {
 					this.users[index] = { ...this.users[index], ...updatedUser }
 				}
 
-				// If the current user is the one being updated, update currentUser and session storage
-				if (this.currentUser && this.currentUser.user_id === userId) {
+				// If the current user is the one being updated, update currentUser
+				if (this.currentUser?.user_id === userId) {
 					this.currentUser = { ...this.currentUser, ...updatedUser }
-					sessionStorage.setItem('user', JSON.stringify(this.currentUser))
+					if (localStorage.getItem('user')) {
+						localStorage.setItem('user', JSON.stringify(this.currentUser))
+					} else {
+						sessionStorage.setItem('user', JSON.stringify(this.currentUser))
+					}
 				}
 
 				this.error = null
@@ -217,9 +211,26 @@ export const useUsersStore = defineStore('users', {
 		},
 
 		// Set current user (for login)
-		setCurrentUser(user) {
+		// rememberMe is optional, defaults to false
+		// token is optional, defaults to null
+		setCurrentUser(user, rememberMe = false, token = null) {
 			this.currentUser = user
-			sessionStorage.setItem('user', JSON.stringify(user))
+			if (rememberMe) {
+				localStorage.setItem('user', JSON.stringify(user))
+				sessionStorage.removeItem('user')
+
+				if (token) {
+					localStorage.setItem('token', token)
+					sessionStorage.removeItem('token')
+				}
+			} else {
+				sessionStorage.setItem('user', JSON.stringify(user))
+				localStorage.removeItem('user')
+				if (token) {
+					sessionStorage.setItem('token', token)
+					localStorage.removeItem('token')
+				}
+			}
 		},
 
 		// Clear user session (for logout)
@@ -230,22 +241,32 @@ export const useUsersStore = defineStore('users', {
 			localStorage.removeItem('user')
 			sessionStorage.removeItem('token')
 			localStorage.removeItem('token')
+			delete axios.defaults.headers.common['Authorization']
 		},
 
 		// Initialize user session from storage
 		initUserSession() {
 			let user = sessionStorage.getItem('user')
+			let token = sessionStorage.getItem('token')
 			if (!user) {
 				user = localStorage.getItem('user')
+				token = localStorage.getItem('token')
 			}
 			if (user) {
 				try {
 					this.currentUser = JSON.parse(user)
+
+					// Set token as default authrization header for axios
+					if (token) {
+						axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+					}
 				} catch (error) {
 					console.error('Error parsing user from storage:', error)
 					this.currentUser = null
 				}
 			} else {
+				console.log('No user found in storage, initializing currentUser to null')
+				axios.defaults.headers.common['Authorization'] = ''
 				this.currentUser = null
 			}
 			this.profileUser = this.currentUser // Default to current user profile
