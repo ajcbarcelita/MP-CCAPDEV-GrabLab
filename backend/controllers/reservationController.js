@@ -9,7 +9,8 @@ import mongoose from "mongoose";
  * @access Private
  */
 export const createReservation = async (req, res) => {
-  const { user_id, lab_id, reservation_date, slots, anonymous } = req.body;
+  const { user_id, lab_id, reservation_date, slots, anonymous, technician_id } =
+    req.body;
 
   if (
     !user_id ||
@@ -29,6 +30,29 @@ export const createReservation = async (req, res) => {
     const user = await User.findOne({ user_id: parseInt(user_id) });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // If technician_id is provided, enforce technician rules
+    if (technician_id) {
+      const technician = await User.findOne({
+        user_id: parseInt(technician_id),
+      });
+      if (!technician || technician.role !== "Technician") {
+        return res.status(403).json({ message: "Invalid technician ID." });
+      }
+      if (parseInt(user_id) === parseInt(technician_id)) {
+        return res
+          .status(403)
+          .json({
+            message:
+              "Technicians cannot reserve for themselves. Please enter a student ID.",
+          });
+      }
+      if (user.role !== "Student") {
+        return res
+          .status(403)
+          .json({ message: "Technicians can only reserve for students." });
+      }
     }
 
     // Check if the lab exists
@@ -243,13 +267,45 @@ export const deleteReservation = async (req, res) => {
 export const updateReservation = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id, lab_id, reservation_date, slots, anonymous, status } =
-      req.body;
+    const {
+      user_id,
+      lab_id,
+      reservation_date,
+      slots,
+      anonymous,
+      status,
+      technician_id,
+    } = req.body;
 
     // Find the existing reservation
     const existingReservation = await Reservation.findById(id);
     if (!existingReservation) {
       return res.status(404).json({ message: "Reservation not found" });
+    }
+
+    // If technician_id is provided, enforce technician rules
+    if (technician_id && user_id) {
+      const User = mongoose.model("User");
+      const technician = await User.findOne({
+        user_id: parseInt(technician_id),
+      });
+      const student = await User.findOne({ user_id: parseInt(user_id) });
+      if (!technician || technician.role !== "Technician") {
+        return res.status(403).json({ message: "Invalid technician ID." });
+      }
+      if (parseInt(user_id) === parseInt(technician_id)) {
+        return res
+          .status(403)
+          .json({
+            message:
+              "Technicians cannot reserve for themselves. Please enter a student ID.",
+          });
+      }
+      if (!student || student.role !== "Student") {
+        return res
+          .status(403)
+          .json({ message: "Technicians can only reserve for students." });
+      }
     }
 
     // Prevent updating to time slots in the past (for today)

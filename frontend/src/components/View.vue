@@ -105,10 +105,7 @@
 			</div>
 
 			<!-- Reservations Grid -->
-			<div
-				v-else
-				class="reservations-grid flex flex-col items-center max-w-60 mx-w-4xl mx-auto"
-			>
+			<div v-else class="reservations-grid">
 				<div
 					class="reservation-card align-middle reservation-card-scrollable"
 					v-for="reservation in filteredReservations"
@@ -353,7 +350,7 @@ export default {
 		})
 
 		const formatDateTime = (dateTime) => {
-			return new Date(dateTime).toLocaleString()
+			return new Date(dateTime).toLocaleDateString()
 		}
 
 		// Function to format time slots

@@ -80,7 +80,7 @@ export function useProfile() {
 		return profilePicPath
 	} // Get full URL for profile picture
 	const formatDateTime = (dateTime) => {
-		return new Date(dateTime).toLocaleString()
+		return new Date(dateTime).toLocaleDateString()
 	} // Format date and time to a readable string
 	const formatTimeSlot = (slot) => {
 		if (slot && slot.startTime && slot.endTime) {
