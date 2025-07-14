@@ -226,6 +226,8 @@ export default {
 		const selectedBuilding = ref('All')
 		const userIdFilter = ref('')
 
+		const currentUser = computed(() => usersStore.currentUser)
+
 		// Extract unique buildings from labs data using store getter
 		const buildings = computed(() => {
 			return labsStore.getAllUniqueBuildings
