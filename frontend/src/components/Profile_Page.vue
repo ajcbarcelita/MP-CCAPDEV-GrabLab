@@ -80,7 +80,7 @@
 							<!-- Name & Change pic handler -->
 							<div>
 								<h4 class="text-xl font-semibold text-forest-dark mb-2 font-karma">
-									{{ profileUser.first_name }} {{ profileUser.last_name }}
+									{{ editForm.first_name }} {{ editForm.last_name }}
 								</h4>
 								<!-- If its your profile, then you can change it -->
 								<input v-if="isOwnProfile" type="file" accept="image/*" @change="handleChangePicture"

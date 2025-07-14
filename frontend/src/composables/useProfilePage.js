@@ -68,6 +68,8 @@ export function useProfile() {
 	}
 	const getProfilePicUrl = (profilePicPath) => {
 		if (!profilePicPath) return null
+		// Assuming profilePicPath is a relative path
+		// Only works 
 		if (process.env.NODE_ENV === 'development') {
 			return `http://localhost:3000${profilePicPath}`
 		}
