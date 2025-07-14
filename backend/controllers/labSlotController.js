@@ -1,5 +1,4 @@
 import LabSlot from "../models/LabSlot.js";
-import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
 // Helper function to check database connection
@@ -9,7 +8,13 @@ const checkConnection = () => {
   }
 };
 
-// Get lab slots by lab ID and date (robust date handling)
+/**
+ * @desc    Get reservations by lab ID
+ * @route   GET /api/reservations/lab/:labId
+ * @access  Public/Private
+ * @param   req.params.labId - Lab ID
+ * @returns Array of reservations for the lab (populated with user info)
+ */
 export const getLabSlotsByLabAndDate = async (req, res) => {
   try {
     checkConnection();
@@ -49,7 +54,13 @@ export const getLabSlotsByLabAndDate = async (req, res) => {
   }
 };
 
-// Get all lab slots by lab ID
+/**
+ * @desc    Get all lab slots by lab ID
+ * @route   GET /api/labslots/lab/:labId
+ * @access  Public/Private
+ * @param   req.params.labId - Lab ID
+ * @returns Array of all lab slot objects for the specified lab
+ */
 export const getLabSlotsByLab = async (req, res) => {
   try {
     checkConnection();
@@ -72,7 +83,13 @@ export const getLabSlotsByLab = async (req, res) => {
   }
 };
 
-// Create lab slots in batch (robust duplicate handling)
+/**
+ * @desc    Create lab slots in batch (multiple slots at once)
+ * @route   POST /api/labslots/batch
+ * @access  Public/Private
+ * @param   req.body.slots - Array of lab slot objects to create
+ * @returns Array of created lab slot objects (or existing slots if duplicates)
+ */
 export const createLabSlotsBatch = async (req, res) => {
   try {
     checkConnection();
@@ -104,7 +121,13 @@ export const createLabSlotsBatch = async (req, res) => {
   }
 };
 
-// Update a specific lab slot
+/**
+ * @desc    Create lab slots in batch (multiple slots at once)
+ * @route   POST /api/labslots/batch
+ * @access  Public/Private
+ * @param   req.body.slots - Array of lab slot objects to create
+ * @returns Array of created lab slot objects (or existing slots if duplicates)
+ */
 export const updateLabSlot = async (req, res) => {
   try {
     checkConnection();

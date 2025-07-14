@@ -23,8 +23,8 @@ router
 
 router
     .route("/:userId")
-    .get(getUserById) // GET /api/users/:userId
-    .put(updateUser) // PUT /api/users/:userId
+    .get(getUserById)    // GET /api/users/:userId
+    .put(updateUser)     // PUT /api/users/:userId
     .delete(deleteUser); // DELETE /api/users/:userId
 
 // Profile picture upload

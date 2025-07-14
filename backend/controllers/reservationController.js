@@ -1,8 +1,16 @@
 import Reservation from "../models/Reservation.js";
-import LabSlot from "../models/LabSlot.js";
 import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
+
+/**
+ * @desc    Update user profile (name, description)
+ * @route   PUT /api/users/:userId
+ * @access  Private
+ * @param   req.params.userId - User ID
+ * @param   req.body.fname, lname, description
+ * @returns Updated user object (transformed)
+ */
 export const createReservation = async (req, res) => {
   const { user_id, lab_id, reservation_date, slots, anonymous } = req.body;
 
@@ -94,6 +102,13 @@ export const createReservation = async (req, res) => {
   }
 };
 
+
+/**
+ * @desc    Get all reservations
+ * @route   GET /api/reservations
+ * @access  Public/Private
+ * @returns Array of all reservations (each populated with lab and user info)
+ */
 export const getReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find({})
@@ -136,6 +151,13 @@ export const getReservations = async (req, res) => {
   }
 };
 
+
+/**
+ * @desc    Get all reservations
+ * @route   GET /api/reservations
+ * @access  Public/Private
+ * @returns Array of all reservations (each populated with lab and user info)
+ */
 export const getReservationsByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -173,6 +195,12 @@ export const getReservationsByUserId = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all reservations
+ * @route   GET /api/reservations
+ * @access  Public/Private
+ * @returns Array of all reservations (each populated with lab and user info)
+ */
 export const deleteReservation = async (req, res) => {
   try {
     const { id } = req.params;
@@ -199,6 +227,14 @@ export const deleteReservation = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Update a reservation (slots, status, etc.)
+ * @route   PATCH /api/reservations/:id
+ * @access  Public/Private
+ * @param   req.params.id - Reservation ID
+ * @param   req.body - Fields to update (user_id, lab_id, reservation_date, slots, anonymous, status)
+ * @returns Updated reservation object (populated with lab and user info)
+ */
 export const updateReservation = async (req, res) => {
   try {
     const { id } = req.params;
@@ -317,7 +353,13 @@ export const updateReservation = async (req, res) => {
   }
 };
 
-// New endpoint to get reservations by lab
+/**
+ * @desc    Get reservations by lab ID
+ * @route   GET /api/reservations/lab/:labId
+ * @access  Public/Private
+ * @param   req.params.labId - Lab ID
+ * @returns Array of reservations for the lab (populated with user info)
+ */
 export const getReservationsByLab = async (req, res) => {
   try {
     const { labId } = req.params;

@@ -64,16 +64,18 @@ export const useReservationsStore = defineStore('reservations', {
 			try {
 				const response = await axios.delete(`${API_URL}/reservations/${reservationId}`)
 				// Instead of removing from array, update the status to "Deleted"
+				// Find the index of the reservation in the local array by its _id
 				const index = this.reservations.findIndex((res) => res._id === reservationId)
 				if (index !== -1) {
 					this.reservations[index] = {
-						...this.reservations[index],
-						status: 'Deleted',
-						...response.data.reservation, // Merge any additional updates from server
+						// Merge existing data with the deleted status
+						...this.reservations[index],  // Keep all existing reservation data
+						status: 'Cancelled',
+						...response.data.reservation, // Update with response data
 					}
 				}
 				this.error = null
-				return response.data
+				return response.data // Return the updated reservation data
 			} catch (error) {
 				this.error = error.message
 				console.error('Error deleting reservation:', error)

@@ -1,5 +1,4 @@
 import User from "../models/User.js";
-import Reservation from "../models/Reservation.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -46,9 +45,14 @@ const upload = multer({
     },
 });
 
-// @desc    Update user profile picture
-// @route   POST /api/users/:userId/profile-picture
-// @access  Private
+/**
+ * @desc    Update user profile picture
+ * @route   POST /api/users/:userId/profile-picture
+ * @access  Private
+ * @param   req.params.userId - User ID
+ * @param   req.file - Uploaded image file
+ * @returns Updated user object (transformed for frontend)
+ */
 const updateUserProfilePicture = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -104,9 +108,14 @@ const updateUserProfilePicture = async (req, res) => {
     }
 };
 
-// @desc    Register a new user
-// @route   POST /api/users/register
-// @access  Public
+/**
+ * @desc    Update user profile picture
+ * @route   POST /api/users/:userId/profile-picture
+ * @access  Private
+ * @param   req.params.userId - User ID
+ * @param   req.file - Uploaded image file
+ * @returns Updated user object (transformed for frontend)
+ */
 const registerUser = async (req, res) => {
     const { email, password, fname, lname, mname = "", role = "Student", status = "Active" } = req.body;
 
@@ -147,9 +156,13 @@ const registerUser = async (req, res) => {
     }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/users/login
-// @access  Public
+/**
+ * @desc    Authenticate user & get JWT token
+ * @route   POST /api/users/login
+ * @access  Public
+ * @param   req.body.email, password, rememberMe
+ * @returns User object and JWT token (sets cookie)
+ */
 const loginUser = async (req, res) => {
     const { email, password, rememberMe } = req.body;
     console.log("Login attempt:", email, password, rememberMe);
@@ -192,9 +205,12 @@ const loginUser = async (req, res) => {
     }
 };
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Public (or add auth middleware later)
+/**
+ * @desc    Get all users
+ * @route   GET /api/users
+ * @access  Public (or add auth middleware later)
+ * @returns Array of all users (transformed, no password)
+ */
 const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({})
@@ -221,9 +237,13 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-// @desc    Get user by ID
-// @route   GET /api/users/:userId
-// @access  Public (or add auth middleware later)
+/**
+ * @desc    Get user by ID
+ * @route   GET /api/users/:userId
+ * @access  Public (or add auth middleware later)
+ * @param   req.params.userId - User ID
+ * @returns User object (transformed, no password)
+ */
 const getUserById = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -260,33 +280,41 @@ const getUserById = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Soft delete user (set status to 'Inactive')
+ * @route   DELETE /api/users/:userId
+ * @access  Private
+ * @param   req.params.userId - User ID
+ * @returns Success message
+ */
 const deleteUser = async (req, res) => {
     try {
-        const { userId } = req.params; // Match the route parameter name
-
-        // Find the user by user_id field
+        // Find User
+        const { userId } = req.params;
         const user = await User.findOne({ user_id: userId });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Delete all reservations associated with the user -- to be fixed
-        //await Reservation.deleteMany({ user: userId });
-        // Also delete profile picture if it exists
+        // Set status to inactive
+        user.status = "Inactive";
+        await user.save();
 
-        // Delete the user using user_id
-        await User.findOneAndDelete({ user_id: userId });
-
-        res.json({ message: "User and associated reservations deleted successfully" });
+        res.json({ message: "User and associated reservations soft deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/:userId
-// @access  Private
+/**
+ * @desc    Update user profile (name, description)
+ * @route   PUT /api/users/:userId
+ * @access  Private
+ * @param   req.params.userId - User ID
+ * @param   req.body.fname, lname, description
+ * @returns Updated user object (transformed)
+ */
 const updateUser = async (req, res) => {
     try {
         const { userId } = req.params;

@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // Configure profile pictures directory
 const profilePicsDir = path.join(__dirname, "uploads", "profile_pictures");
 
-// Ensure directory exists
+// Ensure directory exists - using 'fs' module
 if (!fs.existsSync(profilePicsDir)) {
   fs.mkdirSync(profilePicsDir, { recursive: true });
   console.log(`Created profile pictures directory: ${profilePicsDir}`);
