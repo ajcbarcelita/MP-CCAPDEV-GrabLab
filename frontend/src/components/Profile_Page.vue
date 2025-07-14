@@ -191,7 +191,8 @@
 								v-for="reservation in filteredReservations" :key="reservation._id">
 								<div class="mb-3">
 									<h4 class="font-bold text-forest-dark text-lg font-karma">
-										{{ reservation.lab_id?.display_name || reservation.lab_id?.name || getLabName(reservation.lab_id) }}
+										{{ reservation.lab_id?.display_name || reservation.lab_id?.name ||
+											getLabName(reservation.lab_id) }}
 									</h4>
 									<span class="text-xs text-forest-medium font-karma">
 										Reservation #{{ reservation._id }}

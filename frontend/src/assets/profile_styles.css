@@ -58,13 +58,7 @@
 	@apply text-[#12372A];
 }
 
-#home {
-	font-family: 'Jomhuria';
-	color: #ADBC9F;
-	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
-}
-
-#logout {
+#home, #logout {
 	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
 }
 

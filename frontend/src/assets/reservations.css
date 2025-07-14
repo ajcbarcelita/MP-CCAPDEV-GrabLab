@@ -105,21 +105,12 @@
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#navbar-brand {
-	font-family: 'Jersey 25', cursive;
-	font-size: 2.5rem;
-}
-
 #links a {
 	margin-left: 1.5rem;
-	color: #fbfada;
 	text-decoration: none;
 	transition: color 0.3s ease;
 }
 
-#links a:hover {
-	color: #adbc9f;
-}
 
 #hero-section {
 	background-color: #436850;
@@ -282,4 +273,8 @@
 
 .lab-btn:hover {
 	background-color: #0a1f18;
+}
+
+#profile, #logout {
+	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
 }
