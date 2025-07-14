@@ -110,7 +110,7 @@
 				class="reservations-grid flex flex-col items-center max-w-60 mx-w-4xl mx-auto"
 			>
 				<div
-					class="reservation-card align-middle"
+					class="reservation-card align-middle reservation-card-scrollable"
 					v-for="reservation in filteredReservations"
 					:key="reservation._id"
 				>

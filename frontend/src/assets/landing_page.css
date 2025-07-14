@@ -356,3 +356,17 @@ input[type='number'] {
 	margin-bottom: 20px;
 	text-align: center;
 }
+
+
+/* Scrollable reservation card styles */
+.reservation-card-scrollable {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.reservation-card-scrollable::-webkit-scrollbar {
+  display: none;
+}
