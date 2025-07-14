@@ -185,7 +185,12 @@
 						</button>
 						<button
 							class="delete-btn btn-danger bg-red-500 px-4 py-2"
+							:class="{ 'opacity-50 cursor-not-allowed': !canDeleteReservation(reservation) }"
+							:disabled="!canDeleteReservation(reservation)"
 							@click="deleteReservation(reservation._id)"
+							:title="!canDeleteReservation(reservation) ?
+                'Reservations can only be deleted within 10 minutes of the scheduled time' :
+                'Delete this reservation'"
 						>
 							Delete
 						</button>
@@ -409,6 +414,17 @@ export default {
 
 		// Handle deleting a reservation
 		const deleteReservation = async (reservationId) => {
+			const reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
+
+			// Check if the reservation can be deleted based on time constraints
+			if (!canDeleteReservation(reservation)) {
+				error.value = 'Reservations can only be deleted within 10 minutes of the reservation time.'
+				setTimeout(() => {
+					error.value = null
+				}, 3000) // Clear error after 3 seconds
+				return
+			}
+
 			if (confirm('Are you sure you want to delete this reservation?')) {
 				isLoading.value = true
 				error.value = null
@@ -423,6 +439,47 @@ export default {
 					isLoading.value = false
 				}
 			}
+		}
+
+		// Check if the reservation can be deleted (within 10 minutes of the reservation time)
+		const canDeleteReservation = (reservation) => {
+			// If no reservation or no slots, return false
+			if (!reservation || !reservation.slots || reservation.slots.length === 0) {
+				return false
+			}
+
+			// Find the earliest time slot for today
+			const earliestSlot = [...reservation.slots].sort((a, b) => {
+				// Parse times like "14:00" into comparable values
+				const [aHours, aMinutes] = a.start_time.split(':').map(Number)
+				const [bHours, bMinutes] = b.start_time.split(':').map(Number)
+
+				const aValue = aHours * 60 + aMinutes
+				const bValue = bHours * 60 + bMinutes
+
+				return aValue - bValue
+			})[0]
+
+			if (!earliestSlot || !earliestSlot.start_time) {
+				return false
+			}
+
+			// Get current time
+			const now = new Date()
+			const currentHours = now.getHours()
+			const currentMinutes = now.getMinutes()
+			const currentTimeInMinutes = currentHours * 60 + currentMinutes
+
+			// Parse reservation time
+			const [slotHours, slotMinutes] = earliestSlot.start_time.split(':').map(Number)
+			const slotTimeInMinutes = slotHours * 60 + slotMinutes
+
+			// Calculate time difference in minutes
+			const timeDiffInMinutes = slotTimeInMinutes - currentTimeInMinutes
+
+			// Allow deletion only if WITHIN 10 minutes of the reservation time
+			// This means timeDiff must be between 0 and 10 minutes
+			return timeDiffInMinutes >= 0 && timeDiffInMinutes <= 10
 		}
 
 		return {
@@ -440,6 +497,7 @@ export default {
 			error,
 			editReservation,
 			deleteReservation,
+			canDeleteReservation,
 		}
 	},
 }
