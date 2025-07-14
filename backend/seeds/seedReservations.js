@@ -17,22 +17,21 @@ const seedReservations = async () => {
         const fourDaysLater = new Date();
         fourDaysLater.setDate(now.getDate() + 4);
 
-        // Get all non-technician users
-        const users = await User.find({ role: { $ne: "Technician" } });
+        // Get all Student users only
+        const users = await User.find({ role: "Student" });
         if (users.length === 0) throw new Error("No eligible users found.");
 
         await Reservation.deleteMany({});
         console.log("🧹 Existing reservations removed");
 
-        // Get all LabSlots within 4 days
+        // Get all LabSlots within 4 days, grouped by lab
         const labSlots = await LabSlot.find({
             date: { $gte: now, $lte: fourDaysLater },
         }).populate("lab");
 
-        // Group LabSlots by lab._id
         const labSlotGroups = {};
         for (const slot of labSlots) {
-            if (!slot.lab) continue; // skip if lab is missing
+            if (!slot.lab) continue;
             const labId = slot.lab._id.toString();
             if (!labSlotGroups[labId]) labSlotGroups[labId] = [];
             labSlotGroups[labId].push(slot);
@@ -41,55 +40,55 @@ const seedReservations = async () => {
         let totalReservations = 0;
 
         for (const [labId, slots] of Object.entries(labSlotGroups)) {
-            let reservations = [];
-            let userIdx = 0;
+            for (const user of users) {
+                let reservations = [];
+                let usedSlots = new Set();
 
-            // Try to make up to 3 reservations for this lab
-            for (const labSlot of slots) {
-                if (reservations.length >= 3) break;
-                const isToday = labSlot.date.toDateString() === now.toDateString();
-                const availableTimeSlot = labSlot.time_slots.find((ts) => {
-                    if (ts.reserved) return false;
-                    if (isToday) {
-                        const [endHour, endMinute] = ts.endTime.split(":").map(Number);
-                        const slotEnd = new Date(labSlot.date);
-                        slotEnd.setHours(endHour, endMinute, 0, 0);
-                        return slotEnd > now;
-                    }
-                    return true;
-                });
-                if (availableTimeSlot) {
-                    reservations.push({
-                        user_id: users[userIdx % users.length].user_id,
-                        lab_slot: labSlot._id,
-                        time_slots: [availableTimeSlot._id],
-                        status: "Active",
+                // Try to make up to 5 reservations for this user in this lab
+                for (const labSlot of slots) {
+                    if (reservations.length >= 5) break;
+                    const isToday = labSlot.date.toDateString() === now.toDateString();
+                    const availableTimeSlot = labSlot.time_slots.find((ts) => {
+                        if (ts.reserved) return false;
+                        if (usedSlots.has(ts._id.toString())) return false;
+                        if (isToday) {
+                            const [endHour, endMinute] = ts.endTime.split(":").map(Number);
+                            const slotEnd = new Date(labSlot.date);
+                            slotEnd.setHours(endHour, endMinute, 0, 0);
+                            return slotEnd > now;
+                        }
+                        return true;
                     });
-                    userIdx++;
+                    if (availableTimeSlot) {
+                        reservations.push({
+                            user_id: user.user_id,
+                            lab_id: labSlot.lab._id,
+                            reservation_date: labSlot.date,
+                            slots: [
+                                {
+                                    seat_number: labSlot.seat_number, // <-- FIXED: get from LabSlot, not time slot
+                                    start_time: availableTimeSlot.startTime,
+                                    end_time: availableTimeSlot.endTime,
+                                },
+                            ],
+                            status: "Active",
+                        });
+                        usedSlots.add(availableTimeSlot._id.toString());
+                    }
                 }
-            }
 
-            if (reservations.length === 0) {
-                console.log(`⚠️  No available reservations for lab ${slots[0].lab.display_name || labId}`);
-                continue;
-            }
+                if (reservations.length === 0) {
+                    console.log(`⚠️  No available reservations for user ${user.user_id} in lab ${slots[0].lab.display_name || labId}`);
+                    continue;
+                }
 
-            // Insert reservations and update LabSlot time_slots
-            const inserted = await Reservation.insertMany(reservations);
-
-            for (let i = 0; i < inserted.length; i++) {
-                const reservation = inserted[i];
-                const labSlotId = reservation.lab_slot;
-                const reservedTimeSlotIds = reservation.time_slots;
-                await LabSlot.updateOne(
-                    { _id: labSlotId, "time_slots._id": { $in: reservedTimeSlotIds } },
-                    { $set: { "time_slots.$[elem].reserved": reservation._id } },
-                    { arrayFilters: [{ "elem._id": { $in: reservedTimeSlotIds } }] }
+                // Insert reservations
+                const inserted = await Reservation.insertMany(reservations);
+                totalReservations += inserted.length;
+                console.log(
+                    `✅ Seeded ${inserted.length} reservations for user ${user.user_id} in lab ${slots[0].lab.display_name || labId}`
                 );
             }
-
-            totalReservations += inserted.length;
-            console.log(`✅ Seeded ${inserted.length} reservations for lab ${slots[0].lab.display_name || labId}`);
         }
 
         console.log(`🎉 Total reservations seeded: ${totalReservations}`);
