@@ -220,13 +220,20 @@
 										{{ reservation.status }}
 									</p>
 								</div>
-								<!-- Cancel button, only if not already cancelled/deleted -->
-								<button
-									v-if="isOwnProfile && reservation.status !== 'Cancelled' && reservation.status !== 'Deleted'"
-									@click="cancelReservation(reservation._id)"
-									class="mt-4 mx-auto block bg-pink-100 text-pink-700 px-4 py-2 rounded font-karma transition-colors hover:bg-pink-300">
-									Cancel Reservation
-								</button>
+								<!-- Action buttons, only if not already cancelled/deleted -->
+								<div v-if="isOwnProfile && reservation.status !== 'Cancelled' && reservation.status !== 'Deleted'" 
+									class="mt-4 flex gap-2 justify-center">
+									<button
+										@click="editReservation(reservation._id)"
+										class="bg-forest-medium text-cream px-4 py-2 rounded font-karma transition-colors hover:bg-forest-dark">
+										Edit Reservation
+									</button>
+									<button
+										@click="cancelReservation(reservation._id)"
+										class="bg-pink-100 text-pink-700 px-4 py-2 rounded font-karma transition-colors hover:bg-pink-300">
+										Cancel Reservation
+									</button>
+								</div>
 							</div>
 						</div>
 
