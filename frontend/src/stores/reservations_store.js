@@ -30,16 +30,18 @@ export const useReservationsStore = defineStore('reservations', {
 			this.loading = true
 			try {
 				const response = await axios.get(`${API_URL}/reservations/user/${userId}`)
+
 				this.reservations = response.data.map((reservation) => ({
 					...reservation,
 					time_slots: reservation.time_slots || [],
 					lab: reservation.lab_slot?.lab || null, // Include lab information if available
 					user: reservation.user || null, // Include user information if available
 				}))
+
 				this.error = null
 			} catch (error) {
-				this.error = error.message
 				console.error('Error fetching user reservations:', error)
+				this.error = error.message
 			} finally {
 				this.loading = false
 			}
@@ -110,6 +112,29 @@ export const useReservationsStore = defineStore('reservations', {
 			} catch (error) {
 				this.error = error.message
 				console.error('Error updating reservation:', error)
+			} finally {
+				this.loading = false
+			}
+		},
+		async updateReservation(reservationId, updateData) {
+			this.loading = true
+			try {
+				const response = await axios.patch(
+					`${API_URL}/reservations/${reservationId}`,
+					updateData,
+				)
+
+				const index = this.reservations.findIndex((res) => res._id === reservationId)
+				if (index !== -1) {
+					this.reservations[index] = response.data
+				}
+
+				this.error = null
+				return response.data
+			} catch (error) {
+				console.error('Error updating reservation:', error)
+				this.error = error.message
+				throw error
 			} finally {
 				this.loading = false
 			}

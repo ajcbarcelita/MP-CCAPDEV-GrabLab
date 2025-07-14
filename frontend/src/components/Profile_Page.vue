@@ -191,7 +191,7 @@
 								v-for="reservation in filteredReservations" :key="reservation._id">
 								<div class="mb-3">
 									<h4 class="font-bold text-forest-dark text-lg font-karma">
-										{{ reservation.lab_slot?.lab?.display_name || getLabName(reservation.lab_id) }}
+										{{ reservation.lab_id?.display_name || reservation.lab_id?.name || getLabName(reservation.lab_id) }}
 									</h4>
 									<span class="text-xs text-forest-medium font-karma">
 										Reservation #{{ reservation._id }}
@@ -200,9 +200,9 @@
 								<div class="text-forest-dark text-sm space-y-1 font-karma">
 									<p>
 										<strong>Time Slots:</strong>
-									<div v-if="reservation.time_slots && reservation.time_slots.length > 0">
-										<div v-for="(slot, index) in reservation.time_slots" :key="index">
-											{{ formatTimeSlot(slot) }}
+									<div v-if="reservation.slots && reservation.slots.length > 0">
+										<div v-for="(slot, index) in reservation.slots" :key="index">
+											Seat {{ slot.seat_number }}: {{ slot.start_time }} - {{ slot.end_time }}
 										</div>
 									</div>
 									<div v-else>No time slots available</div>
@@ -220,13 +220,20 @@
 										{{ reservation.status }}
 									</p>
 								</div>
-								<!-- Cancel button, only if not already cancelled/deleted -->
-								<button
-									v-if="isOwnProfile && reservation.status !== 'Cancelled' && reservation.status !== 'Deleted'"
-									@click="cancelReservation(reservation._id)"
-									class="mt-4 mx-auto block bg-pink-100 text-pink-700 px-4 py-2 rounded font-karma transition-colors hover:bg-pink-300">
-									Cancel Reservation
-								</button>
+								<!-- Action buttons, only if not already cancelled/deleted -->
+								<div v-if="isOwnProfile && reservation.status !== 'Cancelled' && reservation.status !== 'Deleted'" 
+									class="mt-4 flex gap-2 justify-center">
+									<button
+										@click="editReservation(reservation._id)"
+										class="bg-forest-medium text-cream px-4 py-2 rounded font-karma transition-colors hover:bg-forest-dark">
+										Edit Reservation
+									</button>
+									<button
+										@click="cancelReservation(reservation._id)"
+										class="bg-pink-100 text-pink-700 px-4 py-2 rounded font-karma transition-colors hover:bg-pink-300">
+										Cancel Reservation
+									</button>
+								</div>
 							</div>
 						</div>
 

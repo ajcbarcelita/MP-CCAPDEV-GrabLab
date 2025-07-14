@@ -25,8 +25,6 @@ export function useProfile() {
 	})
 	const currentUser = ref(null)
 	const profileUser = ref(null)
-	const showEditModal = ref(false)
-	const editingReservation = ref(null)
 
 	// Computed
 	const isOwnProfile = computed(
@@ -45,7 +43,7 @@ export function useProfile() {
 	const userReservations = computed(() => {
 		if (!currentUser.value) return []
 		return reservationsStore.reservations
-			.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'confirmed')
+			.filter((r) => r.user_id === currentUser.value.user_id && r.status === 'Active')
 			.sort((a, b) => new Date(a.reservation_date) - new Date(b.reservation_date))
 	})
 	const filteredReservations = computed(() => {
@@ -63,8 +61,10 @@ export function useProfile() {
 
 	// Utility
 	const getLabName = (labId) => {
-		const lab = labsStore.getLabById(labId)
-		return lab ? lab.name : 'Unknown Lab'
+		// Handle both string and object lab_id
+		const id = typeof labId === 'object' ? labId._id : labId
+		const lab = labsStore.labs.find((lab) => lab._id === id)
+		return lab ? lab.display_name || lab.name : 'Unknown Lab'
 	}
 	const getProfilePicUrl = (profilePicPath) => {
 		if (!profilePicPath) return null
@@ -115,28 +115,17 @@ export function useProfile() {
 		}
 	}
 	function editReservation(reservationId) {
-		const reservation = userReservations.value.find((r) => r.reservation_id === reservationId)
+		// Find the reservation in the store
+		const reservation = reservationsStore.reservations.find((r) => r._id === reservationId)
 		if (reservation) {
-			editingReservation.value = { ...reservation }
-			showEditModal.value = true
+			// Get the lab ID (handle both string and object cases)
+			const labId =
+				typeof reservation.lab_id === 'object' ? reservation.lab_id._id : reservation.lab_id
+			// Navigate to the reservation page with both lab ID and reservation ID for editing
+			router.push(`/reservation/${labId}/${reservationId}`)
 		}
 	}
-	async function saveReservation() {
-		if (editingReservation.value) {
-			try {
-				await reservationsStore.updateReservation(editingReservation.value.reservation_id, {
-					reservation_date: editingReservation.value.reservation_date,
-				})
-				closeEditModal()
-			} catch (error) {
-				alert('Failed to update reservation. Please try again.')
-			}
-		}
-	}
-	function closeEditModal() {
-		showEditModal.value = false
-		editingReservation.value = null
-	}
+
 	function handleEditForm() {
 		if (profileUser.value) {
 			editForm.value = {
@@ -237,11 +226,13 @@ export function useProfile() {
 	}
 	async function handleView() {
 		try {
-			// Try sessionStorage first, then localStorage
-			let user = sessionStorage.getItem('user')
+			const user = sessionStorage.getItem('user') // Get user from sessionStorage
 			if (!user) {
+				// if not found, check localStorage
 				user = localStorage.getItem('user')
 			}
+
+			// If still not found, redirect to login
 			if (!user) {
 				router.push('/login')
 				return
@@ -267,6 +258,7 @@ export function useProfile() {
 			isLoading.value = false
 		}
 	}
+
 	onMounted(() => {
 		handleView()
 	})
@@ -279,8 +271,6 @@ export function useProfile() {
 		editForm,
 		currentUser,
 		profileUser,
-		showEditModal,
-		editingReservation,
 		isOwnProfile,
 		showEditButton,
 		showSaveCancel,
@@ -296,8 +286,6 @@ export function useProfile() {
 		handleLogout,
 		handleHome,
 		editReservation,
-		saveReservation,
-		closeEditModal,
 		handleEditForm,
 		handleEditProfile,
 		handleSaveChanges,
