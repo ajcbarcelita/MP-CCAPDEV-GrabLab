@@ -78,7 +78,7 @@
 								<span class="text-sm">Reserve Anonymously</span>
 							</label>
 
-							<div v-if="currentUser.user_type === 'technician'">
+							<div v-if="showStudentIdInput">
 								<label class="block text-sm font-medium text-gray-700 mb-1"
 									>ID Number</label
 								>
@@ -534,6 +534,9 @@ const studentIdForReservation = ref('')
 const showReservationDetailsModal = ref(false)
 const showCancelConfirmationModal = ref(false)
 
+// Add a variable to store the original reservation state
+const originalReservationState = ref(null)
+
 // Lab slots data
 const labSlots = ref([])
 const isLoadingSchedule = ref(false)
@@ -572,6 +575,11 @@ const maxDate = computed(() => {
 	return future.toISOString().split('T')[0]
 })
 
+// Add a computed property to determine if student ID input should be shown
+const showStudentIdInput = computed(() => {
+	return currentUser.value?.user_type === 'technician' && !route.params.reservationId
+})
+
 // Watchers
 watch(
 	selectedLab,
@@ -595,6 +603,16 @@ onMounted(async () => {
 		// Initialize user
 		currentUser.value =
 			usersStore.currentUser || JSON.parse(sessionStorage.getItem('user') || '{}')
+
+		// Map user_type for compatibility with old logic
+		if (currentUser.value && currentUser.value.role) {
+			currentUser.value.user_type =
+				currentUser.value.role.toLowerCase() === 'technician'
+					? 'technician'
+					: currentUser.value.role.toLowerCase() === 'student'
+						? 'student'
+						: currentUser.value.role.toLowerCase()
+		}
 
 		// Load all labs
 		isLoadingLabs.value = true
@@ -939,9 +957,18 @@ const getSlotText = (seat, timeSlot) => {
 
 // Helper functions
 const clearSelection = () => {
-	selectedSlots.value = []
-	reserveAnonymously.value = false
-	studentIdForReservation.value = ''
+	if (route.params.reservationId && originalReservationState.value) {
+		selectedDate.value = originalReservationState.value.selectedDate
+		selectedSlots.value = JSON.parse(
+			JSON.stringify(originalReservationState.value.selectedSlots),
+		)
+		studentIdForReservation.value = originalReservationState.value.studentIdForReservation
+		reserveAnonymously.value = originalReservationState.value.reserveAnonymously
+	} else {
+		selectedSlots.value = []
+		reserveAnonymously.value = false
+		studentIdForReservation.value = ''
+	}
 }
 
 const scrollToSchedule = () => {
@@ -1010,6 +1037,17 @@ const loadReservationForEditing = async (reservationId) => {
 					time: slot.start_time,
 				}))
 			}
+			// If technician, set studentIdForReservation to reservation.user_id
+			if (currentUser.value?.user_type === 'technician') {
+				studentIdForReservation.value = reservation.user_id
+			}
+			// Store the original state for cancel
+			originalReservationState.value = {
+				selectedDate: selectedDate.value,
+				selectedSlots: JSON.parse(JSON.stringify(selectedSlots.value)),
+				studentIdForReservation: studentIdForReservation.value,
+				reserveAnonymously: reserveAnonymously.value,
+			}
 		} else {
 			console.error('Reservation not found:', reservationId)
 		}
@@ -1052,24 +1090,38 @@ const reserveSlot = async () => {
 	const isEditing = !!reservationId
 
 	try {
-		// When editing, preserve the original user_id unless it's being explicitly changed
 		let user_id
 		if (isEditing) {
-			// For editing, only change user_id if technician is explicitly setting it
-			if (currentUser.value?.user_type === 'technician' && studentIdForReservation.value) {
+			if (currentUser.value?.user_type === 'technician') {
+				if (!studentIdForReservation.value) {
+					alert('Technicians must enter a student ID to reserve for a student.')
+					return
+				}
+				if (studentIdForReservation.value == currentUser.value?.user_id) {
+					alert('Technicians cannot reserve for themselves. Please enter a student ID.')
+					return
+				}
 				user_id = studentIdForReservation.value
 			}
 			// Otherwise, don't include user_id in the update (preserve original)
 		} else {
-			// For new reservations, use the current user's ID
-			user_id =
-				currentUser.value?.user_type === 'technician'
-					? studentIdForReservation.value
-					: currentUser.value?.user_id
+			if (currentUser.value?.user_type === 'technician') {
+				if (!studentIdForReservation.value) {
+					alert('Technicians must enter a student ID to reserve for a student.')
+					return
+				}
+				if (studentIdForReservation.value == currentUser.value?.user_id) {
+					alert('Technicians cannot reserve for themselves. Please enter a student ID.')
+					return
+				}
+				user_id = studentIdForReservation.value
+			} else {
+				user_id = currentUser.value?.user_id
+			}
 		}
 
 		const payload = {
-			...(user_id !== undefined && { user_id }), // Only include user_id if it's defined
+			...(user_id !== undefined && { user_id }),
 			lab_id: selectedLab.value,
 			reservation_date: selectedDate.value,
 			slots: selectedSlots.value.map((slot) => ({
@@ -1078,35 +1130,30 @@ const reserveSlot = async () => {
 				end_time: slot.timeSlot.endTime,
 			})),
 			anonymous: reserveAnonymously.value,
+			...(currentUser.value?.user_type === 'technician' && {
+				technician_id: currentUser.value?.user_id,
+			}),
 		}
 
 		if (isEditing) {
-			// Update existing reservation
 			await reservationsStore.updateReservation(reservationId, payload)
 			alert('Reservation updated successfully!')
-
-			// After successful update, navigate back to view page
 			router.push('/view')
 		} else {
-			// Create new reservation
 			await reservationsStore.createReservation(payload)
 			alert('Reservation created successfully!')
-
 			await reservationsStore.fetchReservationsByUserId(currentUser.value?.user_id || '')
-			await loadLabSchedule() // Refresh the schedule
+			await loadLabSchedule()
 			clearSelection()
 		}
 	} catch (error) {
 		console.error('Error in reserveSlot:', error)
-		// Show backend error message if available
 		let message = 'Failed to create reservation. Please try again.'
 		if (error.response && error.response.data && error.response.data.message) {
 			message = error.response.data.message
 		}
-		// Refresh reservations and matrix
 		await reservationsStore.fetchReservationsByUserId(currentUser.value?.user_id || '')
 		await loadLabSchedule()
-		// Deselect any slots that are now occupied
 		selectedSlots.value = selectedSlots.value.filter((slot) => {
 			return !isSlotOccupied(slot.seat, slot.timeSlot)
 		})
