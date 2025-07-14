@@ -43,8 +43,13 @@
 			<div class="flex-1">
 				<!-- Hero Section -->
 				<section id="hero-section">
+          <!--
+            {{ currentUser?.fname}} - current user's first name
+            {{ currentUser?.lname}} - current user's last name
+
+          -->
 					<h1 id="hero-title">
-						Hi, {{ currentUser.fname }} {{ currentUser.lname }} <br />
+						Hi, {{ currentUser?.fname}} {{ currentUser?.lname }} <br />
 						Welcome back to GrabLab!
 					</h1>
 					<p id="hero-description">

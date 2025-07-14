@@ -222,6 +222,7 @@ export const useUsersStore = defineStore('users', {
 				if (token) {
 					localStorage.setItem('token', token)
 					sessionStorage.removeItem('token')
+					axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 				}
 			} else {
 				sessionStorage.setItem('user', JSON.stringify(user))
@@ -229,6 +230,7 @@ export const useUsersStore = defineStore('users', {
 				if (token) {
 					sessionStorage.setItem('token', token)
 					localStorage.removeItem('token')
+					axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 				}
 			}
 		},
@@ -255,14 +257,12 @@ export const useUsersStore = defineStore('users', {
 			if (user) {
 				try {
 					this.currentUser = JSON.parse(user)
-
-					// Set token as default authrization header for axios
 					if (token) {
 						axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 					}
 				} catch (error) {
-					console.error('Error parsing user from storage:', error)
-					this.currentUser = null
+					console.error('Error parsing user data from storage:', error)
+					this.clearUserSession()
 				}
 			} else {
 				console.log('No user found in storage, initializing currentUser to null')

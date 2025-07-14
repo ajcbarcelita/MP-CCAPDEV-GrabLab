@@ -182,19 +182,14 @@ export const deleteReservation = async (req, res) => {
       return res.status(404).json({ message: "Reservation not found" });
     }
 
-    // Instead of deleting, update the status to "Deleted"
-    const updatedReservation = await Reservation.findByIdAndUpdate(
-      id,
-      { status: "Deleted" },
-      { new: true }
-    );
+    // Perform a hard delete instead of just updating the status
+    await Reservation.findByIdAndDelete(id);
 
     res.json({
-      message: "Reservation marked as deleted successfully",
-      reservation: updatedReservation,
+      message: "Reservation deleted successfully",
     });
   } catch (error) {
-    console.error("Error marking reservation as deleted:", error);
+    console.error("Error deleting reservation:", error);
     res.status(500).json({ message: error.message });
   }
 };

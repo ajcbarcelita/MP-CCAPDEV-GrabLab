@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUsersStore } from '@/stores/users_store'
 
@@ -9,6 +9,16 @@ export function useLandingPage() {
 	const error = ref(null)
 	const showErrorPopup = ref(false)
 	const router = useRouter()
+
+	// Initialize user session when component mounts
+	onMounted(() => {
+		usersStore.initUserSession()
+
+		// Redirect to login if no user is found
+		if (!usersStore.currentUser) {
+			router.push('/')
+		}
+	})
 
 	const closeErrorPopup = () => {
 		showErrorPopup.value = false
