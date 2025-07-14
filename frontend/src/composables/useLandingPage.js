@@ -1,14 +1,23 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUsersStore } from '@/stores/users_store'
+import { useValidation } from '@/composables/useValidation'
 
 export function useLandingPage() {
 	const usersStore = useUsersStore()
 	const currentUser = computed(() => usersStore.currentUser)
 	const searchQuery = ref('')
-	const error = ref(null)
-	const showErrorPopup = ref(false)
 	const router = useRouter()
+
+	// Use the validation composable
+	const {
+		error,
+		showErrorPopup,
+		clearError,
+		setError,
+		validateNumericValue,
+		validateNumberKeypress
+	} = useValidation()
 
 	// Initialize user session when component mounts
 	onMounted(() => {
@@ -21,29 +30,27 @@ export function useLandingPage() {
 	})
 
 	const closeErrorPopup = () => {
-		showErrorPopup.value = false
+		clearError()
 		// Clear the search query when closing the error popup
 		searchQuery.value = ''
 	}
 
-	const validateNumber = (event) => {
-		// Prevent 'e', '+', '-', and '.' characters
-		const invalidChars = ['e', '+', '-', '.']
-		if (invalidChars.includes(event.key)) {
-			event.preventDefault()
-		}
-	}
+	// We can now use the validateNumberKeypress from our composable
+	const validateNumber = validateNumberKeypress
 
 	const searchUser = async () => {
 		try {
 			// Clear any previous errors
-			error.value = null
+			clearError()
 
-			// Type-safe approach to handle the input value
-			const inputValue = searchQuery.value
-			// If it's already a number, use it directly; otherwise, parse it
-			const userId =
-				typeof inputValue === 'number' ? inputValue : parseInt(String(inputValue), 10)
+			// Use the validation function from our composable
+			const isValid = validateNumericValue(searchQuery.value, { min: 0 })
+			if (!isValid) {
+				return
+			}
+
+			// If we got here, the input is valid
+			const userId = parseInt(String(searchQuery.value), 10)
 
 			console.log(
 				'Parsed userId:',
@@ -54,14 +61,6 @@ export function useLandingPage() {
 				typeof searchQuery.value,
 			)
 
-			if (isNaN(userId) || userId <= 0) {
-				error.value =
-					userId <= 0 ? 'User ID must be greater than 0' : 'Invalid user ID format'
-				showErrorPopup.value = true
-				console.log('Invalid user ID format or value:', searchQuery.value)
-				return
-			}
-
 			console.log('Navigating to profile page for user ID:', userId)
 
 			// Check if user exists before navigating
@@ -71,21 +70,18 @@ export function useLandingPage() {
 				console.log('User fetch result:', user)
 
 				if (!user) {
-					error.value = 'User with ID ' + userId + ' was not found'
-					showErrorPopup.value = true
+					setError('User with ID ' + userId + ' was not found')
 					return
 				}
 				router.push(`/profile/${userId}`)
 			} catch (err) {
 				console.error('Error fetching user:', err)
 				console.error('Error response:', err.response?.data)
-				error.value = 'User with ID ' + userId + ' was not found'
-				showErrorPopup.value = true
+				setError('User with ID ' + userId + ' was not found')
 			}
 		} catch (error) {
 			console.error('Error navigating to profile:', error)
-			error.value = 'An error occurred while navigating to the profile page'
-			showErrorPopup.value = true
+			setError('An error occurred while navigating to the profile page')
 		}
 	}
 
