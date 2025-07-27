@@ -111,7 +111,6 @@
 	transition: color 0.3s ease;
 }
 
-
 #hero-section {
 	background-color: #436850;
 	color: #fbfada;
@@ -275,6 +274,7 @@
 	background-color: #0a1f18;
 }
 
-#profile, #logout {
+#profile,
+#logout {
 	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
 }

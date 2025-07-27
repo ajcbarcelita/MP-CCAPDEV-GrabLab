@@ -22,10 +22,18 @@ const routes = [
 	{ path: '/technician-landing', component: TechLanding, meta: { requiresAuth: true } },
 	{ path: '/profile', component: Profile_Page, meta: { requiresAuth: true } },
 	{ path: '/reservation/:labId', component: Reservation, meta: { requiresAuth: true } },
-	{ path: '/reservation/:labId/:reservationId', component: Reservation, meta: { requiresAuth: true } },
+	{
+		path: '/reservation/:labId/:reservationId',
+		component: Reservation,
+		meta: { requiresAuth: true },
+	},
 	{ path: '/view', component: View, meta: { requiresAuth: true } },
-	{ path: '/admin-landing', component: AdminLanding, meta: { requiresAuth: true }},
-	{ path: '/admin-manage-technicians', component: AdminManageTechnicians, meta: { requiresAuth: true, requiresAdmin: true } },
+	{ path: '/admin-landing', component: AdminLanding, meta: { requiresAuth: true } },
+	{
+		path: '/admin-manage-technicians',
+		component: AdminManageTechnicians,
+		meta: { requiresAuth: true, requiresAdmin: true },
+	},
 ]
 
 const router = createRouter({
@@ -45,7 +53,10 @@ router.beforeEach((to, from, next) => {
 		return next('/login')
 	}
 	// Check for admin access
-	if (to.matched.some((record) => record.meta.requiresAdmin) && usersStore.currentUser?.role !== 'Admin') {
+	if (
+		to.matched.some((record) => record.meta.requiresAdmin) &&
+		usersStore.currentUser?.role !== 'Admin'
+	) {
 		return next('/login')
 	}
 	next()

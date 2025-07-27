@@ -12,7 +12,10 @@
 				</div>
 				<p class="text-gray-700 mb-4">{{ error }}</p>
 				<div class="flex justify-end">
-					<button @click="closeErrorPopup" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+					<button
+						@click="closeErrorPopup"
+						class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+					>
 						Close
 					</button>
 				</div>
@@ -43,13 +46,13 @@
 			<div class="flex-1">
 				<!-- Hero Section -->
 				<section id="hero-section">
-          <!--
+					<!--
             {{ currentUser?.fname}} - current user's first name
             {{ currentUser?.lname}} - current user's last name
 
           -->
 					<h1 id="hero-title">
-						Hi, {{ currentUser?.fname}} {{ currentUser?.lname }} <br />
+						Hi, {{ currentUser?.fname }} {{ currentUser?.lname }} <br />
 						Welcome back to GrabLab!
 					</h1>
 					<p id="hero-description">
@@ -134,11 +137,11 @@ import { useLandingPage } from '@/composables/useLandingPage'
 
 export default {
 	name: 'StudentLanding',
-  // Using the useLandingPage composable to manage state and methods
+	// Using the useLandingPage composable to manage state and methods
 	setup() {
 		return {
-			...useLandingPage()
+			...useLandingPage(),
 		}
-	}
+	},
 }
 </script>

@@ -58,7 +58,7 @@
 	@apply text-[#12372A];
 }
 
-#home, #logout {
+#home,
+#logout {
 	@apply font-['Jomhuria'] text-[#ADBC9F] text-[35px] no-underline hover:underline transition-[text-decoration] duration-200;
 }
-
