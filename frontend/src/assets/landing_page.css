@@ -27,6 +27,16 @@
 	transition: text-decoration 0.2s;
 	margin-right: 20px;
 }
+
+#manage-techs {
+	font-family: 'Jomhuria';
+	font-size: 35px;
+	color: #adbc9f;
+	text-decoration: none;
+	transition: text-decoration 0.2s;
+	margin-right: 20px;
+}
+
 #profile:hover {
 	text-decoration: underline;
 }
