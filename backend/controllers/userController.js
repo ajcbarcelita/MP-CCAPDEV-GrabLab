@@ -117,9 +117,15 @@ const updateUserProfilePicture = async (req, res) => {
  * @returns Updated user object (transformed for frontend)
  */
 const registerUser = async (req, res) => {
-    const { email, password, fname, lname, mname = "", role = "Student", status = "Active" } = req.body;
+    const { email, password, fname, lname, mname = "", role = "Student", status = "Active", profile_pic_path = "", description = ""} = req.body;
 
     console.log("Registering user with email:", email);
+
+    // Ensure default profile picture path if missing or empty
+    const finalProfilePicPath =
+        !profile_pic_path || profile_pic_path.trim() === ""
+            ? "/uploads/profile_pictures/default_profile_picture.jpeg"
+            : profile_pic_path;
 
     try {
         const userExists = await User.findOne({ email });
@@ -140,7 +146,7 @@ const registerUser = async (req, res) => {
             mname,
             role,
             status,
-            profile_pic_path: "",
+            profile_pic_path: finalProfilePicPath,
             description: "",
         });
 
@@ -150,6 +156,9 @@ const registerUser = async (req, res) => {
             lname: user.lname,
             email: user.email,
             role: user.role,
+            profile_pic_path: user.profile_pic_path,
+            status: user.status,
+            description: user.description,
         });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
@@ -177,7 +186,7 @@ const loginUser = async (req, res) => {
 
         // If user is inactive, return 403 Forbidden
         if (user.status === "Inactive") {
-            return res.status(403).json({ message: "Your account is inactive. Contact IT support for help." });
+            return res.status(403).json({ message: "Your account is inactive. Contact the administrator for help." });
         }
 
         // If password is incorrect, return 401 Unauthorized
