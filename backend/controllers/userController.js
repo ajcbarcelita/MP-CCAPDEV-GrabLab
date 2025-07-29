@@ -307,13 +307,6 @@ const getUserById = async (req, res) => {
  * @route   DELETE /api/users/:userId
  * @access  Private
  * @param   req.params.userId - User ID
- * @returns Success message
- */
-/**
- * @desc    Soft delete user (set status to 'Inactive')
- * @route   DELETE /api/users/:userId
- * @access  Private
- * @param   req.params.userId - User ID
  * @returns Success message and updated user object
  */
 const deleteUser = async (req, res) => {
@@ -349,7 +342,7 @@ const deleteUser = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { fname, lname, description } = req.body;
+        const { fname, lname, description, status } = req.body;
 
         const user = await User.findOne({ user_id: userId });
 
@@ -361,14 +354,15 @@ const updateUser = async (req, res) => {
         if (fname !== undefined) user.fname = fname;
         if (lname !== undefined) user.lname = lname;
         if (description !== undefined) user.description = description;
+        if (status !== undefined) user.status = status;
 
         const updatedUser = await user.save();
 
         // Transform data to match frontend expectations
         const transformedUser = {
             user_id: updatedUser.user_id,
-            fname: updatedUser.fname,
-            lname: updatedUser.lname,
+            first_name: updatedUser.fname,
+            last_name: updatedUser.lname,
             email: updatedUser.email,
             role: updatedUser.role,
             description: updatedUser.description || "",

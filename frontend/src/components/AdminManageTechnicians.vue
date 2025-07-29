@@ -78,20 +78,8 @@
 					</div>
 					<div class="tech-card-actions">
 						<button class="btn btn-edit" @click="openEditForm(tech)">Edit</button>
-						<button
-							v-if="tech.status === 'Active'"
-							class="btn btn-deactivate"
-							@click="setStatus(tech._id, 'Inactive')"
-						>
-							Deactivate
-						</button>
-						<button
-							v-else
-							class="btn btn-activate"
-							@click="setStatus(tech._id, 'Active')"
-						>
-							Reactivate
-						</button>
+						<button v-if="tech.status === 'Active'" class="btn btn-deactivate" @click="setStatus(tech.user_id, 'Inactive')">Deactivate</button>
+						<button v-else class="btn btn-activate" @click="setStatus(tech.user_id, 'Active')">Reactivate</button>
 					</div>
 				</div>
 			</div>
@@ -221,9 +209,9 @@ function openEditForm(tech) {
 	editTech.value = tech
 	error.value = ''
 	form.value = {
-		fname: tech.fname,
+		fname: tech.first_name,
 		mname: tech.mname || '',
-		lname: tech.lname,
+		lname: tech.last_name,
 		email: tech.email,
 		password: '',
 		confirmPassword: '',
@@ -259,7 +247,7 @@ async function submitTechForm() {
 	}
 	try {
 		if (isEdit.value && editTech.value) {
-			await usersStore.updateTechnician(editTech.value._id, {
+			await usersStore.updateTechnician(editTech.value.user_id, {
 				fname: form.value.fname,
 				mname: form.value.mname,
 				lname: form.value.lname,

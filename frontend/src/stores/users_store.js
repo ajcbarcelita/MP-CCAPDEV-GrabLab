@@ -308,26 +308,27 @@ export const useUsersStore = defineStore('users', {
 			}
 		},
 
-		// Update a technician (by MongoDB _id)
-		async updateTechnician(id, updateData) {
-			this.loading = true
-			try {
-				const response = await axios.put(`${API_URL}/users/${id}`, updateData)
-				const updatedTech = response.data
-				const index = this.users.findIndex((u) => u._id === id)
-				if (index !== -1) {
-					this.users[index] = { ...this.users[index], ...updatedTech }
-				}
-				this.error = null
-				return updatedTech
-			} catch (error) {
-				this.error = error.response?.data?.message || error.message
-				console.error('Error updating technician:', error)
-				throw error
-			} finally {
-				this.loading = false
-			}
-		},
+		// Update a technician (by user_id)
+		// Update a technician (by user_id, not _id)
+async updateTechnician(userId, updateData) {  // ← Change parameter name
+    this.loading = true
+    try {
+        const response = await axios.put(`${API_URL}/users/${userId}`, updateData)
+        const updatedTech = response.data
+        const index = this.users.findIndex((u) => u.user_id === userId)  // ← Change from u._id to u.user_id
+        if (index !== -1) {
+            this.users[index] = { ...this.users[index], ...updatedTech }
+        }
+        this.error = null
+        return updatedTech
+    } catch (error) {
+        this.error = error.response?.data?.message || error.message
+        console.error('Error updating technician:', error)
+        throw error
+    } finally {
+        this.loading = false
+    }
+},
 
 		// Soft delete (deactivate) technician
 		async deactivateTechnician(id) {
