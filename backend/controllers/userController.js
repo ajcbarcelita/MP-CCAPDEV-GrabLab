@@ -244,6 +244,7 @@ const getAllUsers = async (req, res) => {
             user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
+            mname: user.mname || '',
             email: user.email,
             role: user.role,
             description: user.description || "",
@@ -287,6 +288,7 @@ const getUserById = async (req, res) => {
             user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
+            mname: user.mname || '',
             email: user.email,
             role: user.role,
             description: user.description || "",
@@ -342,7 +344,7 @@ const deleteUser = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { fname, lname, description, status } = req.body;
+        const { fname, lname, mname, description, status } = req.body;
 
         const user = await User.findOne({ user_id: userId });
 
@@ -353,6 +355,7 @@ const updateUser = async (req, res) => {
         // Update fields if provided
         if (fname !== undefined) user.fname = fname;
         if (lname !== undefined) user.lname = lname;
+        if (mname !== undefined) user.mname = mname;
         if (description !== undefined) user.description = description;
         if (status !== undefined) user.status = status;
 
@@ -363,6 +366,7 @@ const updateUser = async (req, res) => {
             user_id: updatedUser.user_id,
             first_name: updatedUser.fname,
             last_name: updatedUser.lname,
+            mname: updatedUser.mname || '',
             email: updatedUser.email,
             role: updatedUser.role,
             description: updatedUser.description || "",
