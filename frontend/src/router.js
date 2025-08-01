@@ -22,6 +22,7 @@ const routes = [
 	{ path: '/reservation/:labId', component: Reservation, meta: { requiresAuth: true } },
 	{ path: '/reservation/:labId/:reservationId', component: Reservation, meta: { requiresAuth: true } },
 	{ path: '/view', component: View, meta: { requiresAuth: true } },
+  { path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
