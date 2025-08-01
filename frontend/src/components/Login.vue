@@ -37,6 +37,8 @@ async function handleLogin() {
 			router.push('/technician-landing')
 		} else if (user.role === 'Student') {
 			router.push('/student-landing')
+		} else if (user.role === 'Admin') {
+			router.push('/admin-landing')
 		} else {
 			router.push('/')
 		}

@@ -208,7 +208,7 @@ export const useUsersStore = defineStore('users', {
 				if (index !== -1) {
 					this.users[index] = {
 						// Merge existing data with the inactive status
-						...this.users[index],  // Keep all existing user data
+						...this.users[index], // Keep all existing user data
 						status: 'Inactive',
 						...response.data.user, // Update with response data if provided
 					}
@@ -290,6 +290,54 @@ export const useUsersStore = defineStore('users', {
 				this.currentUser = null
 			}
 			this.profileUser = this.currentUser // Default to current user profile
+		},
+		// Add a new technician
+		async addTechnician(techData) {
+			this.loading = true
+			try {
+				const response = await axios.post(`${API_URL}/users`, techData)
+				this.users.push(response.data)
+				this.error = null
+				return response.data
+			} catch (error) {
+				this.error = error.response?.data?.message || error.message
+				console.error('Error adding technician:', error)
+				throw error
+			} finally {
+				this.loading = false
+			}
+		},
+
+		// Update a technician (by user_id)
+		// Update a technician (by user_id, not _id)
+async updateTechnician(userId, updateData) {  // ← Change parameter name
+    this.loading = true
+    try {
+        const response = await axios.put(`${API_URL}/users/${userId}`, updateData)
+        const updatedTech = response.data
+        const index = this.users.findIndex((u) => u.user_id === userId)  // ← Change from u._id to u.user_id
+        if (index !== -1) {
+            this.users[index] = { ...this.users[index], ...updatedTech }
+        }
+        this.error = null
+        return updatedTech
+    } catch (error) {
+        this.error = error.response?.data?.message || error.message
+        console.error('Error updating technician:', error)
+        throw error
+    } finally {
+        this.loading = false
+    }
+},
+
+		// Soft delete (deactivate) technician
+		async deactivateTechnician(id) {
+			return await this.updateTechnician(id, { status: 'Inactive' })
+		},
+
+		// Reactivate technician
+		async activateTechnician(id) {
+			return await this.updateTechnician(id, { status: 'Active' })
 		},
 	},
 	getters: {

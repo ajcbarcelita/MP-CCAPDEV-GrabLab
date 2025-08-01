@@ -27,6 +27,20 @@
 	transition: text-decoration 0.2s;
 	margin-right: 20px;
 }
+
+#manage-techs {
+	font-family: 'Jomhuria';
+	font-size: 35px;
+	color: #adbc9f;
+	text-decoration: none;
+	transition: text-decoration 0.2s;
+	margin-right: 20px;
+}
+
+#manage-techs:hover {
+	text-decoration: underline;
+}
+
 #profile:hover {
 	text-decoration: underline;
 }
@@ -38,6 +52,20 @@
 	transition: text-decoration 0.2s;
 	margin-right: 20px;
 }
+
+#admin-home {
+	font-family: 'Jomhuria';
+	font-size: 35px;
+	color: #adbc9f;
+	text-decoration: none;
+	transition: text-decoration 0.2s;
+	margin-right: 20px;
+}
+
+#admin-home:hover {
+	text-decoration: underline;
+}
+
 #home:hover {
 	text-decoration: underline;
 }
@@ -357,16 +385,15 @@ input[type='number'] {
 	text-align: center;
 }
 
-
 /* Scrollable reservation card styles */
 .reservation-card-scrollable {
-  max-height: 400px;
-  overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+	max-height: 400px;
+	overflow-y: auto;
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
 .reservation-card-scrollable::-webkit-scrollbar {
-  display: none;
+	display: none;
 }

@@ -117,9 +117,15 @@ const updateUserProfilePicture = async (req, res) => {
  * @returns Updated user object (transformed for frontend)
  */
 const registerUser = async (req, res) => {
-    const { email, password, fname, lname, mname = "", role = "Student", status = "Active" } = req.body;
+    const { email, password, fname, lname, mname = "", role = "Student", status = "Active", profile_pic_path = "", description = ""} = req.body;
 
     console.log("Registering user with email:", email);
+
+    // Ensure default profile picture path if missing or empty
+    const finalProfilePicPath =
+        !profile_pic_path || profile_pic_path.trim() === ""
+            ? "/uploads/profile_pictures/default_profile_picture.jpeg"
+            : profile_pic_path;
 
     try {
         const userExists = await User.findOne({ email });
@@ -140,7 +146,7 @@ const registerUser = async (req, res) => {
             mname,
             role,
             status,
-            profile_pic_path: "",
+            profile_pic_path: finalProfilePicPath,
             description: "",
         });
 
@@ -150,6 +156,9 @@ const registerUser = async (req, res) => {
             lname: user.lname,
             email: user.email,
             role: user.role,
+            profile_pic_path: user.profile_pic_path,
+            status: user.status,
+            description: user.description,
         });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
@@ -177,7 +186,7 @@ const loginUser = async (req, res) => {
 
         // If user is inactive, return 403 Forbidden
         if (user.status === "Inactive") {
-            return res.status(403).json({ message: "Your account is inactive. Contact IT support for help." });
+            return res.status(403).json({ message: "Your account is inactive. Contact the administrator for help." });
         }
 
         // If password is incorrect, return 401 Unauthorized
@@ -235,6 +244,7 @@ const getAllUsers = async (req, res) => {
             user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
+            mname: user.mname || '',
             email: user.email,
             role: user.role,
             description: user.description || "",
@@ -278,6 +288,7 @@ const getUserById = async (req, res) => {
             user_id: user.user_id,
             first_name: user.fname,
             last_name: user.lname,
+            mname: user.mname || '',
             email: user.email,
             role: user.role,
             description: user.description || "",
@@ -293,13 +304,6 @@ const getUserById = async (req, res) => {
     }
 };
 
-/**
- * @desc    Soft delete user (set status to 'Inactive')
- * @route   DELETE /api/users/:userId
- * @access  Private
- * @param   req.params.userId - User ID
- * @returns Success message
- */
 /**
  * @desc    Soft delete user (set status to 'Inactive')
  * @route   DELETE /api/users/:userId
@@ -340,7 +344,7 @@ const deleteUser = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { fname, lname, description } = req.body;
+        const { fname, lname, mname, description, status } = req.body;
 
         const user = await User.findOne({ user_id: userId });
 
@@ -351,15 +355,18 @@ const updateUser = async (req, res) => {
         // Update fields if provided
         if (fname !== undefined) user.fname = fname;
         if (lname !== undefined) user.lname = lname;
+        if (mname !== undefined) user.mname = mname;
         if (description !== undefined) user.description = description;
+        if (status !== undefined) user.status = status;
 
         const updatedUser = await user.save();
 
         // Transform data to match frontend expectations
         const transformedUser = {
             user_id: updatedUser.user_id,
-            fname: updatedUser.fname,
-            lname: updatedUser.lname,
+            first_name: updatedUser.fname,
+            last_name: updatedUser.lname,
+            mname: updatedUser.mname || '',
             email: updatedUser.email,
             role: updatedUser.role,
             description: updatedUser.description || "",

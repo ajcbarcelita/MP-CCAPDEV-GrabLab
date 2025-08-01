@@ -9,7 +9,8 @@
         "seed:labs": "node seeds/seedLabs.js",
         "seed:labslots": "node seeds/seedLabSlots.js",
         "seed:reservations": "node seeds/seedReservations.js",
-        "seed:all": "npm run seed:users && npm run seed:labs && npm run seed:labslots && npm run seed:reservations"
+        "seed:all": "npm run seed:users && npm run seed:labs && npm run seed:labslots && npm run seed:reservations",
+        "clear:logs": "node seeds/clearLogs.js"
     },
     "keywords": [],
     "author": "",

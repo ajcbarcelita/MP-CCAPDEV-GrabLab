@@ -117,6 +117,8 @@ export function useProfile() {
 			router.push('/technician-landing')
 		} else if (currentUser.value?.role === 'Student') {
 			router.push('/student-landing')
+		} else if (currentUser.value?.role === 'Admin') {
+			router.push('/admin-landing')
 		} else {
 			router.push('/')
 		}

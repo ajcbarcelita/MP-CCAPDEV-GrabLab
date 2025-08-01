@@ -37,8 +37,8 @@ export const useReservationsStore = defineStore('reservations', {
 	// All components that use this store will have access to this data
 	state: () => ({
 		reservations: [], // Array to store all reservation objects
-		loading: false,   // Boolean flag to track API call status for UI loading indicators
-		error: null,      // Stores error messages from failed API calls
+		loading: false, // Boolean flag to track API call status for UI loading indicators
+		error: null, // Stores error messages from failed API calls
 	}),
 
 	// MODEL METHODS: Actions for API calls and state mutations
@@ -107,8 +107,8 @@ export const useReservationsStore = defineStore('reservations', {
 				this.reservations = response.data.map((reservation) => ({
 					...reservation,
 					time_slots: reservation.time_slots || [], // Ensure time_slots exists
-					lab: reservation.lab_slot?.lab || null,   // Include lab information if available
-					user: reservation.user || null,           // Include user information if available
+					lab: reservation.lab_slot?.lab || null, // Include lab information if available
+					user: reservation.user || null, // Include user information if available
 				}))
 
 				this.error = null // Clear any previous errors

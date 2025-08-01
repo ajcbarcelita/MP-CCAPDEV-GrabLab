@@ -7,6 +7,8 @@ import Register from './components/Register.vue'
 import TechLanding from './components/TechLanding.vue'
 import Reservation from './components/Reservation.vue'
 import View from './components/View.vue'
+import AdminLanding from './components/AdminLanding.vue'
+import AdminManageTechnicians from './components/AdminManageTechnicians.vue'
 
 import { useUsersStore } from '@/stores/users_store'
 
@@ -20,8 +22,18 @@ const routes = [
 	{ path: '/technician-landing', component: TechLanding, meta: { requiresAuth: true } },
 	{ path: '/profile', component: Profile_Page, meta: { requiresAuth: true } },
 	{ path: '/reservation/:labId', component: Reservation, meta: { requiresAuth: true } },
-	{ path: '/reservation/:labId/:reservationId', component: Reservation, meta: { requiresAuth: true } },
+	{
+		path: '/reservation/:labId/:reservationId',
+		component: Reservation,
+		meta: { requiresAuth: true },
+	},
 	{ path: '/view', component: View, meta: { requiresAuth: true } },
+	{ path: '/admin-landing', component: AdminLanding, meta: { requiresAuth: true } },
+	{
+		path: '/admin-manage-technicians',
+		component: AdminManageTechnicians,
+		meta: { requiresAuth: true, requiresAdmin: true },
+	},
   { path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
 ]
 
@@ -36,7 +48,16 @@ router.beforeEach((to, from, next) => {
 	if (!usersStore.currentUser) {
 		usersStore.initUserSession()
 	}
+	// Check if the route requires authentication, if so, check if the user is logged in
+	// I feel like this logic isnt fully correct, but it works for now
 	if (to.matched.some((record) => record.meta.requiresAuth) && !usersStore.currentUser) {
+		return next('/login')
+	}
+	// Check for admin access
+	if (
+		to.matched.some((record) => record.meta.requiresAdmin) &&
+		usersStore.currentUser?.role !== 'Admin'
+	) {
 		return next('/login')
 	}
 	next()

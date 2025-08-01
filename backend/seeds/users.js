@@ -6,7 +6,7 @@ export default [
         fname: "Aaron",
         lname: "Barcelita",
         mname: "Chucas",
-        role: "Technician",
+        role: "Admin",
         status: "Active",
         profile_pic_path: "/uploads/profile_pictures/war_cat.jpeg",
         description: "",
