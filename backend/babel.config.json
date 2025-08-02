@@ -1,0 +1,14 @@
+{
+    "presets": ["@babel/preset-env"],
+    "plugins": [
+        [
+            "@babel/plugin-transform-modules-commonjs",
+            {
+                "allowTopLevelThis": true
+            }
+        ],
+        [
+            "./node_modules/babel-plugin-transform-import-meta"
+        ]
+    ]
+}

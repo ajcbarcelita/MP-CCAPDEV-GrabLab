@@ -98,7 +98,7 @@ const updateUserProfilePicture = async (req, res) => {
             profile_pic_path: updatedUser.profile_pic_path,
             status: updatedUser.status || "active",
             created_at: updatedUser.createdAt,
-            updated_at: updatedUser.updatedAt,
+            updated_at: updatedUser.updatfedAt,
         };
 
         res.json(transformedUser);
