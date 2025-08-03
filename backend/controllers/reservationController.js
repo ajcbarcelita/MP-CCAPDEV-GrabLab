@@ -200,7 +200,6 @@ export const getReservations = async (req, res) => {
 export const getReservationsByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log("Fetching reservations for user ID:", userId);
 
     // Query by user_id field with the new schema
     let reservations = await Reservation.find({ user_id: parseInt(userId) })
@@ -226,7 +225,6 @@ export const getReservationsByUserId = async (req, res) => {
       });
     }
 
-    console.log("Reservations fetched successfully:", reservations);
     res.json(reservations);
   } catch (error) {
     console.error("Error fetching reservations by user ID:", error);
