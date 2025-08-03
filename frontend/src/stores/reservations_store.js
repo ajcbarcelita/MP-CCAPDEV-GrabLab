@@ -418,24 +418,5 @@ export const useReservationsStore = defineStore('reservations', {
 			return state.reservations.filter((res) => res.status === 'Completed')
 		},
 
-		/**
-		 * EXTENSION POINT: Additional getters can be added here
-		 *
-		 * EXAMPLES OF USEFUL GETTERS TO IMPLEMENT:
-		 * - reservationsByDate: Group reservations by date
-		 * - reservationsByLab: Group reservations by lab
-		 * - upcomingReservations: Get future reservations
-		 * - pastReservations: Get historical reservations
-		 * - reservationCountByStatus: Count reservations by status
-		 */
 	},
-
-	/**
-	 * EXTENSION POINT: Pinia allows adding more configuration options
-	 *
-	 * POTENTIAL ADDITIONS:
-	 * - persist: true - To enable automatic persistence to localStorage
-	 * - hydrate: Custom logic for state restoration
-	 * - debounce: Configure debouncing for specific actions
-	 */
 })

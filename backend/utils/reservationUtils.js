@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-// this bad boy cut down the code by 39%
-// fear him
 
 export const populateUserInfo = async (reservation, user = null) => {
   const reservationObj = reservation.toObject
