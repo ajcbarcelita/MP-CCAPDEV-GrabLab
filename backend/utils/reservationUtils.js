@@ -1,18 +1,7 @@
 import mongoose from "mongoose";
+// this bad boy cut down the code by 39%
+// fear him
 
-/**
- * Utility functions for reservation operations
- * Centralizes common logic to reduce code duplication
- */
-
-/**
- * Populate user information for a reservation
- * Handles both anonymous and regular users
- *
- * @param {Object} reservation - The reservation object
- * @param {Object} user - The user object (optional, will be fetched if not provided)
- * @returns {Object} Reservation with populated user information
- */
 export const populateUserInfo = async (reservation, user = null) => {
   const reservationObj = reservation.toObject
     ? reservation.toObject()
@@ -45,16 +34,9 @@ export const populateUserInfo = async (reservation, user = null) => {
   return reservationObj;
 };
 
-/**
- * Populate user information for multiple reservations
- *
- * @param {Array} reservations - Array of reservation objects
- * @returns {Array} Array of reservations with populated user information
- */
 export const populateUserInfoForMultiple = async (reservations) => {
   const User = mongoose.model("User");
 
-  // Get all unique user IDs to fetch them in one query
   const userIds = [
     ...new Set(
       reservations
@@ -63,11 +45,9 @@ export const populateUserInfoForMultiple = async (reservations) => {
     ),
   ];
 
-  // Fetch all users in one query
   const users = await User.find({ user_id: { $in: userIds } });
   const userMap = new Map(users.map((user) => [user.user_id, user]));
 
-  // Populate each reservation
   return Promise.all(
     reservations.map(async (reservation) => {
       const user = reservation.anonymous
@@ -78,14 +58,6 @@ export const populateUserInfoForMultiple = async (reservations) => {
   );
 };
 
-/**
- * Validate technician reservation rules
- *
- * @param {number} user_id - The user ID being reserved for
- * @param {number} technician_id - The technician ID making the reservation
- * @param {Object} req - Express request object for logging
- * @returns {Object} Validation result with success boolean and error message
- */
 export const validateTechnicianReservation = async (
   user_id,
   technician_id,
@@ -121,13 +93,6 @@ export const validateTechnicianReservation = async (
   return { success: true };
 };
 
-/**
- * Check if time slots are in the past (for today's reservations)
- *
- * @param {Array} slots - Array of slot objects with end_time
- * @param {Date} reservationDate - The reservation date
- * @returns {Object} Validation result with success boolean and error message
- */
 export const validateTimeSlotsNotInPast = (slots, reservationDate) => {
   const today = new Date();
   const resDate = new Date(reservationDate);
@@ -150,4 +115,10 @@ export const validateTimeSlotsNotInPast = (slots, reservationDate) => {
   }
 
   return { success: true };
+};
+
+export const normalizeDateForComparison = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
 };
