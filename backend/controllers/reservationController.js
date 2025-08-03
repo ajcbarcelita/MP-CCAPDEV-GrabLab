@@ -100,7 +100,6 @@ export const createReservation = async (req, res) => {
       return res.status(400).json({ message: timeValidation.message });
     }
 
-    // 🚀 NEW: Use session-based service to create reservation
     // This prevents race conditions by making the conflict check and creation atomic
     const reservation = await reservationService.createReservationWithSession(
       {
@@ -201,7 +200,6 @@ export const deleteReservation = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 🚀 NEW: Use session-based service to delete reservation
     // This ensures atomic deletion and prevents race conditions
     const deletedReservation =
       await reservationService.deleteReservationWithSession(id, req);
@@ -326,7 +324,6 @@ export const updateReservation = async (req, res) => {
       updateData.status = status;
     }
 
-    // 🚀 NEW: Use session-based service to update reservation
     // This prevents race conditions by making conflict checking and updating atomic
     const updatedReservation =
       await reservationService.updateReservationWithSession(
