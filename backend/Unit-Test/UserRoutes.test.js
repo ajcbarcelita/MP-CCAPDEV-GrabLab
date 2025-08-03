@@ -888,6 +888,7 @@ describe('updateUserProfilePicture', () => {
 
         expect(User.findOne).toHaveBeenCalledWith({ user_id: 9 });
         expect(mockUserSave.save).toHaveBeenCalled();
+        
         // Should not try to delete old file since none exists
         expect(fs.existsSync).not.toHaveBeenCalled();
         expect(fs.unlinkSync).not.toHaveBeenCalled();
