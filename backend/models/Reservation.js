@@ -56,5 +56,14 @@ const reservationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
+reservationSchema.index(
+  {
+    lab_id: 1,
+    reservation_date: 1,
+    "slots.seat_number": 1,
+    "slots.start_time": 1,
+    "slots.end_time": 1,
+  },
+  { unique: true }
+);
 export default mongoose.model("Reservation", reservationSchema);

@@ -41,12 +41,10 @@ export const createReservation = async (req, res) => {
         return res.status(403).json({ message: "Invalid technician ID." });
       }
       if (parseInt(user_id) === parseInt(technician_id)) {
-        return res
-          .status(403)
-          .json({
-            message:
-              "Technicians cannot reserve for themselves. Please enter a student ID.",
-          });
+        return res.status(403).json({
+          message:
+            "Technicians cannot reserve for themselves. Please enter a student ID.",
+        });
       }
       if (user.role !== "Student") {
         return res
@@ -135,6 +133,11 @@ export const createReservation = async (req, res) => {
 
     res.status(201).json(populatedReservation);
   } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: "One or more slots are already taken" });
+    }
     console.error("Error creating reservation:", error);
     res.status(500).json({ message: error.message });
   }
@@ -294,12 +297,10 @@ export const updateReservation = async (req, res) => {
         return res.status(403).json({ message: "Invalid technician ID." });
       }
       if (parseInt(user_id) === parseInt(technician_id)) {
-        return res
-          .status(403)
-          .json({
-            message:
-              "Technicians cannot reserve for themselves. Please enter a student ID.",
-          });
+        return res.status(403).json({
+          message:
+            "Technicians cannot reserve for themselves. Please enter a student ID.",
+        });
       }
       if (!student || student.role !== "Student") {
         return res
