@@ -2,8 +2,10 @@ import { computed, ref, onMounted } from 'vue' // Importing Vue's reactive and l
 import { useRouter } from 'vue-router' // Importing Vue Router for navigation
 import { useUsersStore } from '@/stores/users_store' // Importing the users store for state management
 import { useValidation } from '@/composables/useValidation' // Importing the validation composable for input validation
+import { useAuthentication } from '@/composables/useAuthentication' // Importing the authentication composable for login/logout functionality
 
 export function useLandingPage() {
+	const { logout } = useAuthentication() // Destructuring the logout function from the authentication composable
 	const usersStore = useUsersStore() // Accessing the users store
 	const currentUser = computed(() => usersStore.currentUser) // Reactive reference to the current user
 	const searchQuery = ref('') // Reactive reference for the search input
@@ -18,16 +20,6 @@ export function useLandingPage() {
 		validateNumericValue, // Function to validate numeric input values
 		validateNumberKeypress, // Function to validate keypress events for numeric input
 	} = useValidation()
-
-	// Lifecycle hook: Initializes the user session when the component mounts
-	onMounted(() => {
-		usersStore.initUserSession() // Initialize the user session from storage
-
-		// Redirect to the login page if no user is found
-		if (!usersStore.currentUser) {
-			router.push('/') // Navigate to the login page
-		}
-	})
 
 	// Function to close the error popup and clear the search query
 	const closeErrorPopup = () => {
@@ -83,12 +75,6 @@ export function useLandingPage() {
 			console.error('Error navigating to profile:', error) // Log error to console
 			setError('An error occurred while navigating to the profile page') // Set error message
 		}
-	}
-
-	// Function to log out the current user
-	const logout = () => {
-		usersStore.clearUserSession() // Clear the user session in the store
-		router.push('/') // Navigate to the login page
 	}
 
 	// Return the reactive references and functions for use in the component

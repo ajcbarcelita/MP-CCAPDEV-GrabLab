@@ -211,17 +211,8 @@ const loginUser = async (req, res) => {
         }
 
         // Create JWT token
-        const token = jwt.sign({ user_id: user.user_id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ user_id: user.user_id, role: user.role }, process.env.JWT_SECRET, {
             expiresIn: rememberMe ? "21d" : "1d",
-        });
-
-        // Set token as a httpOnly cookie
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-            maxAge: rememberMe ? 1000 * 60 * 24 * 21 : 1000 * 60 * 60 * 24, // 21 days or 1 day
-            sameSite: "Strict", // Prevent CSRF attacks
-            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
         });
 
         // Transform user data to match frontend expectations
