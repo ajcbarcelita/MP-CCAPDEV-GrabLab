@@ -8,8 +8,16 @@ import jwtPkg from "jsonwebtoken";
 const jwt = jwtPkg;
 const { TokenExpiredError } = jwtPkg;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Handle import.meta.url being undefined in Jest test environment
+let __filename, __dirname;
+try {
+    __filename = fileURLToPath(import.meta.url);
+    __dirname = path.dirname(__filename);
+} catch (error) {
+    // Fallback for test environment where import.meta.url is undefined
+    __filename = '';
+    __dirname = process.cwd();
+}
 
 // Ensure upload directory exists
 const uploadsDir = path.join(__dirname, "../uploads/profile_pictures");
@@ -60,10 +68,6 @@ const updateUserProfilePicture = async (req, res) => {
         console.log("Controller: Updating profile picture for user:", userId);
 
         const numericUserId = parseInt(userId, 10);
-
-        if (isNaN(numericUserId)) {
-            return res.status(400).json({ message: "Invalid user ID" });
-        }
 
         const user = await User.findOne({ user_id: numericUserId });
 
