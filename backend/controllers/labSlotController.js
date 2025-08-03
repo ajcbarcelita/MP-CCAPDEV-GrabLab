@@ -1,5 +1,5 @@
 import LabSlot from "../models/LabSlot.js";
-import { logError } from "../utils/logError.js";
+import { logError } from "../utils/logErrors.js";
 import mongoose from "mongoose";
 
 // Helper function to check database connection

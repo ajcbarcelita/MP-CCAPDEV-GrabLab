@@ -46,9 +46,8 @@ export const getLabsByBuilding = async (req, res) => {
     const { building } = req.params;
 
     if (!building) {
-      return res
-        .status(400)
-        .json({ message: "Building parameter is required" });
+      await logError({ error: new Error("Building parameter is required"), req, route: "getLabsByBuilding" });
+      return res.status(400).json({ message: "Building parameter is required" });
     }
 
     const labs = await Lab.find({ building })
@@ -95,12 +94,14 @@ export const getLabByIDNumber = async (req, res) => {
     const { id } = req.params;
 
     if (!id) {
+      await logError({ error: new Error("ID Number is required"), req, route: "getLabByIDNumber" });
       return res.status(400).json({ message: "ID Number is required" });
     }
 
     const lab = await Lab.findById(id).select("-__v").lean();
 
     if (!lab) {
+      await logError({ error: new Error("Lab not found"), req, route: "getLabByIDNumber" });
       return res.status(404).json({ message: "Lab not found" });
     }
 

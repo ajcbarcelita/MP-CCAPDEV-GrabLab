@@ -1,6 +1,5 @@
 import Reservation from "../models/Reservation.js";
-import ErrorLog from "../models/ErrorLog.js";
-import { logError } from "../utils/logError.js";
+import { logError } from "../utils/logErrors.js";
 import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
@@ -46,18 +45,11 @@ export const createReservation = async (req, res) => {
       // Ensure technicians cannot reserve for themselves
       if (parseInt(user_id) === parseInt(technician_id)) {
         await logError({ error: new Error("Technicians cannot reserve for themselves"), req, route: "createReservation" });
-        return res
-          .status(403)
-          .json({
-            message:
-              "Technicians cannot reserve for themselves. Please enter a student ID.",
-          });
+        return res.status(403).json({ message: "Technicians cannot reserve for themselves. Please enter a student ID.",});
       }
       if (user.role !== "Student") {
         await logError({ error: new Error("Technicians can only reserve for students"), req, route: "createReservation" });
-        return res
-          .status(403)
-          .json({ message: "Technicians can only reserve for students." });
+        return res.status(403).json({ message: "Technicians can only reserve for students." });
       }
     }
 

@@ -5,7 +5,6 @@ const errorLogSchema = new mongoose.Schema({
   stackTrace: { type: String },
   route: { type: String }, // API route or function name
   method: { type: String }, // HTTP method (GET, POST, etc.)
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Optional: may be null for system errors
   additionalInfo: { type: mongoose.Schema.Types.Mixed } // For any extra context
 });
 
