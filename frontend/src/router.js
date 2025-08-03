@@ -5,7 +5,7 @@ import Profile_Page from './components/Profile_Page.vue'
 import Login from './components/Login.vue'
 import Register from './components/Register.vue'
 import TechLanding from './components/TechLanding.vue'
-import Reservation from './components/Reservation.vue'
+import Reservation from './components/reservation/ReservationPage.vue'
 import View from './components/View.vue'
 import AdminLanding from './components/AdminLanding.vue'
 import AdminManageTechnicians from './components/AdminManageTechnicians.vue'
@@ -34,7 +34,7 @@ const routes = [
 		component: AdminManageTechnicians,
 		meta: { requiresAuth: true, requiresAdmin: true },
 	},
-  { path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
+	{ path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
