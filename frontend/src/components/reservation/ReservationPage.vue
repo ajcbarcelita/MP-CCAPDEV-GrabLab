@@ -679,14 +679,18 @@ const reserveSlot = async () => {
 		)
 		// Then check for conflicts
 		const hasConflict = selectedSlots.value.some((selectedSlot) =>
-			latestReservations.some((reservation) =>
-				reservation.slots.some(
+			latestReservations.some((reservation) => {
+				// Skip the current reservation being edited
+				if (isEditing && reservation._id === reservationId) {
+					return false
+				}
+				return reservation.slots.some(
 					(slot) =>
 						slot.seat_number === selectedSlot.seat &&
 						slot.start_time === selectedSlot.timeSlot.startTime &&
 						slot.end_time === selectedSlot.timeSlot.endTime,
-				),
-			),
+				)
+			}),
 		)
 
 		if (hasConflict) {
