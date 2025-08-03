@@ -4,47 +4,32 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useUsersStore } from '@/stores/users_store.js'
+import { useRoute } from 'vue-router'
+import { useAuthentication } from '@/composables/useAuthentication'
 
-const email = ref('')
-const password = ref('')
-const rememberMe = ref(false)
-const error = ref('')
-const success = ref('')
+const credentials = ref({
+    email: '',
+    password: '',
+    rememberMe: false
+})
+
+const { login, error, loading } = useAuthentication()
 const route = useRoute()
-const router = useRouter()
-const usersStore = useUsersStore()
+const success = ref('')
 
 onMounted(() => {
-	if (route.query.registered === 'true') {
-		success.value = 'Registration successful! You may now log in.'
-		router.replace({ query: {} })
-	}
+    if (route.query.registered === 'true') {
+        success.value = 'Registration successful! You may now log in.'
+    }
 })
 
 async function handleLogin() {
-	try {
-		const user = await usersStore.loginUser({
-			email: email.value,
-			password: password.value,
-			rememberMe: rememberMe.value,
-		})
-
-		error.value = ''
-
-		if (user.role === 'Technician') {
-			router.push('/technician-landing')
-		} else if (user.role === 'Student') {
-			router.push('/student-landing')
-		} else if (user.role === 'Admin') {
-			router.push('/admin-landing')
-		} else {
-			router.push('/')
-		}
-	} catch (err) {
-		error.value = usersStore.error || 'Invalid email or password. Try again.'
-	}
+    try {
+        await login(credentials.value)
+    } catch (err) {
+        // Error is handled by the composable
+        console.error(err)
+    }
 }
 </script>
 
@@ -69,13 +54,13 @@ async function handleLogin() {
 			<form @submit.prevent="handleLogin">
 				<div>
 					<label>DLSU E-mail</label>
-					<input v-model="email" class="login-input" placeholder="name@dlsu.edu.ph" />
+					<input v-model="credentials.email" class="login-input" placeholder="name@dlsu.edu.ph" />
 				</div>
 
 				<div>
 					<label>Password</label>
 					<input
-						v-model="password"
+						v-model="credentials.password"
 						type="password"
 						class="login-input"
 						placeholder="••••••••"
@@ -83,7 +68,7 @@ async function handleLogin() {
 				</div>
 
 				<div class="login-checkbox">
-					<input type="checkbox" id="rememberMe" class="mr-2" v-model="rememberMe" />
+					<input type="checkbox" id="rememberMe" class="mr-2" v-model="credentials.rememberMe" />
 					<label for="rememberMe">Remember Me</label>
 				</div>
 

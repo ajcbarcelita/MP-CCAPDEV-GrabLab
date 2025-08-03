@@ -73,34 +73,17 @@ export const useUsersStore = defineStore('users', {
 		// @param {Object} credentials - The login credentials (email, password, rememberMe)
 		// @returns {Promise<Object>} - Resolves with the logged-in user data
 		async loginUser(credentials) {
-			this.loading = true // Set loading state to true
+			this.loading = true
 			try {
-				const response = await axios.post(`${API_URL}/users/login`, {
-					email: credentials.email,
-					password: credentials.password,
-					rememberMe: credentials.rememberMe,
-				}) // API call to log in user
-
-				const user = response.data // Extract user data from response
-
-				// Set current user state
-				this.currentUser = {
-					user_id: user.user_id,
-					fname: user.fname,
-					lname: user.lname,
-					email: user.email,
-					role: user.role,
-				}
-
-				// Store current user in session or local storage based on rememberMe
-				this.setCurrentUser(this.currentUser, credentials.rememberMe, user.token)
-				this.error = null // Clear any previous errors
-				return user // Return the logged-in user
+				const response = await axios.post(`${API_URL}/users/login`, credentials)
+				const { token, ...user } = response.data
+				this.setCurrentUser(user, credentials.rememberMe, token)
+				return user
 			} catch (error) {
-				this.error = error.response?.data?.message || 'Login failed' // Set error message
-				throw error // Re-throw error for further handling
+				this.error = error.response?.data?.message || 'Login failed'
+				throw error
 			} finally {
-				this.loading = false // Reset loading state
+				this.loading = false
 			}
 		},
 
@@ -235,22 +218,23 @@ export const useUsersStore = defineStore('users', {
 		// token is optional, defaults to null
 		setCurrentUser(user, rememberMe = false, token = null) {
 			this.currentUser = user
-			if (rememberMe) {
-				localStorage.setItem('user', JSON.stringify(user))
-				sessionStorage.removeItem('user')
-
-				if (token) {
+			if (token) {
+				// Always set axios header first
+				axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+				
+				// Then store based on rememberMe
+				if (rememberMe) {
 					localStorage.setItem('token', token)
+					localStorage.setItem('user', JSON.stringify(user))
+					// Clean up session storage
 					sessionStorage.removeItem('token')
-					axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-				}
-			} else {
-				sessionStorage.setItem('user', JSON.stringify(user))
-				localStorage.removeItem('user')
-				if (token) {
+					sessionStorage.removeItem('user')
+				} else {
 					sessionStorage.setItem('token', token)
+					sessionStorage.setItem('user', JSON.stringify(user))
+					// Clean up local storage
 					localStorage.removeItem('token')
-					axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+					localStorage.removeItem('user')
 				}
 			}
 		},
@@ -266,31 +250,30 @@ export const useUsersStore = defineStore('users', {
 			delete axios.defaults.headers.common['Authorization']
 		},
 
-		// Initialize user session from storage
 		initUserSession() {
+			// First check session storage
 			let user = sessionStorage.getItem('user')
 			let token = sessionStorage.getItem('token')
-			if (!user) {
+			
+			// If not in session storage, check local storage
+			if (!user || !token) {
 				user = localStorage.getItem('user')
 				token = localStorage.getItem('token')
 			}
-			if (user) {
+
+			if (user && token) {
 				try {
 					this.currentUser = JSON.parse(user)
-					if (token) {
-						axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-					}
+					axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 				} catch (error) {
-					console.error('Error parsing user data from storage:', error)
+					console.error('Error parsing user data:', error)
 					this.clearUserSession()
 				}
 			} else {
-				console.log('No user found in storage, initializing currentUser to null')
-				axios.defaults.headers.common['Authorization'] = ''
-				this.currentUser = null
+				this.clearUserSession()
 			}
-			this.profileUser = this.currentUser // Default to current user profile
 		},
+
 		// Add a new technician
 		async addTechnician(techData) {
 			this.loading = true
@@ -310,25 +293,25 @@ export const useUsersStore = defineStore('users', {
 
 		// Update a technician (by user_id)
 		// Update a technician (by user_id, not _id)
-async updateTechnician(userId, updateData) {  // ← Change parameter name
-    this.loading = true
-    try {
-        const response = await axios.put(`${API_URL}/users/${userId}`, updateData)
-        const updatedTech = response.data
-        const index = this.users.findIndex((u) => u.user_id === userId)  // ← Change from u._id to u.user_id
-        if (index !== -1) {
-            this.users[index] = { ...this.users[index], ...updatedTech }
-        }
-        this.error = null
-        return updatedTech
-    } catch (error) {
-        this.error = error.response?.data?.message || error.message
-        console.error('Error updating technician:', error)
-        throw error
-    } finally {
-        this.loading = false
-    }
-},
+		async updateTechnician(userId, updateData) {  // ← Change parameter name
+			this.loading = true
+			try {
+				const response = await axios.put(`${API_URL}/users/${userId}`, updateData)
+				const updatedTech = response.data
+				const index = this.users.findIndex((u) => u.user_id === userId)  // ← Change from u._id to u.user_id
+				if (index !== -1) {
+					this.users[index] = { ...this.users[index], ...updatedTech }
+				}
+				this.error = null
+				return updatedTech
+			} catch (error) {
+				this.error = error.response?.data?.message || error.message
+				console.error('Error updating technician:', error)
+				throw error
+			} finally {
+				this.loading = false
+			}
+		},
 
 		// Soft delete (deactivate) technician
 		async deactivateTechnician(id) {
