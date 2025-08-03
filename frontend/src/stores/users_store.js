@@ -87,6 +87,20 @@ export const useUsersStore = defineStore('users', {
 			}
 		},
 
+		async registerUser(userData) {
+			this.loading = true
+			try {
+				const response = await axios.post(`${API_URL}/users/register`, userData)
+				this.error = null
+				return response.data
+			} catch (error) {
+				this.error = error.response?.data?.message || 'Registration failed'
+				throw error
+			} finally {
+				this.loading = false
+			}
+		},
+
 		// Updates a user's profile with the provided data
 		// @param {string|number} userId - The ID of the user to update
 		// @param {Object} updateData - The data to update the user's profile with

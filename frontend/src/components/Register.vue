@@ -20,39 +20,35 @@ const error = ref('')
 const router = useRouter()
 const usersStore = useUsersStore()
 
+// Replace the handleRegister function with:
 async function handleRegister() {
-	const emailPattern = /^[a-zA-Z0-9._%+-]+@dlsu\.edu\.ph$/
-	if (!emailPattern.test(email.value)) {
-		error.value = 'Please enter a valid DLSU email address.'
-		return
-	}
-	if (password.value !== confirmPassword.value) {
-		error.value = 'Passwords do not match.'
-		return
-	}
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@dlsu\.edu\.ph$/
+    if (!emailPattern.test(email.value)) {
+        error.value = 'Please enter a valid DLSU email address.'
+        return
+    }
+    if (password.value !== confirmPassword.value) {
+        error.value = 'Passwords do not match.'
+        return
+    }
 
-	// Axios POST request to register the user to backend API (/api/users)
-	try {
-		const res = await axios.post('http://localhost:3000/api/users', {
-			email: email.value,
-			password: password.value,
-			fname: firstName.value,
-			mname: middleName.value,
-			lname: lastName.value,
-			role: role.value, // Default role for new users
-			status: 'Active', // Default status for new users
-			profile_pic_path: '/uploads/profile_pictures/default_profile_picture.jpeg', // Default profile picture path
-			description: '', // Default description
-		})
-		error.value = ''
-		router.push({ path: '/login', query: { registered: 'true' } })
-	} catch (err) {
-		if (err.response && err.response.data && err.response.data.message) {
-			error.value = err.response.data.message
-		} else {
-			error.value = 'Registration failed. Please try again.'
-		}
-	}
+    try {
+        await usersStore.registerUser({
+            email: email.value,
+            password: password.value,
+            fname: firstName.value,
+            mname: middleName.value,
+            lname: lastName.value,
+            role: role.value,
+            status: 'Active',
+            profile_pic_path: '/uploads/profile_pictures/default_profile_picture.jpeg',
+            description: '',
+        })
+        error.value = ''
+        router.push({ path: '/login', query: { registered: 'true' } })
+    } catch (err) {
+        error.value = err.response?.data?.message || 'Registration failed. Please try again.'
+    }
 }
 </script>
 
