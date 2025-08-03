@@ -9,6 +9,7 @@
  *  - frontend/src/components/View.vue (indirectly via the labs store)
  */
 import express from 'express';
+import { authMiddleware } from '../middleware/auth.js';
 import {
     getLabs,
     getLabsByBuilding,
@@ -16,6 +17,8 @@ import {
 } from '../controllers/labController.js';
 
 const router = express.Router();
+
+router.use(authMiddleware.verifyToken); // Apply authentication middleware to all lab routes
 
 // Get all labs
 router.get('/', getLabs);

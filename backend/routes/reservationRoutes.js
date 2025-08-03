@@ -1,4 +1,5 @@
 import express from 'express';
+import { authMiddleware } from '../middleware/auth.js';
 import {
     getReservations,
     getReservationsByUserId,
@@ -10,22 +11,17 @@ import {
 
 const router = express.Router();
 
-// Get all reservations
+// All routes need Student or Technician role
+router.use(authMiddleware.verifyToken);
+
+// Student & Tech only routes
+router.use(authMiddleware.requireRole(['Student', 'Technician']));
+
 router.get('/', getReservations);
-
-// Create a new reservation
 router.post('/', createReservation);
-
-// Get reservations by user ID
 router.get('/user/:userId', getReservationsByUserId);
-
-// Get reservations by lab ID
 router.get('/lab/:labId', getReservationsByLab);
-
-// Update a reservation
 router.patch('/:id', updateReservation);
-
-// Delete a reservation
 router.delete('/:id', deleteReservation);
 
 export default router;

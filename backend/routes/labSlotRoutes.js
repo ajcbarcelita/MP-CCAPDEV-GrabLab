@@ -1,4 +1,5 @@
 import express from "express";
+import { authMiddleware } from "../middleware/auth.js";
 import {
   getLabSlotsByLabAndDate,
   createLabSlotsBatch,
@@ -8,16 +9,26 @@ import {
 
 const router = express.Router();
 
-// Get lab slots by lab ID and date
-router.get("/lab/:labId/date/:date", getLabSlotsByLabAndDate);
+// All routes need authentication
+router.use(authMiddleware.verifyToken);
 
-// Get all lab slots by lab ID
-router.get("/lab/:labId", getLabSlotsByLab);
+// Routes accessible by Students and Technicians
+router.get("/lab/:labId/date/:date", 
+    authMiddleware.requireRole(['Student', 'Technician']),
+    getLabSlotsByLabAndDate
+);
+router.get("/lab/:labId", 
+    authMiddleware.requireRole(['Student', 'Technician']),
+    getLabSlotsByLab
+);
 
-// Create lab slots in batch
-router.post("/batch", createLabSlotsBatch);
-
-// Update a specific lab slot
-router.patch("/:id", updateLabSlot);
-
+// Routes only for Technicians
+router.post("/batch", 
+    authMiddleware.requireRole(['Technician', 'Admin']),
+    createLabSlotsBatch
+);
+router.patch("/:id", 
+    authMiddleware.requireRole(['Technician', 'Admin']),
+    updateLabSlot
+);
 export default router;
