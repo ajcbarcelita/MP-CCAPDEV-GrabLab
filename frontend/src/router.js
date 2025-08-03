@@ -12,7 +12,7 @@ import AdminManageTechnicians from './components/AdminManageTechnicians.vue'
 
 import { useUsersStore } from '@/stores/users_store'
 
-// import the components you want to use in your routes
+// Import the components you want to use in your routes
 // then list all the routes you want to use in your app, path and correspondng component
 const routes = [
 	{ path: '/', component: GuestLanding },
@@ -21,6 +21,8 @@ const routes = [
 	{ path: '/student-landing', component: StudentLanding, meta: { requiresAuth: true } },
 	{ path: '/technician-landing', component: TechLanding, meta: { requiresAuth: true } },
 	{ path: '/profile', component: Profile_Page, meta: { requiresAuth: true } },
+	{ path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
+	
 	{ path: '/reservation/:labId', component: Reservation, meta: { requiresAuth: true } },
 	{
 		path: '/reservation/:labId/:reservationId',

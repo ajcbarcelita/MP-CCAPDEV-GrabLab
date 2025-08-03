@@ -1,4 +1,5 @@
 import LabSlot from "../models/LabSlot.js";
+import { logError } from "../utils/logError.js";
 import mongoose from "mongoose";
 
 // Helper function to check database connection
@@ -41,7 +42,6 @@ export const getLabSlotsByLabAndDate = async (req, res) => {
     });
 
     if (!labSlots || labSlots.length === 0) {
-      // Not an error, just means no slots exist yet for this day
       return res
         .status(404)
         .json({ message: "No lab slots found for this lab and date" });
@@ -49,8 +49,10 @@ export const getLabSlotsByLabAndDate = async (req, res) => {
 
     res.json(labSlots);
   } catch (error) {
-    console.error("Error fetching lab slots by lab and date:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "getLabSlotsByLabAndDate" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -76,7 +78,7 @@ export const getLabSlotsByLab = async (req, res) => {
 
     res.json(labSlots);
   } catch (error) {
-    console.error("Error in getLabSlotsByLab:", error);
+    await logError({ error, req, route: "getLabSlotsByLab" });
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
@@ -116,8 +118,10 @@ export const createLabSlotsBatch = async (req, res) => {
       throw error;
     }
   } catch (error) {
-    console.error("Error creating batch lab slots:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "createLabSlotsBatch" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -145,7 +149,7 @@ export const updateLabSlot = async (req, res) => {
 
     res.json(updatedSlot);
   } catch (error) {
-    console.error("Error in updateLabSlot:", error);
+    await logError({ error, req, route: "updateLabSlot" });
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });

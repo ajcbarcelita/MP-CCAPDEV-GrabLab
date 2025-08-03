@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { logError } from "../utils/logErrors.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -62,16 +63,19 @@ const updateUserProfilePicture = async (req, res) => {
         const numericUserId = parseInt(userId, 10);
 
         if (isNaN(numericUserId)) {
+            await logError({ error: new Error("Invalid user ID"), req, route: "updateUserProfilePicture" });
             return res.status(400).json({ message: "Invalid user ID" });
         }
 
         const user = await User.findOne({ user_id: numericUserId });
 
         if (!user) {
+            await logError({ error: new Error("User not found"), req, route: "updateUserProfilePicture" });
             return res.status(404).json({ message: "User not found" });
         }
 
         if (!req.file) {
+            await logError({ error: new Error("No file uploaded"), req, route: "updateUserProfilePicture" });
             return res.status(400).json({ message: "No file uploaded" });
         }
 
@@ -103,8 +107,10 @@ const updateUserProfilePicture = async (req, res) => {
 
         res.json(transformedUser);
     } catch (error) {
-        console.error("Profile picture update error:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        await logError({ error, req, route: "updateUserProfilePicture" });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 
@@ -117,7 +123,7 @@ const updateUserProfilePicture = async (req, res) => {
  * @returns Updated user object (transformed for frontend)
  */
 const registerUser = async (req, res) => {
-    const { email, password, fname, lname, mname = "", role = "Student", status = "Active", profile_pic_path = "", description = ""} = req.body;
+    const { email, password, fname, lname, mname = "", role = "Student", status = "Active", profile_pic_path = "", description = "" } = req.body;
 
     console.log("Registering user with email:", email);
 
@@ -130,6 +136,7 @@ const registerUser = async (req, res) => {
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
+            await logError({ error: new Error("User already exists"), req, route: "registerUser" });
             return res.status(400).json({ message: "User already exists" });
         }
 
@@ -161,7 +168,10 @@ const registerUser = async (req, res) => {
             description: user.description,
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        await logError({ error, req, route: "registerUser" });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 
@@ -179,18 +189,21 @@ const loginUser = async (req, res) => {
     try {
         const user = await User.findOne({ email });
 
-        // If user not found, return 401 Unauthorized
+        // If user not found
         if (!user) {
+            await logError({ error: new Error("Invalid email or password"), req, route: "loginUser" });
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        // If user is inactive, return 403 Forbidden
+        // If user is inactive
         if (user.status === "Inactive") {
+            await logError({ error: new Error("User account is inactive"), req, route: "loginUser" });
             return res.status(403).json({ message: "Your account is inactive. Contact the administrator for help." });
         }
 
-        // If password is incorrect, return 401 Unauthorized
+        // If password is incorrect
         if (!(await user.comparePassword(password))) {
+            await logError({ error: new Error("Invalid email or password"), req, route: "loginUser" });
             return res.status(401).json({ message: "Invalid email or password." });
         }
 
@@ -217,13 +230,16 @@ const loginUser = async (req, res) => {
             role: user.role,
             token,
         });
-    } catch (err) {
-        // Log the error for debugging
-        console.error("Login error:", err);
-        if (err instanceof TokenExpiredError) {
+    } catch (error) {
+        // Log the error and handle token expiration
+        await logError({ error, req, route: "loginUser" });
+        if (error instanceof TokenExpiredError) {
+            await logError({ error: new Error("Token expired"), req, route: "loginUser" });
             return res.status(401).json({ message: "Token expired. Please log in again." });
         }
-        res.status(500).json({ message: "Server error", error: err.message });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 
@@ -256,7 +272,10 @@ const getAllUsers = async (req, res) => {
 
         res.json(transformedUsers);
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        await logError({ error, req, route: "getAllUsers" });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 
@@ -280,6 +299,7 @@ const getUserById = async (req, res) => {
         console.log("User found in DB:", user ? "Yes" : "No");
 
         if (!user) {
+            await logError({ error: new Error("User not found"), req, route: "getUserById" });
             return res.status(404).json({ message: "User not found" });
         }
 
@@ -300,7 +320,10 @@ const getUserById = async (req, res) => {
 
         res.json(transformedUser);
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        await logError({ error, req, route: "getUserById" });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 
@@ -317,19 +340,19 @@ const deleteUser = async (req, res) => {
         const user = await User.findOne({ user_id: userId });
 
         if (!user) {
+            await logError({ error: new Error("User not found"), req, route: "deleteUser" });
             return res.status(404).json({ message: "User not found" });
         }
 
         // Instead of deleting, update the status to "Inactive"
         const updatedUser = await User.findOneAndUpdate({ user_id: userId }, { status: "Inactive" }, { new: true });
 
-        res.json({
-            message: "User marked as inactive successfully",
-            user: updatedUser,
-        });
+        res.json({ message: "User marked as inactive successfully", user: updatedUser });
     } catch (error) {
-        console.error("Error marking user as inactive:", error);
-        res.status(500).json({ message: error.message });
+        await logError({ error, req, route: "deleteUser" });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 
@@ -349,6 +372,7 @@ const updateUser = async (req, res) => {
         const user = await User.findOne({ user_id: userId });
 
         if (!user) {
+            await logError({ error: new Error("User not found"), req, route: "updateUser" });
             return res.status(404).json({ message: "User not found" });
         }
 
@@ -378,7 +402,10 @@ const updateUser = async (req, res) => {
 
         res.json(transformedUser);
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        await logError({ error, req, route: "updateUser" });
+        res
+            .status(error.message === "Database connection is not ready" ? 503 : 500)
+            .json({ message: error.message });
     }
 };
 

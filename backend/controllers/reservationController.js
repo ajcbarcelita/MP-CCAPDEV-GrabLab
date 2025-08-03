@@ -1,4 +1,6 @@
 import Reservation from "../models/Reservation.js";
+import ErrorLog from "../models/ErrorLog.js";
+import { logError } from "../utils/logError.js";
 import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
 
@@ -12,13 +14,9 @@ export const createReservation = async (req, res) => {
   const { user_id, lab_id, reservation_date, slots, anonymous, technician_id } =
     req.body;
 
-  if (
-    !user_id ||
-    !lab_id ||
-    !reservation_date ||
-    !Array.isArray(slots) ||
-    slots.length === 0
-  ) {
+  // Validate required fields
+  if (!user_id || !lab_id || !reservation_date || !Array.isArray(slots) || slots.length === 0) {
+    await logError({ error: new Error("Missing required fields or invalid slots format"), req, route: "createReservation" });
     return res
       .status(400)
       .json({ message: "Missing required fields or invalid slots format" });
@@ -29,6 +27,7 @@ export const createReservation = async (req, res) => {
     const User = mongoose.model("User");
     const user = await User.findOne({ user_id: parseInt(user_id) });
     if (!user) {
+      await logError({ error: new Error("User not found"), req, route: "createReservation" });
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -37,16 +36,25 @@ export const createReservation = async (req, res) => {
       const technician = await User.findOne({
         user_id: parseInt(technician_id),
       });
+
+      // Check if the technician exists and has the correct role
       if (!technician || technician.role !== "Technician") {
+        await logError({ error: new Error("Invalid technician ID"), req, route: "createReservation" });
         return res.status(403).json({ message: "Invalid technician ID." });
       }
+
+      // Ensure technicians cannot reserve for themselves
       if (parseInt(user_id) === parseInt(technician_id)) {
-        return res.status(403).json({
-          message:
-            "Technicians cannot reserve for themselves. Please enter a student ID.",
-        });
+        await logError({ error: new Error("Technicians cannot reserve for themselves"), req, route: "createReservation" });
+        return res
+          .status(403)
+          .json({
+            message:
+              "Technicians cannot reserve for themselves. Please enter a student ID.",
+          });
       }
       if (user.role !== "Student") {
+        await logError({ error: new Error("Technicians can only reserve for students"), req, route: "createReservation" });
         return res
           .status(403)
           .json({ message: "Technicians can only reserve for students." });
@@ -56,6 +64,7 @@ export const createReservation = async (req, res) => {
     // Check if the lab exists
     const lab = await Lab.findById(lab_id);
     if (!lab) {
+      await logError({ error: new Error("Lab not found"), req, route: "createReservation" });
       return res.status(404).json({ message: "Lab not found" });
     }
 
@@ -69,6 +78,7 @@ export const createReservation = async (req, res) => {
         const [endHour, endMinute] = slot.end_time.split(":").map(Number);
         const slotEndMinutes = endHour * 60 + endMinute;
         if (slotEndMinutes <= nowMinutes) {
+          await logError({ error: new Error("Cannot book slot ending before current time"), req, route: "createReservation" });
           return res.status(400).json({
             message: `Cannot book slot ending before current time: ${slot.start_time}-${slot.end_time}`,
           });
@@ -94,6 +104,8 @@ export const createReservation = async (req, res) => {
       );
 
       if (conflict) {
+        // Log Reservation conflict error
+        await logError({ error: new Error("Reservation conflict"), req, route: "createReservation" }); 
         return res.status(409).json({
           message: `Seat ${slot.seat_number} at ${slot.start_time}-${slot.end_time} is already reserved`,
         });
@@ -133,13 +145,10 @@ export const createReservation = async (req, res) => {
 
     res.status(201).json(populatedReservation);
   } catch (error) {
-    if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ message: "One or more slots are already taken" });
-    }
-    console.error("Error creating reservation:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "createReservation" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -187,7 +196,10 @@ export const getReservations = async (req, res) => {
 
     res.json(populatedReservations);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "getReservations" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -227,8 +239,10 @@ export const getReservationsByUserId = async (req, res) => {
 
     res.json(reservations);
   } catch (error) {
-    console.error("Error fetching reservations by user ID:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "getReservationsByUserId" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -244,6 +258,7 @@ export const deleteReservation = async (req, res) => {
     const reservation = await Reservation.findById(id);
 
     if (!reservation) {
+      await logError({ error: new Error("Reservation not found"), req, route: "deleteReservation" });
       return res.status(404).json({ message: "Reservation not found" });
     }
 
@@ -254,8 +269,10 @@ export const deleteReservation = async (req, res) => {
       message: "Reservation deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting reservation:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "deleteReservation" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -281,6 +298,7 @@ export const updateReservation = async (req, res) => {
     // Find the existing reservation
     const existingReservation = await Reservation.findById(id);
     if (!existingReservation) {
+      await logError({ error: new Error("Reservation not found"), req, route: "updateReservation" });
       return res.status(404).json({ message: "Reservation not found" });
     }
 
@@ -292,15 +310,17 @@ export const updateReservation = async (req, res) => {
       });
       const student = await User.findOne({ user_id: parseInt(user_id) });
       if (!technician || technician.role !== "Technician") {
+        await logError({ error: new Error("Invalid technician ID"), req, route: "updateReservation" });
         return res.status(403).json({ message: "Invalid technician ID." });
       }
       if (parseInt(user_id) === parseInt(technician_id)) {
-        return res.status(403).json({
-          message:
-            "Technicians cannot reserve for themselves. Please enter a student ID.",
-        });
+        await logError({ error: new Error("Technicians cannot reserve for themselves"), req, route: "updateReservation" });
+        return res
+          .status(403)
+          .json({ message: "Technicians cannot reserve for themselves. Please enter a student ID."});
       }
       if (!student || student.role !== "Student") {
+        await logError({ error: new Error("Technicians can only reserve for students"), req, route: "updateReservation" });
         return res
           .status(403)
           .json({ message: "Technicians can only reserve for students." });
@@ -319,6 +339,7 @@ export const updateReservation = async (req, res) => {
         const [endHour, endMinute] = slot.end_time.split(":").map(Number);
         const slotEndMinutes = endHour * 60 + endMinute;
         if (slotEndMinutes <= nowMinutes) {
+          await logError({ error: new Error("Cannot update to slot ending before current time"), req, route: "updateReservation" });
           return res.status(400).json({
             message: `Cannot update to slot ending before current time: ${slot.start_time}-${slot.end_time}`,
           });
@@ -343,6 +364,7 @@ export const updateReservation = async (req, res) => {
 
     if (slots !== undefined) {
       if (!Array.isArray(slots) || slots.length === 0) {
+        await logError({ error: new Error("Invalid slots format"), req, route: "updateReservation" });
         return res
           .status(400)
           .json({ message: "Slots must be a non-empty array" });
@@ -356,6 +378,7 @@ export const updateReservation = async (req, res) => {
 
     if (status !== undefined) {
       if (!["Active", "Cancelled", "Completed"].includes(status)) {
+        await logError({ error: new Error("Invalid status value"), req, route: "updateReservation" });
         return res.status(400).json({ message: "Invalid status value" });
       }
       updateData.status = status;
@@ -385,6 +408,7 @@ export const updateReservation = async (req, res) => {
         );
 
         if (conflict) {
+          await logError({ error: new Error("Reservation conflict"), req, route: "updateReservation" });
           return res.status(409).json({
             message: `Seat ${slot.seat_number} at ${slot.start_time}-${slot.end_time} is already reserved`,
           });
@@ -427,8 +451,10 @@ export const updateReservation = async (req, res) => {
 
     res.json(populatedReservation);
   } catch (error) {
-    console.error("Error updating reservation:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "updateReservation" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -482,7 +508,9 @@ export const getReservationsByLab = async (req, res) => {
 
     res.json(populatedReservations);
   } catch (error) {
-    console.error("Error fetching reservations by lab:", error);
-    res.status(500).json({ message: error.message });
+    await logError({ error, req, route: "getReservationsByLab" });
+    res
+      .status(error.message === "Database connection is not ready" ? 503 : 500)
+      .json({ message: error.message });
   }
 };

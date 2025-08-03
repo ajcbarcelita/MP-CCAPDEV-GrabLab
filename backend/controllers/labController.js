@@ -4,6 +4,7 @@
  * See backend/models/Lab.js for the Lab model.
  */
 import Lab from "../models/Lab.js";
+import { logError } from "../utils/logErrors.js";
 import mongoose from "mongoose";
 
 // Helper function to check database connection
@@ -24,11 +25,11 @@ export const getLabs = async (req, res) => {
     const labs = await Lab.find({})
       .sort({ building: 1, name: 1 })
       .select("-__v")
-      .lean(); // Use lean() for better performance with JSON data
+      .lean();
 
     res.json(labs);
   } catch (error) {
-    console.error("Error in getLabs:", error);
+    await logError({ error, req, route: "getLabs" });
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
@@ -57,7 +58,7 @@ export const getLabsByBuilding = async (req, res) => {
 
     res.json(labs);
   } catch (error) {
-    console.error("Error in getLabsByBuilding:", error);
+    await logError({ error, req, route: "getLabsByBuilding" });
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
@@ -77,7 +78,7 @@ export const getAllUniqueBuildings = async (req, res) => {
 
     res.json(buildings);
   } catch (error) {
-    console.error("Error in getAllUniqueBuildings:", error);
+    await logError({ error, req, route: "getAllUniqueBuildings" });
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
@@ -105,7 +106,7 @@ export const getLabByIDNumber = async (req, res) => {
 
     res.json(lab);
   } catch (error) {
-    console.error("Error in getLabByID:", error);
+    await logError({ error, req, route: "getLabByIDNumber" });
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
