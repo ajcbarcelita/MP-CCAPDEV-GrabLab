@@ -12,31 +12,78 @@ import AdminManageTechnicians from './components/AdminManageTechnicians.vue'
 
 import { useUsersStore } from '@/stores/users_store'
 
-// Import the components you want to use in your routes
-// then list all the routes you want to use in your app, path and correspondng component
 const routes = [
-	{ path: '/', component: GuestLanding },
-	{ path: '/login', component: Login },
-	{ path: '/register', component: Register },
-	{ path: '/student-landing', component: StudentLanding, meta: { requiresAuth: true } },
-	{ path: '/technician-landing', component: TechLanding, meta: { requiresAuth: true } },
-	{ path: '/profile', component: Profile_Page, meta: { requiresAuth: true } },
-	{ path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
+    // Guest-only routes (only when NOT logged in)
+    { 
+        path: '/', 
+        component: GuestLanding,
+        meta: { requiresGuest: true }
+    },
+    { 
+        path: '/login', 
+        component: Login,
+        meta: { requiresGuest: true }
+    },
+    { 
+        path: '/register', 
+        component: Register,
+        meta: { requiresGuest: true }
+    },
+
+    // Role-specific landing pages
+    { 
+        path: '/student-landing', 
+        component: StudentLanding, 
+        meta: { requiresAuth: true, role: 'Student' }
+    },
+    { 
+        path: '/technician-landing', 
+        component: TechLanding, 
+        meta: { requiresAuth: true, role: 'Technician' }
+    },
+    { 
+        path: '/admin-landing', 
+        component: AdminLanding, 
+        meta: { requiresAuth: true, role: 'Admin' }
+    },
+
+    // Shared authenticated routes (all roles)
+    { 
+        path: '/profile', 
+        component: Profile_Page, 
+        meta: { requiresAuth: true }
+    },
+
+    // Student & Tech only routes
+    { 
+        path: '/reservation/:labId', 
+        component: Reservation, 
+        meta: { requiresAuth: true, roles: ['Student', 'Technician'] }
+    },
+    {
+        path: '/reservation/:labId/:reservationId',
+        component: Reservation,
+        meta: { requiresAuth: true, roles: ['Student', 'Technician'] }
+    },
+
+    { 
+        path: '/profile/:userId', 
+        component: Profile_Page, 
+        meta: { requiresAuth: true, roles: ['Student', 'Technician']}
+    },  
 	
-	{ path: '/reservation/:labId', component: Reservation, meta: { requiresAuth: true } },
-	{
-		path: '/reservation/:labId/:reservationId',
-		component: Reservation,
-		meta: { requiresAuth: true },
-	},
-	{ path: '/view', component: View, meta: { requiresAuth: true } },
-	{ path: '/admin-landing', component: AdminLanding, meta: { requiresAuth: true } },
-	{
-		path: '/admin-manage-technicians',
-		component: AdminManageTechnicians,
-		meta: { requiresAuth: true, requiresAdmin: true },
-	},
-	{ path: '/profile/:userId', component: Profile_Page, meta: { requiresAuth: true } },
+    { 
+        path: '/view', 
+        component: View, 
+        meta: { requiresAuth: true, roles: ['Student', 'Technician'] }
+    },
+
+    // Admin only routes
+    {
+        path: '/admin-manage-technicians',
+        component: AdminManageTechnicians,
+        meta: { requiresAuth: true, role: 'Admin' }
+    }
 ]
 
 const router = createRouter({
@@ -44,28 +91,53 @@ const router = createRouter({
 	routes,
 })
 
+// Updated navigation guard
 router.beforeEach((to, from, next) => {
-	const usersStore = useUsersStore()
-	// Restore session if needed
-	if (!usersStore.currentUser) {
-		usersStore.initUserSession()
-	}
-	// Check if the route requires authentication, if so, check if the user is logged in
-	// I feel like this logic isnt fully correct, but it works for now
-	if (to.matched.some((record) => record.meta.requiresAuth) && !usersStore.currentUser) {
-		return next('/login')
-	}
-	// Check for admin access
-	if (
-		to.matched.some((record) => record.meta.requiresAdmin) &&
-		usersStore.currentUser?.role !== 'Admin'
-	) {
-		return next('/login')
-	}
-	next()
+    const usersStore = useUsersStore()
+    if (!usersStore.currentUser) {
+        usersStore.initUserSession()
+    }
+    
+    const user = usersStore.currentUser
+
+    // Guest-only routes check
+    if (to.meta.requiresGuest && user) {
+        // Redirect logged-in users to their landing page
+        const roleRoutes = {
+            'Student': '/student-landing',
+            'Technician': '/technician-landing',
+            'Admin': '/admin-landing'
+        }
+        return next(roleRoutes[user.role])
+    }
+
+    // Auth required check
+    if (to.meta.requiresAuth && !user) {
+        return next('/login')
+    }
+
+    // Role-specific route check
+    if (to.meta.role && user?.role !== to.meta.role) {
+        // Redirect to user's landing if wrong role
+        const roleRoutes = {
+            'Student': '/student-landing',
+            'Technician': '/technician-landing',
+            'Admin': '/admin-landing'
+        }
+        return next(roleRoutes[user.role] || '/login')
+    }
+
+    // Multiple roles check (for Student & Tech routes)
+    if (to.meta.roles && !to.meta.roles.includes(user?.role)) {
+        const roleRoutes = {
+            'Student': '/student-landing',
+            'Technician': '/technician-landing',
+            'Admin': '/admin-landing'
+        }
+        return next(roleRoutes[user.role] || '/login')
+    }
+
+    next()
 })
-// Create a nav guard for RBAC redirection with router.beforeEach
-// For example, if user is not logged in, redirect to guest landing page
-// If user is logged in, redirect to either student or technician landing page, but cannot go back to guest landing page
 
 export default router
