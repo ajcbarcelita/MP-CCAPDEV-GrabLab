@@ -1,4 +1,4 @@
-import { describe, it, expect, jest} from '@jest/globals';
+import { describe, it, expect, jest, beforeEach} from '@jest/globals';
 import mongoose from 'mongoose';
 import {
     getReservations,
@@ -18,7 +18,13 @@ jest.mock('mongoose', () => ({
   connection: {
     readyState: 1 
   },
-  Schema: function () { return {}; },
+  Schema: class MockSchema {
+    constructor() {}
+    static Types = {
+      Mixed: 'Mixed',
+      ObjectId: 'ObjectId'
+    }
+  },
   model: jest.fn()
 }));
 
@@ -42,6 +48,11 @@ jest.mock('../models/User.js', () => ({
 jest.mock('../models/Lab.js', () => ({
     findById: jest.fn(),
     find: jest.fn()
+}));
+
+// Mock logError utility
+jest.mock('../utils/logErrors.js', () => ({
+  logError: jest.fn()
 }));
 
 // Mock data
@@ -169,6 +180,12 @@ const mockCreateReservationData = {
     lab_id: mockLabs[0]
   })
 };
+
+beforeEach(() => {
+  // Reset to connected state for each test
+  mongoose.connection.readyState = 1;
+  jest.clearAllMocks();
+});
 
 describe('getReservations', () => {
     const mockRequest = {
@@ -885,9 +902,6 @@ describe('updateReservation', () => {
     });
 
     it('should return 500 for database errors during findById', async () => {
-        const originalConsoleError = console.error;
-        console.error = jest.fn();
-
         const dbError = new Error('Database connection failed');
         Reservation.findById.mockRejectedValue(dbError);
 
@@ -897,15 +911,9 @@ describe('updateReservation', () => {
         expect(mockResponse.json).toHaveBeenCalledWith({
             message: 'Database connection failed'
         });
-        expect(console.error).toHaveBeenCalledWith('Error updating reservation:', dbError);
-
-        console.error = originalConsoleError;
     });
 
     it('should return 500 for database errors during user lookup', async () => {
-        const originalConsoleError = console.error;
-        console.error = jest.fn();
-
         const mockExistingReservation = mockResrvations[0];
         const dbError = new Error('User lookup failed');
 
@@ -919,9 +927,6 @@ describe('updateReservation', () => {
         expect(mockResponse.json).toHaveBeenCalledWith({
             message: 'User lookup failed'
         });
-        expect(console.error).toHaveBeenCalledWith('Error updating reservation:', dbError);
-
-        console.error = originalConsoleError;
     });
 
     it('should return 500 for database errors during update', async () => {
@@ -949,9 +954,6 @@ describe('updateReservation', () => {
         expect(mockResponse.json).toHaveBeenCalledWith({
             message: 'Update failed'
         });
-        expect(console.error).toHaveBeenCalledWith('Error updating reservation:', dbError);
-
-        console.error = originalConsoleError;
     });
 });
 

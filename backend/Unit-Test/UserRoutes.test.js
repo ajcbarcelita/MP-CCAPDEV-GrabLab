@@ -1,4 +1,4 @@
-import { describe, it, expect, jest} from '@jest/globals';
+import { describe, it, expect, jest, beforeEach} from '@jest/globals';
 import {
     loginUser,
     deleteUser,
@@ -17,17 +17,25 @@ import multer from 'multer';
 jest.mock('mongoose', () => ({
   connection: {
     readyState: 1
+  },
+  Schema: class MockSchema {
+    constructor() {}
+    static Types = {
+      Mixed: 'Mixed'
+    }
   }
 }));
 
 // Mock multer
 jest.mock('multer', () => {
-    return () => ({
+    const mockMulter = () => ({
         single: () => (req, res, next) => {
             req.file = { path: '/mock/path/to/profile_pic.jpg' }; // Mock file upload
             next();
         }
     });
+    mockMulter.diskStorage = jest.fn(() => ({}));
+    return mockMulter;
 });
 
 //mock Model
@@ -41,6 +49,16 @@ jest.mock('../models/User.js', () => ({
     findOneAndUpdate: jest.fn(),
     save: jest.fn(),
 }));
+
+// Mock logError utility
+jest.mock('../utils/logErrors.js', () => ({
+    logError: jest.fn()
+}));
+
+// Clear all mocks before each test
+beforeEach(() => {
+    jest.clearAllMocks();
+});
 
 // mock Data
 mockUsers = [
@@ -346,8 +364,7 @@ describe('updateUser', () => {
         expect(User.findOne).toHaveBeenCalledWith({ user_id: 9 });
         expect(mockResponse.status).toHaveBeenCalledWith(500);
         expect(mockResponse.json).toHaveBeenCalledWith({
-            message: 'Server error',
-            error: 'Database connection lost'
+            message: 'Database connection lost'
         });
 
         // Restore original values

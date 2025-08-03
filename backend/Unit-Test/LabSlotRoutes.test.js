@@ -1,3 +1,4 @@
+import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import {
   getLabSlotsByLabAndDate,
   createLabSlotsBatch,
@@ -6,7 +7,7 @@ import {
 } from "../controllers/labSlotController.js";
 import mongoose from "mongoose";
 import LabSlot from "../models/LabSlot.js";
-import { describe, it } from "@jest/globals";
+
 
 
 // Mock mongoose
@@ -14,11 +15,14 @@ jest.mock('mongoose', () => ({
   connection: {
     readyState: 1 
   },
-  
-  Types: {
-    ObjectId: jest.fn(() => 'mockObjectId')
+  Schema: class MockSchema {
+    constructor() {}
+    static Types = {
+      Mixed: 'Mixed',
+      ObjectId: 'ObjectId'
+    }
   },
-  
+  model: jest.fn()
 }));
 
 // Mock LabSlot model
@@ -29,8 +33,11 @@ jest.mock('../models/LabSlot.js', () => ({
   updateOne: jest.fn(),
   insertMany: jest.fn(),
   findByIdAndUpdate: jest.fn(),
-  populate: jest.fn(),
-  sort: jest.fn
+}));
+
+// Mock logError utility
+jest.mock('../utils/logErrors.js', () => ({
+  logError: jest.fn()
 }));
 
 // Mock data
@@ -84,7 +91,13 @@ const mockData = [
       }
     ]
   }
-]
+];
+
+beforeEach(() => {
+  // Reset to connected state for each test
+  mongoose.connection.readyState = 1;
+  jest.clearAllMocks();
+});
 
 describe('getLabSlotsByLabAndDate', () =>
 {
@@ -143,22 +156,13 @@ describe('getLabSlotsByLabAndDate', () =>
     expect(mockResponse.status).toHaveBeenCalledWith(400);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Invalid date format' });
   });
-  it('should return 500 on error', async () => {
-    const expectedSlots = mockData.filter(slot => slot.lab === mockRequest.params.labId);
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-
+  it('should return 503 on database connection error', async () => {
     mongoose.connection.readyState = 0; 
-
-    LabSlot.find.mockRejectedValue(expectedSlots);
 
     await getLabSlotsByLabAndDate(mockRequest, mockResponse);
 
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
-    console.error = originalConsoleError;
-    mongoose.connection.readyState = copyOfReadyState;
   });
 });
 
@@ -194,8 +198,8 @@ describe('createLabSlotBatch', () => {
 
   it('should create lab slots in batch', async () => {
     const createdSlots = [
-      { ...mockRequest.body.slots[0], _id: new mongoose.Types.ObjectId() },
-      { ...mockRequest.body.slots[1], _id: new mongoose.Types.ObjectId() }
+      { ...mockRequest.body.slots[0], _id: 'mock-id-1' },
+      { ...mockRequest.body.slots[1], _id: 'mock-id-2' }
     ];
     LabSlot.insertMany.mockResolvedValue(createdSlots);
     
@@ -219,8 +223,8 @@ describe('createLabSlotBatch', () => {
   });
   it('should return 200 with existing slots if duplicates found', async () => {
     const existingSlots = [
-      { ...mockRequest.body.slots[0], _id: new mongoose.Types.ObjectId() },
-      { ...mockRequest.body.slots[1], _id: new mongoose.Types.ObjectId() }
+      { ...mockRequest.body.slots[0], _id: 'existing-id-1' },
+      { ...mockRequest.body.slots[1], _id: 'existing-id-2' }
     ];
     
     LabSlot.insertMany.mockRejectedValue({ code: 11000 });
@@ -236,23 +240,13 @@ describe('createLabSlotBatch', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(mockResponse.json).toHaveBeenCalledWith(existingSlots);
   });
-  it('should return 500 on Database connection error', async () => {
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-    const mockError = new Error('Database error');
-
+  it('should return 503 on Database connection error', async () => {
     mongoose.connection.readyState = 0; 
-
-    LabSlot.insertMany.mockRejectedValue(mockError);
 
     await createLabSlotsBatch(mockRequest, mockResponse);
 
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
-    
-    console.error = originalConsoleError;
-    mongoose.connection.readyState = copyOfReadyState;
   });
 });
 
@@ -306,22 +300,14 @@ describe('updateLabSlot', () => {
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Lab slot not found' });
   });
   it('should return 500 on Database connection error', async () => {
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-    const mockError = new Error('Database error');
-
     mongoose.connection.readyState = 0; 
 
-    LabSlot.findByIdAndUpdate.mockRejectedValue(mockError);
+    LabSlot.findByIdAndUpdate.mockRejectedValue(new Error('Database error'));
 
     await updateLabSlot(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
-    
-    console.error = originalConsoleError;
-    mongoose.connection.readyState = copyOfReadyState;
   });
 });
 
@@ -357,21 +343,13 @@ describe('getLabSlotsByLab', () => {
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Lab ID is required' });
   });
   it('should return 500 on Database connection error', async () => {
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-    const mockError = new Error('Database error');
-
     mongoose.connection.readyState = 0; 
 
-    LabSlot.find.mockRejectedValue(mockError);
+    LabSlot.find.mockRejectedValue(new Error('Database error'));
 
     await getLabSlotsByLab(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
-    
-    console.error = originalConsoleError;
-    mongoose.connection.readyState = copyOfReadyState;
   });
 });
