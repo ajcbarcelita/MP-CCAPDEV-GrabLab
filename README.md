@@ -7,6 +7,8 @@ A comprehensive web application for reserving seats in university computer labor
 ### Core Functionality
 
 - **User Authentication & Authorization:** Secure registration and login with role-based access control (Student, Technician, Admin)
+  - Persistent sessions with "Remember Me" functionality
+  - Automatic login across browser sessions
 - **Lab Reservation System:** Real-time seat booking with conflict detection and session-based concurrency control
 - **Profile Management:** User profiles with customizable pictures, descriptions, and personal information
 - **Anonymous Reservations:** Option to make reservations anonymously for privacy
@@ -33,56 +35,112 @@ A comprehensive web application for reserving seats in university computer labor
 ```
 backend/
 ├── app.js                    # Express application setup and middleware
-├── controllers/              # Request handlers and business logic
-│   ├── userController.js     # User authentication and management
-│   ├── labController.js      # Lab CRUD operations
-│   ├── reservationController.js # Reservation management with session control
-│   └── labSlotController.js  # Lab slot operations
-├── models/                   # MongoDB schema definitions
-│   ├── User.js              # User model with password hashing
-│   ├── Lab.js               # Lab model with validation
-│   ├── Reservation.js       # Reservation model with indexes
-│   ├── LabSlot.js           # Lab slot model
-│   └── ErrorLog.js          # Error logging model
-├── routes/                   # API route definitions
-├── services/                 # Business logic services
-│   └── reservationService.js # Session-based reservation operations
-├── utils/                    # Utility functions
-│   ├── logErrors.js         # Error logging utilities
-│   └── reservationUtils.js  # Reservation helper functions
-├── seeds/                    # Database seeding scripts
-├── uploads/                  # File uploads (profile pictures)
-└── Unit-Test/               # Comprehensive test suite
+├── babel.config.json         # Babel configuration for modern JavaScript
+├── jest.config.mjs          # Jest testing configuration
+├── test-sessions.js         # Session testing utilities
+├── controllers/             # Request handlers and business logic
+│   ├── userController.js    # User authentication and management
+│   ├── labController.js     # Lab CRUD operations
+│   ├── reservationController.js # Reservation management
+│   └── labSlotController.js # Lab slot operations
+├── middleware/
+│   └── auth.js             # Authentication middleware
+├── models/                  # MongoDB schema definitions
+│   ├── ErrorLog.js         # Error logging model
+│   ├── Lab.js             # Lab model with validation
+│   ├── LabSlot.js         # Lab slot model
+│   ├── Reservation.js     # Reservation model with indexes
+│   └── User.js           # User model with password hashing
+├── routes/                 # API route definitions
+│   ├── labRoutes.js       # Lab-related endpoints
+│   ├── labSlotRoutes.js   # Lab slot endpoints
+│   ├── reservationRoutes.js # Reservation endpoints
+│   └── userRoutes.js      # User/auth endpoints
+├── seeds/                  # Database seeding scripts
+│   ├── clearLogs.js       # Clear error logs
+│   ├── labs.js            # Lab seed data
+│   ├── seedLabs.js        # Lab seeding script
+│   ├── seedLabSlots.js    # Lab slot seeding
+│   ├── seedReservations.js # Reservation seeding
+│   ├── seedUsers.js       # User seeding
+│   └── users.js           # User seed data
+├── services/
+│   └── reservationService.js # Business logic for reservations
+├── Unit-Test/             # Comprehensive test suite
+│   ├── LabRoutes.test.js  # Lab endpoint tests
+│   ├── LabSlotRoutes.test.js # Lab slot tests
+│   ├── ReservationRoutes.test.js # Reservation tests
+│   └── UserRoutes.test.js # User/auth tests
+├── uploads/               # File upload directory
+│   └── profile_pictures/  # User profile pictures
+└── utils/                # Utility functions
+    ├── logErrors.js      # Error logging utilities
+    └── reservationUtils.js # Reservation helpers
 ```
 
 ### Frontend (Vue.js + Vite + Tailwind CSS)
 
 ```
 frontend/
-├── src/
-│   ├── components/           # Vue components
-│   │   ├── reservation/      # Reservation-specific components
-│   │   │   ├── ReservationPage.vue      # Main reservation interface
-│   │   │   ├── ReservationCalendar.vue  # Calendar grid component
-│   │   │   ├── ReservationControls.vue  # Control panel
-│   │   │   └── ReservationModals.vue    # Modal dialogs
-│   │   ├── StudentLanding.vue           # Student dashboard
-│   │   ├── TechLanding.vue              # Technician dashboard
-│   │   ├── AdminLanding.vue             # Admin dashboard
-│   │   ├── Profile_Page.vue             # User profile management
-│   │   ├── Login.vue                    # Authentication
-│   │   └── Register.vue                 # User registration
-│   ├── stores/              # Pinia state management
-│   │   ├── users_store.js   # User state management
-│   │   ├── reservations_store.js # Reservation state
-│   │   ├── labs_store.js    # Lab state management
-│   │   └── labSlots_store.js # Lab slots state
-│   ├── composables/         # Reusable Vue composition functions
-│   ├── assets/              # Static resources and styles
-│   ├── router.js            # Vue Router configuration
-│   └── main.js              # Application entry point
-├── public/                  # Static files
-└── index.html               # HTML entry point
+├── eslint.config.js        # ESLint configuration
+├── index.html              # HTML entry point
+├── jsconfig.json          # JavaScript configuration
+├── package.json           # Project dependencies
+├── postcss.config.js      # PostCSS configuration
+├── tailwind.config.js     # Tailwind CSS configuration
+├── vite.config.js         # Vite bundler configuration
+├── public/                # Static files
+│   └── favicon.ico        # Site favicon
+└── src/                   # Source code
+    ├── App.vue            # Root component
+    ├── main.js           # Application entry point
+    ├── router.js         # Vue Router configuration
+    ├── assets/           # Static resources and styles
+    │   ├── admin_manage_tech.css
+    │   ├── Calendar.png
+    │   ├── Clock.png
+    │   ├── gokongwei_hall.png
+    │   ├── lab.png
+    │   ├── landing_page.css
+    │   ├── login_styles.css
+    │   ├── main.css
+    │   ├── multiuser.png
+    │   ├── profile_styles.css
+    │   ├── register_styles.css
+    │   ├── reservations.css
+    │   ├── right_arrow.png
+    │   ├── search.png
+    │   └── User-check.png
+    ├── components/        # Vue components
+    │   ├── AdminLanding.vue
+    │   ├── AdminManageTechnicians.vue
+    │   ├── GuestLanding.vue
+    │   ├── Login.vue
+    │   ├── Profile_Page.vue
+    │   ├── Register.vue
+    │   ├── Reservation.vue
+    │   ├── StudentLanding.vue
+    │   ├── TechLanding.vue
+    │   ├── View.vue
+    │   └── reservation/   # Reservation components
+    │       ├── ReservationCalendar.vue
+    │       ├── ReservationControls.vue
+    │       ├── ReservationModals.vue
+    │       └── ReservationPage.vue
+    ├── composables/      # Reusable Vue composition functions
+    │   ├── useAuthentication.js
+    │   ├── useLandingPage.js
+    │   ├── useProfilePage.js
+    │   └── useValidation.js
+    ├── data/            # Static data files
+    │   ├── labs.js
+    │   ├── reservations.js
+    │   └── users.js
+    └── stores/          # Pinia state management
+        ├── labs_store.js
+        ├── labSlots_store.js
+        ├── reservations_store.js
+        └── users_store.js
 ```
 
 ## Technology Stack
@@ -92,7 +150,10 @@ frontend/
 - **Runtime:** Node.js with ES modules
 - **Framework:** Express.js
 - **Database:** MongoDB with Mongoose ODM
-- **Authentication:** JWT with bcrypt password hashing
+- **Authentication:** 
+  - JWT with bcrypt password hashing
+  - Persistent sessions using localStorage/sessionStorage
+  - Auto-login capability with token management
 - **File Upload:** Multer for profile picture handling
 - **Testing:** Jest with comprehensive test suite
 - **Error Handling:** Custom error logging system
@@ -264,7 +325,10 @@ The project follows the Model-View-Controller (MVC) architectural pattern:
 ## 🔐 Security Features
 
 - **Password Hashing:** bcrypt with salt rounds for secure password storage
-- **JWT Authentication:** Secure token-based authentication
+- **JWT Authentication:** 
+  - Secure token-based authentication
+  - Token storage in localStorage/sessionStorage based on "Remember Me" preference
+  - Automatic token refresh and validation
 - **Role-Based Access Control:** Granular permissions for different user types
 - **Input Validation:** Comprehensive validation on both frontend and backend
 - **Session Management:** MongoDB sessions for transaction safety
