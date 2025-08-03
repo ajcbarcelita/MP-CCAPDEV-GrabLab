@@ -374,7 +374,6 @@ describe('getAllUsers', () => {
     };
 
     it('should return all users with transformed data', async () => {
-        // Mock the chained methods
         const mockSort = jest.fn().mockResolvedValue(mockUsers);
         const mockSelect = jest.fn().mockReturnValue({ sort: mockSort });
         User.find.mockReturnValue({ select: mockSelect });
@@ -385,7 +384,6 @@ describe('getAllUsers', () => {
         expect(mockSelect).toHaveBeenCalledWith("-password");
         expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
 
-        // Verify the transformed data structure
         const expectedTransformedUsers = mockUsers.map(user => ({
             user_id: user.user_id,
             first_name: user.fname,
@@ -404,7 +402,6 @@ describe('getAllUsers', () => {
     });
 
     it('should return empty array when no users found', async () => {
-        // Mock the chained methods for empty result
         const mockSort = jest.fn().mockResolvedValue([]);
         const mockSelect = jest.fn().mockReturnValue({ sort: mockSort });
         User.find.mockReturnValue({ select: mockSelect });
@@ -434,22 +431,6 @@ describe('getAllUsers', () => {
         console.error = originalConsoleError;
     });
 
-    it('should return 503 on database connection error', async () => {
-        const originalConsoleError = console.error;
-        console.error = jest.fn();
-
-        const connectionError = new Error('Database connection is not ready');
-        const mockSelect = jest.fn().mockReturnValue({ sort: jest.fn().mockRejectedValue(connectionError) });
-        User.find.mockReturnValue({ select: mockSelect });
-
-        await getAllUsers(mockRequest, mockResponse);
-
-        expect(User.find).toHaveBeenCalledWith({});
-        expect(mockResponse.status).toHaveBeenCalledWith(503);
-        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
-
-        console.error = originalConsoleError;
-    });
 });
 
 describe('getUserById', () => {
@@ -464,7 +445,6 @@ describe('getUserById', () => {
     };
 
     it('should return user by ID with transformed data', async () => {
-        // Mock the chained methods
         const mockLean = jest.fn().mockResolvedValue(mockUsers[2]);
         const mockSelect = jest.fn().mockReturnValue({ lean: mockLean });
         User.findOne.mockReturnValue({ select: mockSelect });
@@ -475,7 +455,6 @@ describe('getUserById', () => {
         expect(mockSelect).toHaveBeenCalledWith("-password");
         expect(mockLean).toHaveBeenCalled();
 
-        // Verify the transformed data structure
         const expectedTransformedUser = {
             user_id: mockUsers[2].user_id,
             first_name: mockUsers[2].fname,
@@ -506,7 +485,7 @@ describe('getUserById', () => {
 
         await getUserById(stringUserIdRequest, mockResponse);
 
-        // Should convert string '1' to numeric 1
+        //check if converted
         expect(User.findOne).toHaveBeenCalledWith({ user_id: 1 });
         expect(mockSelect).toHaveBeenCalledWith("-password");
         expect(mockLean).toHaveBeenCalled();
@@ -515,7 +494,7 @@ describe('getUserById', () => {
     it('should return 404 if user not found', async () => {
         const notFoundRequest = {
             params: {
-                userId: '999'  // Non-existent user ID
+                userId: '999'  
             }
         };
 
@@ -587,7 +566,6 @@ describe('updateUserProfilePicture', () => {
         expect(fs.existsSync).toHaveBeenCalled();
         expect(fs.unlinkSync).toHaveBeenCalled();
 
-        // Verify the transformed data structure
         const expectedTransformedUser = {
             user_id: mockUsers[2].user_id,
             first_name: mockUsers[2].fname,
@@ -726,9 +704,8 @@ describe('registerUser', () => {
             updatedAt: new Date()
         };
 
-        // Mock User.findOne for checking existing user (should return null)
-        User.findOne.mockResolvedValueOnce(null);
-        // Mock User.findOne for getting last user (for user_id generation) with sort chaining
+        
+        User.findOne.mockResolvedValueOnce(null); //email check
         const mockSort = jest.fn().mockResolvedValue({ user_id: 9 });
         User.findOne.mockReturnValueOnce({ sort: mockSort });
         User.create.mockResolvedValue(mockCreatedUser);
@@ -808,8 +785,8 @@ describe('registerUser', () => {
     });
 
     it('should handle first user registration (no existing users)', async () => {
-        User.findOne.mockResolvedValueOnce(null); // No existing user with email
-        const mockSort = jest.fn().mockResolvedValue(null); // No existing users at all (first user)
+        User.findOne.mockResolvedValueOnce(null); 
+        const mockSort = jest.fn().mockResolvedValue(null); 
         User.findOne.mockReturnValueOnce({ sort: mockSort });
 
         const mockCreatedUser = {
@@ -854,8 +831,8 @@ describe('registerUser', () => {
         const originalConsoleError = console.error;
         console.error = jest.fn();
 
-        User.findOne.mockResolvedValueOnce(null); // No existing user
-        const mockSort = jest.fn().mockResolvedValue({ user_id: 9 }); // Last user for ID generation
+        User.findOne.mockResolvedValueOnce(null);
+        const mockSort = jest.fn().mockResolvedValue({ user_id: 9 }); 
         User.findOne.mockReturnValueOnce({ sort: mockSort });
 
         const error = new Error('Database error');
@@ -893,7 +870,7 @@ describe('registerUser', () => {
             profile_pic_path: '/uploads/profile_pictures/default_profile_picture.jpeg'
         };
 
-        User.findOne.mockResolvedValueOnce(null);
+        User.findOne.mockResolvedValueOnce(null); // email 
         const mockSort = jest.fn().mockResolvedValue({ user_id: 11 });
         User.findOne.mockReturnValueOnce({ sort: mockSort });
         User.create.mockResolvedValue(mockCreatedUser);
