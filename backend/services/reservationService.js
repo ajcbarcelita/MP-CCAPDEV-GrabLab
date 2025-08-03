@@ -8,11 +8,6 @@ import { normalizeDateForComparison } from "../utils/reservationUtils.js";
  * Service class for handling reservation operations with database sessions
  * to prevent race conditions and ensure data consistency
  *
- * WHY WE NEED THIS:
- * - Without sessions, two users could check for conflicts at the same time
- * - Both might see "no conflicts" and both try to create reservations
- * - This leads to double bookings (race condition)
- * - Database sessions ensure atomic operations (check + create happen together)
  */
 class ReservationService {
   /**

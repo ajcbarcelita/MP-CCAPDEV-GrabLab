@@ -1,200 +1,330 @@
-    # MP-CCAPDEV-GrabLab
+# MP-CCAPDEV-GrabLab
 
-A group major course output for Web Application Development (CCAPDEV) at De La Salle University - Manila. This project is a web application for reserving seats in university computer laboratories.
+A comprehensive web application for reserving seats in university computer laboratories, developed as a group major course output for Web Application Development (CCAPDEV) at De La Salle University - Manila.
 
 ## Features
 
--   **User Authentication:** Secure registration and login for students and technicians.
--   **Lab Reservation System:** View lab schedules, reserve seats, and manage bookings.
--   **Role-Based Access Control:** Distinct interfaces and permissions for students and technicians.
--   **User Profiles:** View and edit user information, including profile pictures and descriptions.
--   **Technician Dashboard:** Tools for technicians to manage reservations and view user profiles.
+### Core Functionality
 
-## Project Structure
+- **User Authentication & Authorization:** Secure registration and login with role-based access control (Student, Technician, Admin)
+- **Lab Reservation System:** Real-time seat booking with conflict detection and session-based concurrency control
+- **Profile Management:** User profiles with customizable pictures, descriptions, and personal information
+- **Anonymous Reservations:** Option to make reservations anonymously for privacy
+- **Real-time Availability:** Live updates of lab seat availability with visual calendar interface
+
+### Role-Based Access Control
+
+- **Students:** Can view labs, make reservations, manage their bookings, and edit profiles
+- **Technicians:** Can manage reservations for students, view user profiles, and access technician-specific dashboard
+- **Admins:** Full system access including technician management and administrative functions
+
+### Advanced Features
+
+- **Session-Based Concurrency Control:** Prevents race conditions during reservation operations
+- **Error Logging & Monitoring:** Comprehensive error tracking and logging system
+- **File Upload System:** Profile picture management with secure file handling
+- **Responsive Design:** Modern UI built with Tailwind CSS and Vue.js
+- **Database Indexing:** Optimized queries for better performance
+
+## 🏗️ Architecture
+
+### Backend (Node.js + Express + MongoDB)
 
 ```
-/
-├── backend/                  # Node.js, Express, MongoDB backend
-│   ├── controllers/          # Request handlers and business logic
-│   ├── models/               # MongoDB schema definitions
-│   ├── routes/               # API route definitions
-│   ├── seeds/                # Database seed scripts
-│   ├── uploads/              # File uploads (e.g., profile pictures)
-│   ├── app.js                # Express application setup
-│   └── package.json          # Backend dependencies and scripts
-└── frontend/                 # Vue.js, Vite, Tailwind CSS frontend
-    ├── public/               # Static files
-    ├── src/
-    │   ├── assets/           # Images, fonts, and other static resources
-    │   ├── components/       # Reusable Vue components
-    │   ├── composables/      # Reusable Vue composition functions
-    │   ├── data/             # Static data files
-    │   ├── stores/           # Pinia/Vuex state management
-    │   ├── App.vue           # Root component
-    │   ├── main.js           # Application entry point
-    │   └── router.js         # Vue Router configuration
-    ├── index.html            # HTML entry point
-    ├── tailwind.config.js    # Tailwind CSS configuration
-    ├── vite.config.js        # Vite bundler configuration
-    └── package.json          # Frontend dependencies and scripts
+backend/
+├── app.js                    # Express application setup and middleware
+├── controllers/              # Request handlers and business logic
+│   ├── userController.js     # User authentication and management
+│   ├── labController.js      # Lab CRUD operations
+│   ├── reservationController.js # Reservation management with session control
+│   └── labSlotController.js  # Lab slot operations
+├── models/                   # MongoDB schema definitions
+│   ├── User.js              # User model with password hashing
+│   ├── Lab.js               # Lab model with validation
+│   ├── Reservation.js       # Reservation model with indexes
+│   ├── LabSlot.js           # Lab slot model
+│   └── ErrorLog.js          # Error logging model
+├── routes/                   # API route definitions
+├── services/                 # Business logic services
+│   └── reservationService.js # Session-based reservation operations
+├── utils/                    # Utility functions
+│   ├── logErrors.js         # Error logging utilities
+│   └── reservationUtils.js  # Reservation helper functions
+├── seeds/                    # Database seeding scripts
+├── uploads/                  # File uploads (profile pictures)
+└── Unit-Test/               # Comprehensive test suite
 ```
+
+### Frontend (Vue.js + Vite + Tailwind CSS)
+
+```
+frontend/
+├── src/
+│   ├── components/           # Vue components
+│   │   ├── reservation/      # Reservation-specific components
+│   │   │   ├── ReservationPage.vue      # Main reservation interface
+│   │   │   ├── ReservationCalendar.vue  # Calendar grid component
+│   │   │   ├── ReservationControls.vue  # Control panel
+│   │   │   └── ReservationModals.vue    # Modal dialogs
+│   │   ├── StudentLanding.vue           # Student dashboard
+│   │   ├── TechLanding.vue              # Technician dashboard
+│   │   ├── AdminLanding.vue             # Admin dashboard
+│   │   ├── Profile_Page.vue             # User profile management
+│   │   ├── Login.vue                    # Authentication
+│   │   └── Register.vue                 # User registration
+│   ├── stores/              # Pinia state management
+│   │   ├── users_store.js   # User state management
+│   │   ├── reservations_store.js # Reservation state
+│   │   ├── labs_store.js    # Lab state management
+│   │   └── labSlots_store.js # Lab slots state
+│   ├── composables/         # Reusable Vue composition functions
+│   ├── assets/              # Static resources and styles
+│   ├── router.js            # Vue Router configuration
+│   └── main.js              # Application entry point
+├── public/                  # Static files
+└── index.html               # HTML entry point
+```
+
+## Technology Stack
+
+### Backend
+
+- **Runtime:** Node.js with ES modules
+- **Framework:** Express.js
+- **Database:** MongoDB with Mongoose ODM
+- **Authentication:** JWT with bcrypt password hashing
+- **File Upload:** Multer for profile picture handling
+- **Testing:** Jest with comprehensive test suite
+- **Error Handling:** Custom error logging system
+
+### Frontend
+
+- **Framework:** Vue.js 3 with Composition API
+- **Build Tool:** Vite for fast development and building
+- **State Management:** Pinia for reactive state management
+- **Routing:** Vue Router with navigation guards
+- **Styling:** Tailwind CSS for responsive design
+- **HTTP Client:** Axios for API communication
+
+### Development Tools
+
+- **Linting:** ESLint with Vue.js rules
+- **Formatting:** Prettier for code formatting
+- **Testing:** Jest for backend unit tests
+- **Database:** MongoDB with Mongoose schemas
+
+## 📋 Prerequisites
+
+- [Node.js](https://nodejs.org/) (v16 or later)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [MongoDB](https://www.mongodb.com/try/download/community) (running locally or cloud instance)
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/MP-CCAPDEV-GrabLab.git
+cd MP-CCAPDEV-GrabLab
+```
+
+### 2. Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+### 3. Frontend Setup
+
+```bash
+cd ../frontend
+npm install
+```
+
+### 4. Environment Configuration
+
+Create a `.env` file in the `backend` directory:
+
+```env
+# MongoDB Connection URI
+MONGODB_URI=mongodb://localhost:27017/grabLab
+
+# JSON Web Token Secret (generate a secure random string)
+JWT_SECRET=your_secure_jwt_secret_key_here
+
+# Server Port
+PORT=3000
+```
+
+### 5. Database Seeding (Optional)
+
+Populate the database with sample data:
+
+```bash
+cd backend
+npm run seed:all
+```
+
+Available seed scripts:
+
+- `npm run seed:users` - Create sample users
+- `npm run seed:labs` - Create sample labs
+- `npm run seed:labslots` - Create sample lab slots
+- `npm run seed:reservations` - Create sample reservations
+- `npm run seed:all` - Run all seed scripts
+
+### 6. Running the Application
+
+#### Start Backend Server
+
+```bash
+cd backend
+npm start
+```
+
+The backend server will run on `http://localhost:3000`
+
+#### Start Frontend Development Server
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend application will be available at `http://localhost:5173`
+
+## 🧪 Testing
+
+### Backend Tests
+
+```bash
+cd backend
+npm test
+```
+
+The test suite includes comprehensive coverage for:
+
+- User authentication and management
+- Lab operations
+- Reservation system with session control
+- Lab slot management
+
+### Frontend Development
+
+```bash
+cd frontend
+npm run lint    # Run ESLint
+npm run format  # Format code with Prettier
+```
+
+## 🔧 Development Scripts
+
+### Backend Scripts
+
+```bash
+npm start                    # Start the server
+npm test                     # Run Jest tests
+npm run seed:all            # Seed all data
+npm run clear:logs          # Clear error logs
+```
+
+### Frontend Scripts
+
+```bash
+npm run dev                 # Start development server
+npm run build               # Build for production
+npm run preview             # Preview production build
+npm run lint                # Run ESLint
+npm run format              # Format code
+```
+
+## 🏛️ MVC Architecture
+
+The project follows the Model-View-Controller (MVC) architectural pattern:
+
+### Model Layer
+
+- **MongoDB Schemas:** Define data structure and validation rules
+- **Business Logic:** Encapsulated in services and utility functions
+- **Data Access:** Mongoose ODM for database operations
+
+### View Layer
+
+- **Vue Components:** Reusable UI components with responsive design
+- **State Management:** Pinia stores for reactive state
+- **Routing:** Vue Router for navigation and route protection
+
+### Controller Layer
+
+- **Express Routes:** API endpoint definitions
+- **Request Handlers:** Business logic and data processing
+- **Middleware:** Authentication, validation, and error handling
+
+## 🔐 Security Features
+
+- **Password Hashing:** bcrypt with salt rounds for secure password storage
+- **JWT Authentication:** Secure token-based authentication
+- **Role-Based Access Control:** Granular permissions for different user types
+- **Input Validation:** Comprehensive validation on both frontend and backend
+- **Session Management:** MongoDB sessions for transaction safety
+- **Error Logging:** Secure error tracking without exposing sensitive data
+
+## 📊 Database Schema
+
+### User Model
+
+- `user_id`: Unique numeric identifier
+- `email`: DLSU email validation
+- `password`: Hashed with bcrypt
+- `fname/lname/mname`: Name fields
+- `role`: Student/Technician/Admin
+- `status`: Active/Inactive
+- `profile_pic_path`: Profile picture path
+- `description`: User bio
+
+### Lab Model
+
+- `name`: Lab identifier (e.g., GK302)
+- `building`: Building name
+- `display_name`: Full display name
+- `operating_hours`: Open/close times
+- `capacity`: Number of seats
+- `status`: Active/Inactive
+
+### Reservation Model
+
+- `user_id`: User making reservation
+- `lab_id`: Lab being reserved
+- `reservation_date`: Date of reservation
+- `slots`: Array of seat/time slots
+- `anonymous`: Privacy option
+- `status`: Active/Cancelled/Completed
+
+## 🚀 Performance Optimizations
+
+- **Database Indexing:** Optimized queries for reservation conflicts
+- **Session-Based Operations:** Prevents race conditions
+- **Efficient Queries:** Batch operations for user data
+- **Frontend Optimization:** Vue.js reactivity and component caching
+- **Error Handling:** Comprehensive logging without performance impact
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is developed for educational purposes at De La Salle University - Manila.
+
+## 👥 Team
+
+This project was developed as a group major course output for Web Application Development (CCAPDEV).
 
 ---
 
-## Getting Started
-
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
-
-### Prerequisites
-
--   [Node.js](https://nodejs.org/) (v14 or later)
--   [npm](https://www.npmjs.com/)
--   [MongoDB](https://www.mongodb.com/try/download/community) (running locally or a cloud instance)
-
-### Setup and Installation
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/MP-CCAPDEV-GrabLab.git
-    cd MP-CCAPDEV-GrabLab
-    ```
-
-2.  **Install Backend Dependencies:**
-    ```bash
-    cd backend
-    npm install
-    ```
-
-3.  **Install Frontend Dependencies:**
-    ```bash
-    cd ../frontend
-    npm install
-    ```
-
-### Configuration
-
-1.  **Create a `.env` file** in the `backend` directory.
-2.  **Add the following environment variables** to the `.env` file:
-
-    ```env
-    # MongoDB Connection URI
-    MONGODB_URI=your_mongodb_connection_string
-
-    # JSON Web Token Secret
-    JWT_SECRET=your_jwt_secret_key
-
-    # Server Port
-    PORT=3000
-    ```
-    *Replace `your_mongodb_connection_string` with your actual MongoDB URI.*
-    *Replace `your_jwt_secret_key` with a long, random, and secret string.*
-
-### Database Seeding (Optional)
-
-The project includes seed scripts to populate the database with initial sample data.
-
-1.  **Navigate to the `backend` directory.**
-2.  **Run the seed scripts:**
-    ```bash
-    node seeds/seedUsers.js
-    node seeds/seedLabs.js
-    node seeds/seedLabSlots.js
-    ```
-
-### Running the Application
-
-1.  **Start the Backend Server:**
-    -   Navigate to the `backend` directory.
-    -   Run the following command:
-    ```bash
-    npm start
-    ```
-    The backend server will start on `http://localhost:3000`.
-
-2.  **Start the Frontend Development Server:**
-    -   Open a new terminal.
-    -   Navigate to the `frontend` directory.
-    -   Run the following command:
-    ```bash
-    npm run dev
-    ```
-    The frontend application will be available at `http://localhost:5173`.
-
-You can now access the GrabLab application in your web browser.
-
-### How to Run the Program
-
-To run the GrabLab application, follow these steps:
-
-1. **Connect to the MongoDB Server:**
-   - Ensure that your MongoDB server is running locally or accessible via a cloud instance.
-   - Update the `MONGODB_URI` in the `.env` file located in the `backend` directory with the correct connection string.
-
-2. **Start the Backend Server:**
-   - Navigate to the `backend` directory:
-     ```bash
-     cd backend
-     ```
-   - Install the required dependencies:
-     ```bash
-     npm install
-     ```
-   - Start the server:
-     ```bash
-     npm start
-     ```
-   - The backend server will run on `http://localhost:3000`.
-
-3. **Start the Frontend Development Server:**
-   - Open a new terminal window.
-   - Navigate to the `frontend` directory:
-     ```bash
-     cd frontend
-     ```
-   - Install the required dependencies:
-     ```bash
-     npm install
-     ```
-   - Start the development server:
-     ```bash
-     npm run dev
-     ```
-   - The frontend application will be available at `http://localhost:5173`.
-
-4. **Access the Application:**
-   - Open your web browser and navigate to `http://localhost:5173` to access the GrabLab application.
-
-5. **Optional - Seed the Database:**
-   - If you want to populate the database with sample data, run the seed scripts:
-     ```bash
-     node seeds/seedUsers.js
-     node seeds/seedLabs.js
-     node seeds/seedLabSlots.js
-     ```
-   - These scripts are located in the `backend/seeds/` directory and will add sample users, labs, and lab slots to your database.
-
-### MVC Architecture
-
-The project follows the Model-View-Controller (MVC) architectural pattern, which separates the application logic into three interconnected components:
-
-1. **Model**
-   - Represents the data and business logic of the application.
-   - In this project, the `backend/models/` directory contains the MongoDB schema definitions for entities such as `Lab`, `LabSlot`, `Reservation`, and `User`.
-   - Example: The `Lab.js` model defines the structure of a laboratory document in the database, including fields like `name`, `location`, and `capacity`.
-
-2. **View**
-   - Handles the presentation layer and user interface.
-   - In this project, the `frontend/src/components/` directory contains reusable Vue components that render the UI.
-   - Example: The `StudentLanding.vue` component displays the landing page for students, showing available labs and reservation options.
-
-3. **Controller**
-   - Manages the flow of data between the Model and the View.
-   - In this project, the `backend/controllers/` directory contains request handlers that process incoming API requests and interact with the models.
-   - Example: The `labController.js` file includes functions to fetch lab data from the database and send it as a response to the frontend.
-
-4. **Stores**
-   - Manage the application's state and provide a centralized data store.
-   - In this project, the `frontend/src/stores/` directory contains state management files for entities such as `labs`, `reservations`, `slots`, and `users`.
-   - Example: The `labs_store.js` file manages the state of laboratory data, including fetching lab details from the backend and storing them for use across components.
-
-By adhering to the MVC pattern, the project ensures a clear separation of concerns, making the codebase easier to maintain and scale.
+**GrabLab** - Streamlining laboratory reservations with modern web technology.
