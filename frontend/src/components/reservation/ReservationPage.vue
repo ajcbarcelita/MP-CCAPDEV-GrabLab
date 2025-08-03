@@ -461,21 +461,25 @@ const toggleSlotSelection = (seat, timeSlot) => {
 				slot.timeSlot.endTime === timeSlot.endTime,
 		)
 
-	// Allow deselection of current reservation slots even if they appear occupied
-	if (isSlotOccupied(seat, timeSlot) && !isCurrentReservationSlot) return
-
 	const slotIdentifier = `${seat}-${timeSlot.startTime}`
 	const index = selectedSlots.value.findIndex((s) => s.identifier === slotIdentifier)
+	const isCurrentlySelected = index !== -1
 
-	if (index === -1) {
+	// If slot is occupied and not currently selected, don't allow selection
+	if (isSlotOccupied(seat, timeSlot) && !isCurrentlySelected && !isCurrentReservationSlot) {
+		return
+	}
+
+	// Allow deselection of any slot (including occupied ones) to prevent stunlock
+	if (isCurrentlySelected) {
+		selectedSlots.value.splice(index, 1)
+	} else {
 		selectedSlots.value.push({
 			seat,
 			timeSlot,
 			identifier: slotIdentifier,
 			time: timeSlot.startTime,
 		})
-	} else {
-		selectedSlots.value.splice(index, 1)
 	}
 }
 
@@ -694,8 +698,13 @@ const reserveSlot = async () => {
 		)
 
 		if (hasConflict) {
+			// Clear any slots that are now occupied to prevent stunlock
+			selectedSlots.value = selectedSlots.value.filter((slot) => {
+				return !isSlotOccupied(slot.seat, slot.timeSlot)
+			})
+
 			alert(
-				'One or more of the selected slots have already been reserved. Please refresh and try again.',
+				'One or more of the selected slots have already been reserved. The unavailable slots have been removed from your selection.',
 			)
 			return
 		}
@@ -759,7 +768,18 @@ const reserveSlot = async () => {
 		}
 	} catch (error) {
 		if (error.response?.status === 409) {
-			alert('One or more slots are already taken. Please refresh and try again.')
+			// Refresh all reservation data to get the latest state
+			await reservationsStore.fetchReservationsByLab(selectedLab.value)
+			await loadLabSchedule()
+
+			// Clear any slots that are now occupied to prevent stunlock
+			selectedSlots.value = selectedSlots.value.filter((slot) => {
+				return !isSlotOccupied(slot.seat, slot.timeSlot)
+			})
+
+			alert(
+				'One or more slots are already taken. The unavailable slots have been removed from your selection.',
+			)
 			return
 		}
 		console.error('Error in reserveSlot:', error)
@@ -769,9 +789,6 @@ const reserveSlot = async () => {
 		}
 		await reservationsStore.fetchReservationsByUserId(currentUser.value?.user_id || '')
 		await loadLabSchedule()
-		selectedSlots.value = selectedSlots.value.filter((slot) => {
-			return !isSlotOccupied(slot.seat, slot.timeSlot)
-		})
 		alert(message)
 	}
 }
