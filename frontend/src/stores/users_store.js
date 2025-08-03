@@ -292,7 +292,7 @@ export const useUsersStore = defineStore('users', {
 		async addTechnician(techData) {
 			this.loading = true
 			try {
-				const response = await axios.post(`${API_URL}/users`, techData)
+				const response = await axios.post(`${API_URL}/users/register`, techData)
 				this.users.push(response.data)
 				this.error = null
 				return response.data
