@@ -183,8 +183,6 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
     const { email, password, rememberMe } = req.body;
-    console.log("Login attempt for email:", email);
-
     try {
         const user = await User.findOne({ email });
 

@@ -52,16 +52,32 @@ jest.mock('fs', () => ({
     mkdirSync: jest.fn()
 }));
 
+// Mock jsonwebtoken
+jest.mock('jsonwebtoken', () => ({
+    sign: jest.fn(),
+    TokenExpiredError: class TokenExpiredError extends Error {
+        constructor(message) {
+            super(message);
+            this.name = 'TokenExpiredError';
+        }
+    }
+}));
 
+import jwt from 'jsonwebtoken';
 
-// Clear all mocks before each test
+// Mock environment variables
+const originalEnv = process.env;
 beforeEach(() => {
-     mongoose.connection.readyState = 1;
+    process.env = {
+        ...originalEnv,
+        JWT_SECRET: 'test-jwt-secret'
+    };
+    mongoose.connection.readyState = 1;
     jest.clearAllMocks();
 });
 
-// mock Data
-mockUsers = [
+// Test data
+const mockUsers = [
     {
         "_id": {
             "$oid": "688832d4e5d691bc40a37fb9"
@@ -76,6 +92,7 @@ mockUsers = [
         "status": "Active",
         "profile_pic_path": "/uploads/profile_pictures/war_cat.jpeg",
         "description": "",
+        "comparePassword": jest.fn(),
         "createdAt": {
             "$date": "2025-07-29T02:32:52.613Z"
         },
@@ -97,6 +114,7 @@ mockUsers = [
         "status": "Active",
         "profile_pic_path": "/uploads/profile_pictures/haru_urara_pfp.png",
         "description": "0 wins, 100% heart.",
+        "comparePassword": jest.fn(),
         "createdAt": {
             "$date": "2025-07-29T02:32:54.770Z"
         },
@@ -115,9 +133,10 @@ mockUsers = [
         "fname": "Hitori",
         "lname": "Gotoh",
         "role": "Student",
-        "status": "Active",
+        "status": "Inactive",
         "profile_pic_path": "/uploads/profile_pictures/bocchi_pfp.png",
         "description": "I should really change the way I am...",
+        "comparePassword": jest.fn(),
         "createdAt": {
             "$date": "2025-07-29T02:32:55.075Z"
         },
@@ -127,6 +146,277 @@ mockUsers = [
         "__v": 0
     },
 ];
+
+describe('loginUser', () => {
+    const mockRequest = {
+        body: {
+            email: 'aaron_barcelita@dlsu.edu.ph',
+            password: 'password123',
+            rememberMe: false
+        }
+    };
+    const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+    };
+    
+
+    it('should login user successfully without rememberMe', async () => {
+        const mockUser = { ...mockUsers[0] };
+        mockUser.comparePassword.mockResolvedValue(true);
+        
+        User.findOne.mockResolvedValue(mockUser);
+        jwt.sign.mockReturnValue('mock-jwt-token');
+
+        await loginUser(mockRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockUser.comparePassword).toHaveBeenCalledWith('password123');
+        expect(jwt.sign).toHaveBeenCalledWith(
+            { user_id: 1, role: 'Technician' },
+            'test-jwt-secret',
+            { expiresIn: '1d' }
+        );
+        expect(mockResponse.json).toHaveBeenCalledWith({
+            user_id: 1,
+            fname: 'Aaron',
+            lname: 'Barcelita',
+            email: 'aaron_barcelita@dlsu.edu.ph',
+            role: 'Technician',
+            token: 'mock-jwt-token'
+        });
+    });
+
+    it('should login user successfully with rememberMe', async () => {
+        const mockUser = { ...mockUsers[1] };
+        mockUser.comparePassword.mockResolvedValue(true);
+        
+        User.findOne.mockResolvedValue(mockUser);
+        jwt.sign.mockReturnValue('mock-jwt-token-long');
+
+        const withRememberMeRequest = {
+            ...mockRequest,
+            body: {
+                ...mockRequest.body,
+                email: 'haru_urara@dlsu.edu.ph',
+                password: 'admin123',
+                rememberMe: true
+            }
+        };
+
+        await loginUser(withRememberMeRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'haru_urara@dlsu.edu.ph' });
+        expect(mockUser.comparePassword).toHaveBeenCalledWith('admin123');
+        expect(jwt.sign).toHaveBeenCalledWith(
+            { user_id: 8, role: 'Student' },
+            'test-jwt-secret',
+            { expiresIn: '21d' }
+        );
+        expect(mockResponse.json).toHaveBeenCalledWith({
+            user_id: 8,
+            fname: 'Haru',
+            lname: 'Urara',
+            email: 'haru_urara@dlsu.edu.ph',
+            role: 'Student',
+            token: 'mock-jwt-token-long'
+        });
+    });
+
+    it('should return 401 when user is not found', async () => {
+        const notFoundRequest = {
+            body: {
+                email: 'nonexistent@gmail.com',
+                password: 'password123'
+            }
+        };
+
+        User.findOne.mockResolvedValue(null);
+
+        await loginUser(notFoundRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'nonexistent@gmail.com' });
+        expect(mockResponse.status).toHaveBeenCalledWith(401);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Invalid email or password' });
+    });
+
+    it('should return 401 when password is incorrect', async () => {
+        const incorrectPasswordRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'wrongpassword'
+            }
+        };
+
+        const mockUser = { ...mockUsers[0] };
+        mockUser.comparePassword.mockResolvedValue(false);
+        
+        User.findOne.mockResolvedValue(mockUser);
+
+        await loginUser(incorrectPasswordRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockUser.comparePassword).toHaveBeenCalledWith('wrongpassword');
+        expect(mockResponse.status).toHaveBeenCalledWith(401);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Invalid email or password.' });
+    });
+
+    it('should return 403 when user is inactive', async () => {
+        const inactiveUserRequest = {
+            body: {
+                email: 'hitori_gotoh@dlsu.edu.ph',
+                password: 'tech123'
+            }
+        };
+
+        const mockUser = { ...mockUsers[2] }; // inactive user
+        
+        User.findOne.mockResolvedValue(mockUser);
+
+        await loginUser(inactiveUserRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'hitori_gotoh@dlsu.edu.ph' });
+        // Should not call comparePassword for inactive user
+        expect(mockUser.comparePassword).not.toHaveBeenCalled();
+        expect(mockResponse.status).toHaveBeenCalledWith(403);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Your account is inactive. Contact the administrator for help.' });
+    });
+
+    it('should return 500 when JWT signing fails', async () => {
+        const jwtFailRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'password123'
+            }
+        };
+
+        const mockUser = { ...mockUsers[0] };
+        mockUser.comparePassword.mockResolvedValue(true);
+        
+        User.findOne.mockResolvedValue(mockUser);
+        jwt.sign.mockImplementation(() => {
+            throw new Error('JWT signing failed');
+        });
+
+        await loginUser(jwtFailRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockUser.comparePassword).toHaveBeenCalledWith('password123');
+        expect(jwt.sign).toHaveBeenCalledWith(
+            { user_id: 1, role: 'Technician' },
+            'test-jwt-secret',
+            { expiresIn: '1d' }
+        );
+        expect(mockResponse.status).toHaveBeenCalledWith(500);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'JWT signing failed' });
+    });
+
+    it('should use correct expiry time when rememberMe is undefined', async () => {
+        const undefinedRememberMeRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'password123'
+                // rememberMe is undefined
+            }
+        };
+
+        const mockUser = { ...mockUsers[0] };
+        mockUser.comparePassword.mockResolvedValue(true);
+        
+        User.findOne.mockResolvedValue(mockUser);
+        jwt.sign.mockReturnValue('mock-jwt-token');
+
+        await loginUser(undefinedRememberMeRequest, mockResponse);
+
+        expect(jwt.sign).toHaveBeenCalledWith(
+            { user_id: 1, role: 'Technician' },
+            'test-jwt-secret',
+            { expiresIn: '1d' }
+        );
+    });
+
+    it('should return 503 when database connection error occurs', async () => {
+        const connectionErrorRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'password123'
+            }
+        };
+
+        const error = new Error('Database connection is not ready');
+        User.findOne.mockRejectedValue(error);
+
+        await loginUser(connectionErrorRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockResponse.status).toHaveBeenCalledWith(503);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
+    });
+
+    it('should return 500 when User.findOne throws an error', async () => {
+        const findOneErrorRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'password123'
+            }
+        };
+
+        User.findOne.mockRejectedValue(new Error('Database query failed'));
+
+        await loginUser(findOneErrorRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockResponse.status).toHaveBeenCalledWith(500);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database query failed' });
+    });
+
+    it('should return 500 when comparePassword throws an error', async () => {
+        const comparePasswordErrorRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'password123'
+            }
+        };
+
+        const mockUser = { ...mockUsers[0] };
+        mockUser.comparePassword.mockRejectedValue(new Error('Password comparison failed'));
+        
+        User.findOne.mockResolvedValue(mockUser);
+
+        await loginUser(comparePasswordErrorRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockUser.comparePassword).toHaveBeenCalledWith('password123');
+        expect(mockResponse.status).toHaveBeenCalledWith(500);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Password comparison failed' });
+    });
+
+    it('should return 500 when JWT_SECRET is missing', async () => {
+        const jwtSecretMissingRequest = {
+            body: {
+                email: 'aaron_barcelita@dlsu.edu.ph',
+                password: 'password123'
+            }
+        };
+
+        delete process.env.JWT_SECRET;
+        
+        const mockUser = { ...mockUsers[0] };
+        mockUser.comparePassword.mockResolvedValue(true);
+        
+        User.findOne.mockResolvedValue(mockUser);
+        jwt.sign.mockImplementation(() => {
+            throw new Error('secret or public key must be provided');
+        });
+
+        await loginUser(jwtSecretMissingRequest, mockResponse);
+
+        expect(User.findOne).toHaveBeenCalledWith({ email: 'aaron_barcelita@dlsu.edu.ph' });
+        expect(mockUser.comparePassword).toHaveBeenCalledWith('password123');
+        expect(mockResponse.status).toHaveBeenCalledWith(500);
+        expect(mockResponse.json).toHaveBeenCalledWith({ message: 'secret or public key must be provided' });
+    });
+});
 
 describe('deleteUser', () => {
     const mockRequest = {
