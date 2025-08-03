@@ -151,3 +151,9 @@ export const validateTimeSlotsNotInPast = (slots, reservationDate) => {
 
   return { success: true };
 };
+
+export const normalizeDateForComparison = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
