@@ -68,7 +68,7 @@ export const useReservationsStore = defineStore('reservations', {
 				// Process and normalize the data structure
 				this.reservations = response.data.map((reservation) => ({
 					...reservation,
-					time_slots: reservation.time_slots || [], // Ensure time_slots is always an array
+					time_slots: reservation.slots || [], // Map backend slots to frontend time_slots
 				}))
 
 				this.error = null // Clear any previous errors on success
@@ -106,7 +106,7 @@ export const useReservationsStore = defineStore('reservations', {
 				// Process and normalize the data structure with additional fields
 				this.reservations = response.data.map((reservation) => ({
 					...reservation,
-					time_slots: reservation.time_slots || [], // Ensure time_slots exists
+					time_slots: reservation.slots || [], // Map backend slots to frontend time_slots
 					lab: reservation.lab_slot?.lab || null, // Include lab information if available
 					user: reservation.user || null, // Include user information if available
 				}))

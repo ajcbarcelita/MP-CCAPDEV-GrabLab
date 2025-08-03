@@ -2,10 +2,28 @@ import Reservation from "../models/Reservation.js";
 import { logError } from "../utils/logErrors.js";
 import Lab from "../models/Lab.js";
 import mongoose from "mongoose";
+import reservationService from "../services/reservationService.js";
+import {
+  populateUserInfo,
+  populateUserInfoForMultiple,
+  validateTechnicianReservation,
+  validateTimeSlotsNotInPast,
+} from "../utils/reservationUtils.js";
 
 /**
- * Create a new reservation.
- * Prevents booking time slots that end before the current time (for today).
+ * Create a new reservation with session-based concurrency control.
+ * This prevents race conditions where multiple users could book the same slot.
+ *
+ * OLD PROBLEM:
+ * - User A checks for conflicts → sees none
+ * - User B checks for conflicts → sees none (because A hasn't saved yet)
+ * - User A creates reservation
+ * - User B creates reservation → DOUBLE BOOKING!
+ *
+ * NEW SOLUTION:
+ * - User A starts session → checks conflicts → creates reservation (all atomic)
+ * - User B starts session → checks conflicts → sees A's reservation → fails
+ *
  * @route POST /api/reservations
  * @access Private
  */
@@ -14,8 +32,18 @@ export const createReservation = async (req, res) => {
     req.body;
 
   // Validate required fields
-  if (!user_id || !lab_id || !reservation_date || !Array.isArray(slots) || slots.length === 0) {
-    await logError({ error: new Error("Missing required fields or invalid slots format"), req, route: "createReservation" });
+  if (
+    !user_id ||
+    !lab_id ||
+    !reservation_date ||
+    !Array.isArray(slots) ||
+    slots.length === 0
+  ) {
+    await logError({
+      error: new Error("Missing required fields or invalid slots format"),
+      req,
+      route: "createReservation",
+    });
     return res
       .status(400)
       .json({ message: "Missing required fields or invalid slots format" });
@@ -26,118 +54,82 @@ export const createReservation = async (req, res) => {
     const User = mongoose.model("User");
     const user = await User.findOne({ user_id: parseInt(user_id) });
     if (!user) {
-      await logError({ error: new Error("User not found"), req, route: "createReservation" });
+      await logError({
+        error: new Error("User not found"),
+        req,
+        route: "createReservation",
+      });
       return res.status(404).json({ message: "User not found" });
     }
 
     // If technician_id is provided, enforce technician rules
     if (technician_id) {
-      const technician = await User.findOne({
-        user_id: parseInt(technician_id),
-      });
-
-      // Check if the technician exists and has the correct role
-      if (!technician || technician.role !== "Technician") {
-        await logError({ error: new Error("Invalid technician ID"), req, route: "createReservation" });
-        return res.status(403).json({ message: "Invalid technician ID." });
-      }
-
-      // Ensure technicians cannot reserve for themselves
-      if (parseInt(user_id) === parseInt(technician_id)) {
-        await logError({ error: new Error("Technicians cannot reserve for themselves"), req, route: "createReservation" });
-        return res.status(403).json({ message: "Technicians cannot reserve for themselves. Please enter a student ID.",});
-      }
-      if (user.role !== "Student") {
-        await logError({ error: new Error("Technicians can only reserve for students"), req, route: "createReservation" });
-        return res.status(403).json({ message: "Technicians can only reserve for students." });
+      const validation = await validateTechnicianReservation(
+        user_id,
+        technician_id,
+        req
+      );
+      if (!validation.success) {
+        await logError({
+          error: new Error(validation.message),
+          req,
+          route: "createReservation",
+        });
+        return res.status(403).json({ message: validation.message });
       }
     }
-
     // Check if the lab exists
     const lab = await Lab.findById(lab_id);
     if (!lab) {
-      await logError({ error: new Error("Lab not found"), req, route: "createReservation" });
+      await logError({
+        error: new Error("Lab not found"),
+        req,
+        route: "createReservation",
+      });
       return res.status(404).json({ message: "Lab not found" });
     }
 
-    // Prevent booking time slots in the past (for today)
-    const today = new Date();
-    const resDate = new Date(reservation_date);
-    const isToday = today.toDateString() === resDate.toDateString();
-    if (isToday) {
-      const nowMinutes = today.getHours() * 60 + today.getMinutes();
-      for (const slot of slots) {
-        const [endHour, endMinute] = slot.end_time.split(":").map(Number);
-        const slotEndMinutes = endHour * 60 + endMinute;
-        if (slotEndMinutes <= nowMinutes) {
-          await logError({ error: new Error("Cannot book slot ending before current time"), req, route: "createReservation" });
-          return res.status(400).json({
-            message: `Cannot book slot ending before current time: ${slot.start_time}-${slot.end_time}`,
-          });
-        }
-      }
+    // Validate time slots are not in the past
+    const timeValidation = validateTimeSlotsNotInPast(slots, reservation_date);
+    if (!timeValidation.success) {
+      await logError({
+        error: new Error(timeValidation.message),
+        req,
+        route: "createReservation",
+      });
+      return res.status(400).json({ message: timeValidation.message });
     }
 
-    // Check for conflicts with existing reservations
-    const existingReservations = await Reservation.find({
-      lab_id,
-      reservation_date: new Date(reservation_date),
-      status: "Active",
-    });
-
-    for (const slot of slots) {
-      const conflict = existingReservations.find((reservation) =>
-        reservation.slots.some(
-          (existingSlot) =>
-            existingSlot.seat_number === slot.seat_number &&
-            existingSlot.start_time === slot.start_time &&
-            existingSlot.end_time === slot.end_time
-        )
-      );
-
-      if (conflict) {
-        // Log Reservation conflict error
-        await logError({ error: new Error("Reservation conflict"), req, route: "createReservation" }); 
-        return res.status(409).json({
-          message: `Seat ${slot.seat_number} at ${slot.start_time}-${slot.end_time} is already reserved`,
-        });
-      }
-    }
-
-    // Create the reservation
-    const reservation = await Reservation.create({
-      user_id: parseInt(user_id),
-      lab_id,
-      reservation_date: new Date(reservation_date),
-      slots,
-      anonymous: anonymous || false,
-    });
+    // 🚀 NEW: Use session-based service to create reservation
+    // This prevents race conditions by making the conflict check and creation atomic
+    const reservation = await reservationService.createReservationWithSession(
+      {
+        user_id,
+        lab_id,
+        reservation_date,
+        slots,
+        anonymous,
+      },
+      req
+    );
 
     // Populate lab and user information
     const populatedReservation = await Reservation.findById(reservation._id)
       .populate("lab_id", "name display_name building")
       .lean();
 
-    // Add user information only if not anonymous
-    if (!anonymous) {
-      populatedReservation.user = {
-        user_id: user.user_id,
-        email: user.email,
-        fname: user.fname,
-        lname: user.lname,
-      };
-    } else {
-      populatedReservation.user = {
-        user_id: "Anonymous",
-        email: "Anonymous",
-        fname: "Anonymous",
-        lname: "User",
-      };
-    }
+    // Use utility function to populate user information
+    const finalReservation = await populateUserInfo(populatedReservation, user);
 
-    res.status(201).json(populatedReservation);
+    res.status(201).json(finalReservation);
   } catch (error) {
     await logError({ error, req, route: "createReservation" });
+
+    // Handle specific session-based errors
+    if (error.message.includes("already reserved")) {
+      return res.status(409).json({ message: error.message });
+    }
+
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
@@ -156,34 +148,9 @@ export const getReservations = async (req, res) => {
       .populate("lab_id", "name display_name building")
       .sort({ createdAt: -1 });
 
-    // Populate user details for each reservation
-    const User = mongoose.model("User");
-    const populatedReservations = await Promise.all(
-      reservations.map(async (reservation) => {
-        const reservationObj = reservation.toObject();
-
-        // Handle anonymous reservations
-        if (reservation.anonymous) {
-          reservationObj.user = {
-            user_id: "Anonymous",
-            email: "Anonymous",
-            fname: "Anonymous",
-            lname: "User",
-          };
-        } else {
-          const user = await User.findOne({ user_id: reservation.user_id });
-          if (user) {
-            reservationObj.user = {
-              _id: user._id,
-              user_id: user.user_id,
-              email: user.email,
-              fname: user.fname,
-              lname: user.lname,
-            };
-          }
-        }
-        return reservationObj;
-      })
+    // Use utility function to populate user details
+    const populatedReservations = await populateUserInfoForMultiple(
+      reservations
     );
 
     res.json(populatedReservations);
@@ -206,30 +173,16 @@ export const getReservationsByUserId = async (req, res) => {
     const { userId } = req.params;
 
     // Query by user_id field with the new schema
-    let reservations = await Reservation.find({ user_id: parseInt(userId) })
+    const reservations = await Reservation.find({ user_id: parseInt(userId) })
       .populate("lab_id", "name display_name building")
       .sort({ createdAt: -1 });
 
-    // Find the user separately to ensure we have user details
-    const User = mongoose.model("User");
-    const user = await User.findOne({ user_id: parseInt(userId) });
+    // Use utility function to populate user details
+    const populatedReservations = await populateUserInfoForMultiple(
+      reservations
+    );
 
-    if (user) {
-      // Attach user details to each reservation
-      reservations = reservations.map((reservation) => {
-        const reservationObj = reservation.toObject();
-        reservationObj.user = {
-          _id: user._id,
-          user_id: user.user_id,
-          email: user.email,
-          fname: user.fname,
-          lname: user.lname,
-        };
-        return reservationObj;
-      });
-    }
-
-    res.json(reservations);
+    res.json(populatedReservations);
   } catch (error) {
     await logError({ error, req, route: "getReservationsByUserId" });
     res
@@ -247,19 +200,17 @@ export const getReservationsByUserId = async (req, res) => {
 export const deleteReservation = async (req, res) => {
   try {
     const { id } = req.params;
-    const reservation = await Reservation.findById(id);
 
-    if (!reservation) {
-      await logError({ error: new Error("Reservation not found"), req, route: "deleteReservation" });
+    // 🚀 NEW: Use session-based service to delete reservation
+    // This ensures atomic deletion and prevents race conditions
+    const deletedReservation =
+      await reservationService.deleteReservationWithSession(id, req);
+
+    if (!deletedReservation) {
       return res.status(404).json({ message: "Reservation not found" });
     }
 
-    // Perform a hard delete instead of just updating the status
-    await Reservation.findByIdAndDelete(id);
-
-    res.json({
-      message: "Reservation deleted successfully",
-    });
+    res.json({ message: "Reservation deleted successfully" });
   } catch (error) {
     await logError({ error, req, route: "deleteReservation" });
     res
@@ -269,8 +220,8 @@ export const deleteReservation = async (req, res) => {
 };
 
 /**
- * Update an existing reservation.
- * Prevents updating to time slots that end before the current time (for today).
+ * Update an existing reservation with session-based concurrency control.
+ * This prevents race conditions when updating reservations.
  * @route PUT /api/reservations/:id
  * @access Private
  */
@@ -290,52 +241,43 @@ export const updateReservation = async (req, res) => {
     // Find the existing reservation
     const existingReservation = await Reservation.findById(id);
     if (!existingReservation) {
-      await logError({ error: new Error("Reservation not found"), req, route: "updateReservation" });
+      await logError({
+        error: new Error("Reservation not found"),
+        req,
+        route: "updateReservation",
+      });
       return res.status(404).json({ message: "Reservation not found" });
     }
 
     // If technician_id is provided, enforce technician rules
     if (technician_id && user_id) {
-      const User = mongoose.model("User");
-      const technician = await User.findOne({
-        user_id: parseInt(technician_id),
-      });
-      const student = await User.findOne({ user_id: parseInt(user_id) });
-      if (!technician || technician.role !== "Technician") {
-        await logError({ error: new Error("Invalid technician ID"), req, route: "updateReservation" });
-        return res.status(403).json({ message: "Invalid technician ID." });
-      }
-      if (parseInt(user_id) === parseInt(technician_id)) {
-        await logError({ error: new Error("Technicians cannot reserve for themselves"), req, route: "updateReservation" });
-        return res
-          .status(403)
-          .json({ message: "Technicians cannot reserve for themselves. Please enter a student ID."});
-      }
-      if (!student || student.role !== "Student") {
-        await logError({ error: new Error("Technicians can only reserve for students"), req, route: "updateReservation" });
-        return res
-          .status(403)
-          .json({ message: "Technicians can only reserve for students." });
+      const validation = await validateTechnicianReservation(
+        user_id,
+        technician_id,
+        req
+      );
+      if (!validation.success) {
+        await logError({
+          error: new Error(validation.message),
+          req,
+          route: "updateReservation",
+        });
+        return res.status(403).json({ message: validation.message });
       }
     }
-
-    // Prevent updating to time slots in the past (for today)
-    const today = new Date();
-    const resDate = new Date(
-      reservation_date || existingReservation.reservation_date
-    );
-    const isToday = today.toDateString() === resDate.toDateString();
-    if (isToday && slots && slots.length > 0) {
-      const nowMinutes = today.getHours() * 60 + today.getMinutes();
-      for (const slot of slots) {
-        const [endHour, endMinute] = slot.end_time.split(":").map(Number);
-        const slotEndMinutes = endHour * 60 + endMinute;
-        if (slotEndMinutes <= nowMinutes) {
-          await logError({ error: new Error("Cannot update to slot ending before current time"), req, route: "updateReservation" });
-          return res.status(400).json({
-            message: `Cannot update to slot ending before current time: ${slot.start_time}-${slot.end_time}`,
-          });
-        }
+    // Validate time slots are not in the past (if updating slots)
+    if (slots && slots.length > 0) {
+      const timeValidation = validateTimeSlotsNotInPast(
+        slots,
+        reservation_date || existingReservation.reservation_date
+      );
+      if (!timeValidation.success) {
+        await logError({
+          error: new Error(timeValidation.message),
+          req,
+          route: "updateReservation",
+        });
+        return res.status(400).json({ message: timeValidation.message });
       }
     }
 
@@ -356,7 +298,11 @@ export const updateReservation = async (req, res) => {
 
     if (slots !== undefined) {
       if (!Array.isArray(slots) || slots.length === 0) {
-        await logError({ error: new Error("Invalid slots format"), req, route: "updateReservation" });
+        await logError({
+          error: new Error("Invalid slots format"),
+          req,
+          route: "updateReservation",
+        });
         return res
           .status(400)
           .json({ message: "Slots must be a non-empty array" });
@@ -370,80 +316,44 @@ export const updateReservation = async (req, res) => {
 
     if (status !== undefined) {
       if (!["Active", "Cancelled", "Completed"].includes(status)) {
-        await logError({ error: new Error("Invalid status value"), req, route: "updateReservation" });
+        await logError({
+          error: new Error("Invalid status value"),
+          req,
+          route: "updateReservation",
+        });
         return res.status(400).json({ message: "Invalid status value" });
       }
       updateData.status = status;
     }
 
-    // If we're updating slots, check for conflicts with other reservations
-    if (slots && slots.length > 0) {
-      const conflictDate =
-        reservation_date || existingReservation.reservation_date;
-      const conflictLabId = lab_id || existingReservation.lab_id;
+    // 🚀 NEW: Use session-based service to update reservation
+    // This prevents race conditions by making conflict checking and updating atomic
+    const updatedReservation =
+      await reservationService.updateReservationWithSession(
+        id,
+        updateData,
+        req
+      );
 
-      const existingReservations = await Reservation.find({
-        lab_id: conflictLabId,
-        reservation_date: new Date(conflictDate),
-        status: "Active",
-        _id: { $ne: id }, // Exclude the current reservation being updated
-      });
+    // Populate lab and user information
+    const populatedReservation = await Reservation.findById(
+      updatedReservation._id
+    )
+      .populate("lab_id", "name display_name building")
+      .lean();
 
-      for (const slot of slots) {
-        const conflict = existingReservations.find((reservation) =>
-          reservation.slots.some(
-            (existingSlot) =>
-              existingSlot.seat_number === slot.seat_number &&
-              existingSlot.start_time === slot.start_time &&
-              existingSlot.end_time === slot.end_time
-          )
-        );
+    // Use utility function to populate user information
+    const finalReservation = await populateUserInfo(populatedReservation);
 
-        if (conflict) {
-          await logError({ error: new Error("Reservation conflict"), req, route: "updateReservation" });
-          return res.status(409).json({
-            message: `Seat ${slot.seat_number} at ${slot.start_time}-${slot.end_time} is already reserved`,
-          });
-        }
-      }
-    }
-
-    // Update the reservation
-    const updatedReservation = await Reservation.findByIdAndUpdate(
-      id,
-      updateData,
-      {
-        new: true,
-      }
-    ).populate("lab_id", "name display_name building");
-
-    // Populate user information
-    const User = mongoose.model("User");
-    const populatedReservation = updatedReservation.toObject();
-
-    if (updatedReservation.anonymous) {
-      populatedReservation.user = {
-        user_id: "Anonymous",
-        email: "Anonymous",
-        fname: "Anonymous",
-        lname: "User",
-      };
-    } else {
-      const user = await User.findOne({ user_id: updatedReservation.user_id });
-      if (user) {
-        populatedReservation.user = {
-          _id: user._id,
-          user_id: user.user_id,
-          email: user.email,
-          fname: user.fname,
-          lname: user.lname,
-        };
-      }
-    }
-
-    res.json(populatedReservation);
+    res.json(finalReservation);
   } catch (error) {
     await logError({ error, req, route: "updateReservation" });
+
+    // Handle specific session-based errors
+    if (error.message.includes("already reserved")) {
+      return res.status(409).json({ message: error.message });
+    }
+
     res
       .status(error.message === "Database connection is not ready" ? 503 : 500)
       .json({ message: error.message });
@@ -468,34 +378,9 @@ export const getReservationsByLab = async (req, res) => {
       .populate("lab_id", "name display_name building")
       .sort({ createdAt: -1 });
 
-    // Populate user details for each reservation
-    const User = mongoose.model("User");
-    const populatedReservations = await Promise.all(
-      reservations.map(async (reservation) => {
-        const reservationObj = reservation.toObject();
-
-        // Handle anonymous reservations
-        if (reservation.anonymous) {
-          reservationObj.user = {
-            user_id: "Anonymous",
-            email: "Anonymous",
-            fname: "Anonymous",
-            lname: "User",
-          };
-        } else {
-          const user = await User.findOne({ user_id: reservation.user_id });
-          if (user) {
-            reservationObj.user = {
-              _id: user._id,
-              user_id: user.user_id,
-              email: user.email,
-              fname: user.fname,
-              lname: user.lname,
-            };
-          }
-        }
-        return reservationObj;
-      })
+    // Use utility function to populate user details
+    const populatedReservations = await populateUserInfoForMultiple(
+      reservations
     );
 
     res.json(populatedReservations);

@@ -57,4 +57,21 @@ const reservationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// 🚀 NEW: Add database indexes for better performance
+// These indexes speed up the conflict checking queries used in session-based operations
+
+// Compound index for efficient conflict checking
+// This is the most important index - it speeds up queries that check for existing reservations
+reservationSchema.index({ 
+  lab_id: 1, 
+  reservation_date: 1, 
+  status: 1 
+});
+
+// Index for user queries (getting reservations by user)
+reservationSchema.index({ user_id: 1 });
+
+// Index for date-based queries
+reservationSchema.index({ reservation_date: 1 });
+
 export default mongoose.model("Reservation", reservationSchema);
