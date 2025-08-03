@@ -7,7 +7,6 @@ import {
 import mongoose from "mongoose";
 import LabSlot from "../models/LabSlot.js";
 import { describe, it } from "@jest/globals";
-import { populate } from "dotenv";
 
 
 // Mock mongoose
