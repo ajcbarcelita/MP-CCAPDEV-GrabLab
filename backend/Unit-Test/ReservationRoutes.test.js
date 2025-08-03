@@ -11,6 +11,13 @@ import {
 import Reservation from '../models/Reservation.js';
 import User from '../models/User.js';
 import Lab from '../models/Lab.js';
+import * as reservationService from '../services/reservationService.js';
+import {
+    populateUserInfo,
+    populateUserInfoForMultiple,
+    validateTechnicianReservation,
+    validateTimeSlotsNotInPast
+} from '../utils/reservationUtils.js';
 
 
 // Mock mongoose
@@ -53,6 +60,21 @@ jest.mock('../models/Lab.js', () => ({
 // Mock logError utility
 jest.mock('../utils/logErrors.js', () => ({
   logError: jest.fn()
+}));
+
+// Mock reservationUtils
+jest.mock('../utils/reservationUtils.js', () => ({
+  populateUserInfo: jest.fn(),
+  populateUserInfoForMultiple: jest.fn(),
+  validateTechnicianReservation: jest.fn(),
+  validateTimeSlotsNotInPast: jest.fn()
+}));
+
+// Mock reservationService
+jest.mock('../services/reservationService.js', () => ({
+  deleteReservationWithSession: jest.fn(),
+  updateReservationWithSession: jest.fn(),
+  createReservationWithSession: jest.fn()
 }));
 
 // Mock data
@@ -185,6 +207,35 @@ beforeEach(() => {
   // Reset to connected state for each test
   mongoose.connection.readyState = 1;
   jest.clearAllMocks();
+  
+  // Set up default successful mocks for utility functions
+  validateTechnicianReservation.mockResolvedValue({ success: true });
+  validateTimeSlotsNotInPast.mockReturnValue({ success: true });
+  populateUserInfo.mockResolvedValue({
+    user: {
+      user_id: mockStudent.user_id,
+      email: mockStudent.email,
+      fname: mockStudent.fname,
+      lname: mockStudent.lname,
+      _id: mockStudent._id
+    }
+  });
+  populateUserInfoForMultiple.mockResolvedValue([{
+    user: {
+      user_id: mockStudent.user_id,
+      email: mockStudent.email,
+      fname: mockStudent.fname,
+      lname: mockStudent.lname,
+      _id: mockStudent._id
+    }
+  }]);
+  
+  // Set up default mocks for service functions
+  reservationService.deleteReservationWithSession.mockResolvedValue({});
+  reservationService.updateReservationWithSession.mockResolvedValue({});
+  reservationService.createReservationWithSession.mockResolvedValue({
+    _id: 'mock-reservation-id'
+  });
 });
 
 describe('getReservations', () => {
@@ -196,24 +247,34 @@ describe('getReservations', () => {
         status: jest.fn().mockReturnThis()
     };
     it('should return all reservations', async () => {
-        const mockReservationsWithToObject = mockResrvations.map(reservation => ({
+        const mockReservations = mockResrvations.map(reservation => ({
             ...reservation,
             toObject: jest.fn().mockReturnValue(reservation)
         }));
 
-        const mockSort = jest.fn().mockResolvedValue(mockReservationsWithToObject);
+        const mockSort = jest.fn().mockResolvedValue(mockReservations);
         const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
         Reservation.find.mockReturnValue({ populate: mockPopulate });
 
-        // Use the already mocked User model
-        User.findOne.mockResolvedValue(mockStudent);
-        mongoose.model.mockReturnValue(User);
+        // Mock populateUserInfoForMultiple to return reservations with user info
+        const mockPopulated = mockReservations.map(reservation => ({
+            ...reservation,
+            user: {
+                user_id: mockStudent.user_id,
+                email: mockStudent.email,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                _id: mockStudent._id
+            }
+        }));
+        populateUserInfoForMultiple.mockResolvedValue(mockPopulated);
 
         await getReservations(mockRequest, mockResponse);
 
         expect(Reservation.find).toHaveBeenCalledWith({});
         expect(mockPopulate).toHaveBeenCalledWith("lab_id", "name display_name building");
         expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
+        expect(populateUserInfoForMultiple).toHaveBeenCalledWith(mockReservations);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
         
         const responseCall = mockResponse.json.mock.calls[0][0];
@@ -229,7 +290,7 @@ describe('getReservations', () => {
     });
     });
     it('should handle anonymous reservations', async () => {
-        const allAnonymousReservations = mockResrvations.map(reservation => ({
+        const anonymousRes = mockResrvations.map(reservation => ({
             ...reservation,
             anonymous: true,
             toObject: jest.fn().mockReturnValue({
@@ -238,12 +299,21 @@ describe('getReservations', () => {
             })
         }));
 
-        const mockSort = jest.fn().mockResolvedValue(allAnonymousReservations);
+        const mockSort = jest.fn().mockResolvedValue(anonymousRes);
         const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
         Reservation.find.mockReturnValue({ populate: mockPopulate });
 
-        User.findOne.mockResolvedValue(mockStudent);
-        mongoose.model.mockReturnValue(User);
+        // Mock populateUserInfoForMultiple to return anonymous user info
+        const mockAnonymous = anonymousRes.map(reservation => ({
+            ...reservation,
+            user: {
+                user_id: "Anonymous",
+                email: "Anonymous",
+                fname: "Anonymous",
+                lname: "User"
+            }
+        }));
+        populateUserInfoForMultiple.mockResolvedValue(mockAnonymous);
 
         await getReservations(mockRequest, mockResponse);
 
@@ -290,23 +360,33 @@ describe('getReservationByUserId', () => {
     it('should return reservations by user ID', async () => {
         const userReservations = [mockResrvations[0]]; 
 
-        const mockReservationsWithToObject = userReservations.map(reservation => ({
+        const mockReservations = userReservations.map(reservation => ({
             ...reservation,
             toObject: jest.fn().mockReturnValue(reservation)
         }));
 
-        const mockSort = jest.fn().mockResolvedValue(mockReservationsWithToObject);
+        const mockSort = jest.fn().mockResolvedValue(mockReservations);
         const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
         Reservation.find.mockReturnValue({ populate: mockPopulate });
 
-        User.findOne.mockResolvedValue(mockStudent);
-        mongoose.model.mockReturnValue(User);
+        const mockPopulated = mockReservations.map(reservation => ({
+            ...reservation,
+            user: {
+                user_id: mockStudent.user_id,
+                email: mockStudent.email,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                _id: mockStudent._id
+            }
+        }));
+        populateUserInfoForMultiple.mockResolvedValue(mockPopulated);
 
         await getReservationsByUserId(mockRequest, mockResponse);
 
         expect(Reservation.find).toHaveBeenCalledWith({ user_id: 5 });
         expect(mockPopulate).toHaveBeenCalledWith("lab_id", "name display_name building");
         expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
+        expect(populateUserInfoForMultiple).toHaveBeenCalledWith(mockReservations);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
 
         const responseCall = mockResponse.json.mock.calls[0][0];
@@ -319,7 +399,6 @@ describe('getReservationByUserId', () => {
             expect(reservation.user.lname).toBe(mockStudent.lname);
             expect(reservation.user._id).toBe(mockStudent._id);
         });
-
     });
 
     it('should return 500 if there is a database error', async () => {
@@ -355,17 +434,26 @@ describe('getReservationByLab', () => {
     it('should return reservations by lab ID', async () => {
         const labReservations = [mockResrvations[0]]; // Only reservations for this lab
         
-        const mockReservationsWithToObject = labReservations.map(reservation => ({
+        const mockReservations = labReservations.map(reservation => ({
             ...reservation,
             toObject: jest.fn().mockReturnValue(reservation)
         }));
 
-        const mockSort = jest.fn().mockResolvedValue(mockReservationsWithToObject);
+        const mockSort = jest.fn().mockResolvedValue(mockReservations);
         const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
         Reservation.find.mockReturnValue({ populate: mockPopulate });
 
-        User.findOne.mockResolvedValue(mockStudent);
-        mongoose.model.mockReturnValue(User);
+        const mockPopulated = mockReservations.map(reservation => ({
+            ...reservation,
+            user: {
+                user_id: mockStudent.user_id,
+                email: mockStudent.email,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                _id: mockStudent._id
+            }
+        }));
+        populateUserInfoForMultiple.mockResolvedValue(mockPopulated);
 
         await getReservationsByLab(mockRequest, mockResponse);
 
@@ -375,6 +463,7 @@ describe('getReservationByLab', () => {
         });
         expect(mockPopulate).toHaveBeenCalledWith("lab_id", "name display_name building");
         expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
+        expect(populateUserInfoForMultiple).toHaveBeenCalledWith(mockReservations);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
         
         const responseCall = mockResponse.json.mock.calls[0][0];
@@ -394,12 +483,15 @@ describe('getReservationByLab', () => {
         const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
         Reservation.find.mockReturnValue({ populate: mockPopulate });
 
+        populateUserInfoForMultiple.mockResolvedValue([]);
+
         await getReservationsByLab(mockRequest, mockResponse);
 
         expect(Reservation.find).toHaveBeenCalledWith({ 
             lab_id: mockRequest.params.labId, 
             status: 'Active' 
         });
+        expect(populateUserInfoForMultiple).toHaveBeenCalledWith([]);
         expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
@@ -435,10 +527,16 @@ describe('getReservationByLab', () => {
         const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
         Reservation.find.mockReturnValue({ populate: mockPopulate });
 
-        const mockUserModel = {
-            findOne: jest.fn().mockResolvedValue(mockStudent)
-        };
-        mongoose.model.mockReturnValue(mockUserModel);
+        const mockAnonymous = [{
+            ...anonymousReservation,
+            user: {
+                user_id: "Anonymous",
+                fname: "Anonymous",
+                lname: "User",
+                email: "Anonymous"
+            }
+        }];
+        populateUserInfoForMultiple.mockResolvedValue(mockAnonymous);
 
         await getReservationsByLab(mockRequest, mockResponse);
 
@@ -464,18 +562,19 @@ describe('deleteReservation', () => {
     it('should delete a reservation by ID', async () => {
         const mockReservation = mockResrvations[0];
 
-        Reservation.findById.mockResolvedValue(mockReservation);
-        Reservation.findByIdAndDelete.mockResolvedValue(mockReservation);
+        // Mock the service to return the deleted reservation
+        reservationService.deleteReservationWithSession.mockResolvedValue(mockReservation);
 
         await deleteReservation(mockRequest, mockResponse);
 
-        expect(Reservation.findByIdAndDelete).toHaveBeenCalledWith(mockRequest.params.id);
-        expect(Reservation.findById).toHaveBeenCalledWith(mockRequest.params.id);
+        expect(reservationService.deleteReservationWithSession).toHaveBeenCalledWith(mockRequest.params.id, mockRequest);
+        expect(reservationService.deleteReservationWithSession).toHaveBeenCalledWith('688832d915bcb1b6b3479930', mockRequest);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
         expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Reservation deleted successfully' });
     });
     it('should return 404 if reservation not found', async () => {
-        Reservation.findById.mockResolvedValue(null);
+        // Mock the service to return null (reservation not found)
+        reservationService.deleteReservationWithSession.mockResolvedValue(null);
 
         await deleteReservation(mockRequest, mockResponse);
 
@@ -487,7 +586,7 @@ describe('deleteReservation', () => {
         console.error = jest.fn(); 
 
         const dbError = new Error('Database connection failed');
-        Reservation.findById.mockImplementation(() => {
+        reservationService.deleteReservationWithSession.mockImplementation(() => {
             throw dbError;
         });
 
@@ -529,53 +628,49 @@ describe('updateReservation', () => {
     };
     
     it('should successfully update a reservation', async () => {
-        const mockExistingReservation = mockResrvations[0];
-        const mockUpdatedReservation = {
-            ...mockExistingReservation,
+        const mockExisting = mockResrvations[0];
+        const mockUpdated = {
+            ...mockExisting,
             ...mockRequest.body,
             user_id: 5,
             reservation_date: new Date(mockRequest.body.reservation_date),
-            toObject: jest.fn().mockReturnValue({
-                ...mockExistingReservation,
-                ...mockRequest.body,
-                user_id: 5,
-                reservation_date: new Date(mockRequest.body.reservation_date)
-            })
+            _id: mockRequest.params.id
         };
 
-        // check if reservation exists
-        Reservation.findById.mockResolvedValue(mockExistingReservation);
+        // Mock existing reservation lookup
+        Reservation.findById.mockResolvedValue(mockExisting);
         
-        // check for conflicts
-        Reservation.find.mockResolvedValue([]);
+        // Mock service layer
+        reservationService.updateReservationWithSession.mockResolvedValue(mockUpdated);
         
-        const mockPopulate = jest.fn().mockResolvedValue(mockUpdatedReservation);
-        Reservation.findByIdAndUpdate.mockReturnValue({ populate: mockPopulate });
-
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0]) // for technician lookup
-            .mockResolvedValueOnce(mockStudent)    // for student lookup
-            .mockResolvedValueOnce(mockStudent);   // for final user population
-
-        mongoose.model.mockReturnValue(User);
+        // Mock the populated reservation
+        const mockPopulated = {
+            ...mockUpdated,
+            lab_id: { name: 'Test Lab', display_name: 'Test Lab', building: 'Test Building' }
+        };
+        Reservation.findById.mockResolvedValueOnce(mockPopulated);
+        
+        // Mock populate chain
+        const mockPopulate = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(mockPopulated) });
+        Reservation.findById.mockReturnValueOnce({ populate: mockPopulate });
+        
+        // Mock populateUserInfo
+        const finalRes = {
+            ...mockPopulated,
+            user: {
+                user_id: mockStudent.user_id,
+                email: mockStudent.email,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                _id: mockStudent._id
+            }
+        };
+        populateUserInfo.mockResolvedValue(finalRes);
 
         await updateReservation(mockRequest, mockResponse);
 
-    
         expect(Reservation.findById).toHaveBeenCalledWith(mockRequest.params.id);
-        expect(User.findOne).toHaveBeenCalledWith({ user_id: parseInt(mockRequest.body.technician_id) });
-        expect(User.findOne).toHaveBeenCalledWith({ user_id: parseInt(mockRequest.body.user_id) });
-        
-        // verify conflict 
-        expect(Reservation.find).toHaveBeenCalledWith({
-            lab_id: mockRequest.body.lab_id,
-            reservation_date: new Date(mockRequest.body.reservation_date),
-            status: "Active",
-            _id: { $ne: mockRequest.params.id }
-        });
-        
-        // update reservation
-        expect(Reservation.findByIdAndUpdate).toHaveBeenCalledWith(
+        expect(reservationService.updateReservationWithSession).toHaveBeenCalledWith(
             mockRequest.params.id,
             expect.objectContaining({
                 user_id: 5,
@@ -585,16 +680,9 @@ describe('updateReservation', () => {
                 anonymous: false,
                 status: mockRequest.body.status
             }),
-            { new: true }
+            mockRequest
         );
         
-        // verify population
-        expect(mockPopulate).toHaveBeenCalledWith("lab_id", "name display_name building");
-        
-        // verify final user population
-        expect(User.findOne).toHaveBeenCalledWith({ user_id: mockUpdatedReservation.user_id });
-        
-        // verify response
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
         const responseCall = mockResponse.json.mock.calls[0][0];
         expect(responseCall.user).toBeDefined();
@@ -610,28 +698,48 @@ describe('updateReservation', () => {
             body: { ...mockRequest.body, anonymous: true, technician_id: undefined }
         };
         
-        const mockExistingReservation = mockResrvations[0];
-        const mockUpdatedReservation = {
-            ...mockExistingReservation,
+        const mockExisting = mockResrvations[0];
+        const mockUpdated = {
+            ...mockExisting,
             anonymous: true,
-            toObject: jest.fn().mockReturnValue({
-                ...mockExistingReservation,
-                anonymous: true
-            })
+            _id: mockRequest.params.id
         };
 
-        Reservation.findById.mockResolvedValue(mockExistingReservation);
-        Reservation.find.mockResolvedValue([]);
+        // Mock existing reservation lookup (first call)
+        Reservation.findById.mockResolvedValueOnce(mockExisting);
         
-        const mockPopulate = jest.fn().mockResolvedValue(mockUpdatedReservation);
-        Reservation.findByIdAndUpdate.mockReturnValue({ populate: mockPopulate });
-
-        mongoose.model.mockReturnValue(User);
+        // Mock service layer
+        reservationService.updateReservationWithSession.mockResolvedValue(mockUpdated);
+        
+        // Mock the populated reservation with anonymous flag
+        const mockPopulated = {
+            ...mockUpdated,
+            anonymous: true,  // Make sure this flag is set
+            lab_id: { name: 'Test Lab', display_name: 'Test Lab', building: 'Test Building' }
+        };
+        
+        // Mock populate chain for second findById call
+        const mockLean = jest.fn().mockResolvedValue(mockPopulated);
+        const mockPopulate = jest.fn().mockReturnValue({ lean: mockLean });
+        Reservation.findById.mockReturnValueOnce({ populate: mockPopulate });
+        
+        // Override the default populateUserInfo mock for this test
+        const finalAnonymous = {
+            ...mockPopulated,
+            user: {
+                user_id: "Anonymous",
+                fname: "Anonymous",
+                lname: "User",
+                email: "Anonymous"
+            }
+        };
+        populateUserInfo.mockResolvedValueOnce(finalAnonymous);
 
         await updateReservation(anonymousRequest, mockResponse);
 
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
         const responseCall = mockResponse.json.mock.calls[0][0];
+        expect(responseCall.user).toBeDefined();
         expect(responseCall.user.user_id).toBe("Anonymous");
         expect(responseCall.user.fname).toBe("Anonymous");
         expect(responseCall.user.lname).toBe("User");
@@ -644,25 +752,52 @@ describe('updateReservation', () => {
             body: { ...mockRequest.body, technician_id: undefined }
         };
         
-        const mockExistingReservation = mockResrvations[0];
-        const mockUpdatedReservation = {
-            ...mockExistingReservation,
-            toObject: jest.fn().mockReturnValue(mockExistingReservation)
+        const mockExisting = mockResrvations[0];
+        const mockUpdated = {
+            ...mockExisting,
+            toObject: jest.fn().mockReturnValue(mockExisting)
         };
 
-        Reservation.findById.mockResolvedValue(mockExistingReservation);
-        Reservation.find.mockResolvedValue([]);
+        Reservation.findById.mockResolvedValueOnce(mockExisting);
         
-        const mockPopulate = jest.fn().mockResolvedValue(mockUpdatedReservation);
-        Reservation.findByIdAndUpdate.mockReturnValue({ populate: mockPopulate });
-
-        User.findOne.mockResolvedValue(mockStudent);
-        mongoose.model.mockReturnValue(User);
+        // Mock the service layer call
+        reservationService.updateReservationWithSession.mockResolvedValue(mockUpdated);
+        
+        const mockPopulated = {
+            ...mockUpdated,
+            lab_id: { name: 'Test Lab', display_name: 'Test Lab', building: 'Test Building' }
+        };
+        
+        const mockLean = jest.fn().mockResolvedValue(mockPopulated);
+        const mockPopulate = jest.fn().mockReturnValue({ lean: mockLean });
+        Reservation.findById.mockReturnValueOnce({ populate: mockPopulate });
+        
+        // Mock populateUserInfo for regular reservation
+        const finalRegular = {
+            ...mockPopulated,
+            user: {
+                user_id: mockStudent.user_id,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                email: mockStudent.email
+            }
+        };
+        populateUserInfo.mockResolvedValueOnce(finalRegular);
 
         await updateReservation(requestWithoutTechnician, mockResponse);
 
-        expect(User.findOne).toHaveBeenCalledTimes(1);
-        expect(User.findOne).toHaveBeenCalledWith({ user_id: mockUpdatedReservation.user_id });
+        expect(reservationService.updateReservationWithSession).toHaveBeenCalledWith(
+            mockRequest.params.id,
+            expect.objectContaining({
+                user_id: parseInt(mockRequest.body.user_id),
+                lab_id: mockRequest.body.lab_id,
+                reservation_date: expect.any(Date),
+                slots: mockRequest.body.slots,
+                anonymous: false,
+                status: mockRequest.body.status
+            }),
+            requestWithoutTechnician
+        );
         
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
         const responseCall = mockResponse.json.mock.calls[0][0];
@@ -683,11 +818,12 @@ describe('updateReservation', () => {
         const mockExistingReservation = mockResrvations[0];
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne
-            .mockResolvedValueOnce(null) // Technician not found
-            .mockResolvedValueOnce(mockStudent);
-
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Invalid technician ID.' 
+        });
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -697,14 +833,14 @@ describe('updateReservation', () => {
 
     it('should return 403 if technician role is not Technician', async () => {
         const mockExistingReservation = mockResrvations[0];
-        const invalidTechnician = { ...mockTechnician[0], role: 'Student' };
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne
-            .mockResolvedValueOnce(invalidTechnician) // Invalid role
-            .mockResolvedValueOnce(mockStudent);
-
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Invalid technician ID.' 
+        });
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -724,11 +860,12 @@ describe('updateReservation', () => {
         };
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])
-            .mockResolvedValueOnce(mockTechnician[0]); // Same user
-
+        User.findOne.mockResolvedValue(mockTechnician[0]);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Technicians cannot reserve for themselves. Please enter a student ID.' 
+        });
 
         await updateReservation(selfReservationRequest, mockResponse);
 
@@ -742,11 +879,12 @@ describe('updateReservation', () => {
         const mockExistingReservation = mockResrvations[0];
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])
-            .mockResolvedValueOnce(null); // Student not found
-
+        User.findOne.mockResolvedValue(mockTechnician[0]);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Technicians can only reserve for students.' 
+        });
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -758,14 +896,14 @@ describe('updateReservation', () => {
 
     it('should return 403 if student role is not Student', async () => {
         const mockExistingReservation = mockResrvations[0];
-        const nonStudent = { ...mockStudent, role: 'Admin' };
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])
-            .mockResolvedValueOnce(nonStudent);
-
+        User.findOne.mockResolvedValue(mockTechnician[0]);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Technicians can only reserve for students.' 
+        });
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -793,11 +931,12 @@ describe('updateReservation', () => {
         };
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])
-            .mockResolvedValueOnce(mockStudent);
-
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        validateTimeSlotsNotInPast.mockReturnValue({ 
+            success: false, 
+            message: 'Cannot update to slot ending before current time: 08:00-09:00' 
+        });
 
         await updateReservation(pastSlotRequest, mockResponse);
 
@@ -875,23 +1014,15 @@ describe('updateReservation', () => {
 
     it('should return 409 for slot conflicts', async () => {
         const mockExistingReservation = mockResrvations[0];
-        const conflictingReservation = {
-            _id: 'different-reservation-id',
-            slots: [{
-                seat_number: 2,
-                start_time: '2025-07-29T16:00:00.000+00:00',
-                end_time: '2025-07-29T17:00:00.000+00:00'
-            }]
-        };
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        Reservation.find.mockResolvedValue([conflictingReservation]); // Conflict found
-        
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])
-            .mockResolvedValueOnce(mockStudent);
-
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        
+        // Mock the service to throw a conflict error
+        reservationService.updateReservationWithSession.mockRejectedValue(
+            new Error('Seat 2 at 2025-07-29T16:00:00.000+00:00-2025-07-29T17:00:00.000+00:00 is already reserved')
+        );
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -918,8 +1049,11 @@ describe('updateReservation', () => {
         const dbError = new Error('User lookup failed');
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        User.findOne.mockRejectedValue(dbError);
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        
+        // Mock the service to throw an error
+        reservationService.updateReservationWithSession.mockRejectedValue(dbError);
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -937,16 +1071,11 @@ describe('updateReservation', () => {
         const dbError = new Error('Update failed');
 
         Reservation.findById.mockResolvedValue(mockExistingReservation);
-        Reservation.find.mockResolvedValue([]);
-        Reservation.findByIdAndUpdate.mockImplementation(() => {
-            throw dbError;
-        });
-
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])
-            .mockResolvedValueOnce(mockStudent);
-
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        
+        // Mock the service to throw an error
+        reservationService.updateReservationWithSession.mockRejectedValue(dbError);
 
         await updateReservation(mockRequest, mockResponse);
 
@@ -1020,16 +1149,20 @@ describe('createReservation', () => {
                         id: '688832d915bcb1b6b3479930'
                     }
                 ],
-                anonymous: false,
-                technician_id: '1234567890'
+                anonymous: false
             }
         };
 
-        User.findOne.mockResolvedValue(null); // User not found
+        User.findOne.mockReset();
+        User.findOne.mockResolvedValue(null);
         mongoose.model.mockReturnValue(User);
-
+        
+        Lab.findById.mockResolvedValue(mockLabs[0]);
+        
         await createReservation(invalidRequest, mockResponse);
 
+        expect(User.findOne).toHaveBeenCalledWith({ user_id: 0 });
+        
         expect(mockResponse.status).toHaveBeenCalledWith(404);
         expect(mockResponse.json).toHaveBeenCalledWith({
             message: 'User not found'
@@ -1054,11 +1187,12 @@ describe('createReservation', () => {
             }
         };
 
-        User.findOne
-            .mockResolvedValueOnce(mockStudent)  // student lookup
-            .mockResolvedValueOnce(null);        // technician lookup (should fail)
-    
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Invalid technician ID.' 
+        });
 
         await createReservation(invalidTechnician, mockResponse);
 
@@ -1086,13 +1220,12 @@ describe('createReservation', () => {
             }
         };
 
-        const invalidTechnician = { ...mockTechnician[0], role: 'Student' };
-
-        User.findOne
-            .mockResolvedValueOnce(mockStudent)  // student lookup
-            .mockResolvedValueOnce(invalidTechnician); // technician lookup (should fail)
-    
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Invalid technician ID.' 
+        });
 
         await createReservation(invalidTechnicianRequest, mockResponse);
 
@@ -1120,11 +1253,12 @@ describe('createReservation', () => {
             }
         };
 
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0]) 
-            .mockResolvedValueOnce(mockTechnician[0]); 
-    
+        User.findOne.mockResolvedValue(mockTechnician[0]);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Technicians cannot reserve for themselves. Please enter a student ID.' 
+        });
 
         await createReservation(selfReservation, mockResponse);
 
@@ -1152,11 +1286,12 @@ describe('createReservation', () => {
             }
         };
 
-        User.findOne
-            .mockResolvedValueOnce(mockTechnician[0])  
-            .mockResolvedValueOnce(mockTechnician[1]); 
-
+        User.findOne.mockResolvedValue(mockTechnician[0]);
         mongoose.model.mockReturnValue(User);
+        validateTechnicianReservation.mockResolvedValue({ 
+            success: false, 
+            message: 'Technicians can only reserve for students.' 
+        });
 
         await createReservation(reserveTech, mockResponse);
 
@@ -1200,7 +1335,6 @@ describe('createReservation', () => {
     });
 
     it('should return 400 for past time slots (today)', async () => {
-        // Create a date for today with past time slots
         const today = new Date();
         const pastTime = new Date(today);
         pastTime.setHours(today.getHours() - 2); // 2 hours ago
@@ -1225,6 +1359,10 @@ describe('createReservation', () => {
         User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
         Lab.findById.mockResolvedValue(mockLabs[0]);
+        validateTimeSlotsNotInPast.mockReturnValue({ 
+            success: false, 
+            message: 'Cannot book slot ending before current time: 08:00-09:00' 
+        });
 
         await createReservation(pastTimeRequest, mockResponse);
 
@@ -1245,18 +1383,14 @@ describe('createReservation', () => {
             }
         };
 
-        const existingReservation = {
-            slots: [{
-                seat_number: 2,
-                start_time: '16:00',
-                end_time: '17:00'
-            }]
-        };
-
         User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
         Lab.findById.mockResolvedValue(mockLabs[0]);
-        Reservation.find.mockResolvedValue([existingReservation]);
+        
+        // Mock the service to throw a conflict error
+        reservationService.createReservationWithSession.mockRejectedValue(
+            new Error('Seat 2 at 16:00-17:00 is already reserved')
+        );
 
         await createReservation(conflictRequest, mockResponse);
 
@@ -1277,28 +1411,44 @@ describe('createReservation', () => {
             }
         };
 
-        const mockCreatedReservation = mockCreateReservationData.createMockReservation('688832d915bcb1b6b3479999', 3);
-        const mockPopulatedReservation = mockCreateReservationData.createMockPopulatedReservation(mockCreatedReservation);
+        const mockCreated = mockCreateReservationData.createMockReservation('688832d915bcb1b6b3479999', 3);
+        const mockPopulated = mockCreateReservationData.createMockPopulatedReservation(mockCreated);
 
         User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
         Lab.findById.mockResolvedValue(mockLabs[0]);
         Reservation.find.mockResolvedValue([]); // No conflicts
-        Reservation.create.mockResolvedValue(mockCreatedReservation);
         
-        const mockLean = jest.fn().mockResolvedValue(mockPopulatedReservation);
+        reservationService.createReservationWithSession.mockResolvedValue(mockCreated);
+        
+        const mockLean = jest.fn().mockResolvedValue({
+            ...mockCreated,
+            lab_id: { name: 'Test Lab', display_name: 'Test Lab', building: 'Test Building' }
+        });
         const mockPopulate = jest.fn().mockReturnValue({ lean: mockLean });
         Reservation.findById.mockReturnValue({ populate: mockPopulate });
+        
+        const finalWithUser = {
+            ...mockPopulated,
+            user: {
+                user_id: mockStudent.user_id,
+                email: mockStudent.email,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                _id: mockStudent._id
+            }
+        };
+        populateUserInfo.mockResolvedValue(finalWithUser);
 
         await createReservation(successRequest, mockResponse);
 
-        expect(Reservation.create).toHaveBeenCalledWith({
-            user_id: 5,
+        expect(reservationService.createReservationWithSession).toHaveBeenCalledWith({
+            user_id: "5",  // String, not integer
             lab_id: '688832d915bcb1b6b3479930',
-            reservation_date: expect.any(Date),
+            reservation_date: expect.any(String), // String, not Date object
             slots: successRequest.body.slots,
             anonymous: false
-        });
+        }, successRequest);
 
         expect(mockResponse.status).toHaveBeenCalledWith(201);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
@@ -1322,28 +1472,43 @@ describe('createReservation', () => {
             }
         };
 
-        const mockCreatedReservation = mockCreateReservationData.createMockReservation('688832d915bcb1b6b3479998', 4, true);
-        const mockPopulatedReservation = mockCreateReservationData.createMockPopulatedReservation(mockCreatedReservation);
+        const mockCreated = mockCreateReservationData.createMockReservation('688832d915bcb1b6b3479998', 4, true);
+        const mockPopulated = mockCreateReservationData.createMockPopulatedReservation(mockCreated);
 
         User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
         Lab.findById.mockResolvedValue(mockLabs[0]);
         Reservation.find.mockResolvedValue([]); // No conflicts
-        Reservation.create.mockResolvedValue(mockCreatedReservation);
         
-        const mockLean = jest.fn().mockResolvedValue(mockPopulatedReservation);
+        reservationService.createReservationWithSession.mockResolvedValue(mockCreated);
+        
+        const mockLean = jest.fn().mockResolvedValue({
+            ...mockCreated,
+            lab_id: { name: 'Test Lab', display_name: 'Test Lab', building: 'Test Building' }
+        });
         const mockPopulate = jest.fn().mockReturnValue({ lean: mockLean });
         Reservation.findById.mockReturnValue({ populate: mockPopulate });
+        
+        const finalAnonymous = {
+            ...mockPopulated,
+            user: {
+                user_id: "Anonymous",
+                fname: "Anonymous",
+                lname: "User",
+                email: "Anonymous"
+            }
+        };
+        populateUserInfo.mockResolvedValue(finalAnonymous);
 
         await createReservation(anonymousRequest, mockResponse);
 
-        expect(Reservation.create).toHaveBeenCalledWith({
-            user_id: 5,
+        expect(reservationService.createReservationWithSession).toHaveBeenCalledWith({
+            user_id: "5",  // String, not integer
             lab_id: '688832d915bcb1b6b3479930',
-            reservation_date: expect.any(Date),
+            reservation_date: expect.any(String), // String, not Date object
             slots: anonymousRequest.body.slots,
             anonymous: true
-        });
+        }, anonymousRequest);
 
         expect(mockResponse.status).toHaveBeenCalledWith(201);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
@@ -1371,31 +1536,43 @@ describe('createReservation', () => {
         const mockCreatedReservation = mockCreateReservationData.createMockReservation('688832d915bcb1b6b3479997', 5);
         const mockPopulatedReservation = mockCreateReservationData.createMockPopulatedReservation(mockCreatedReservation);
 
-        User.findOne
-            .mockResolvedValueOnce(mockStudent)     // student lookup
-            .mockResolvedValueOnce(mockTechnician[0]); // technician lookup
-
+        User.findOne.mockResolvedValue(mockStudent);
         mongoose.model.mockReturnValue(User);
         Lab.findById.mockResolvedValue(mockLabs[0]);
         Reservation.find.mockResolvedValue([]); // No conflicts
-        Reservation.create.mockResolvedValue(mockCreatedReservation);
         
-        const mockLean = jest.fn().mockResolvedValue(mockPopulatedReservation);
+        reservationService.createReservationWithSession.mockResolvedValue(mockCreatedReservation);
+        
+        const mockLean = jest.fn().mockResolvedValue({
+            ...mockCreatedReservation,
+            lab_id: { name: 'Test Lab', display_name: 'Test Lab', building: 'Test Building' }
+        });
         const mockPopulate = jest.fn().mockReturnValue({ lean: mockLean });
         Reservation.findById.mockReturnValue({ populate: mockPopulate });
+        
+        const finalReservationWithUser = {
+            ...mockPopulatedReservation,
+            user: {
+                user_id: mockStudent.user_id,
+                email: mockStudent.email,
+                fname: mockStudent.fname,
+                lname: mockStudent.lname,
+                _id: mockStudent._id
+            }
+        };
+        populateUserInfo.mockResolvedValue(finalReservationWithUser);
 
         await createReservation(technicianRequest, mockResponse);
 
-        expect(User.findOne).toHaveBeenCalledWith({ user_id: 5 });
-        expect(User.findOne).toHaveBeenCalledWith({ user_id: 1234567890 });
+        expect(validateTechnicianReservation).toHaveBeenCalledWith('5', '1234567890', technicianRequest);
         
-        expect(Reservation.create).toHaveBeenCalledWith({
-            user_id: 5,
+        expect(reservationService.createReservationWithSession).toHaveBeenCalledWith({
+            user_id: "5",  // String, not integer
             lab_id: '688832d915bcb1b6b3479930',
-            reservation_date: expect.any(Date),
+            reservation_date: expect.any(String), // String, not Date object
             slots: technicianRequest.body.slots,
             anonymous: false
-        });
+        }, technicianRequest);
 
         expect(mockResponse.status).toHaveBeenCalledWith(201);
         expect(mockResponse.json).toHaveBeenCalledTimes(1);
