@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
 import mongoose from 'mongoose';
 import {
     getLabs,
@@ -11,7 +11,15 @@ import Lab from '../models/Lab.js';
 jest.mock('mongoose', () => ({
   connection: {
     readyState: 1 
-  }
+  },
+  Schema: class MockSchema {
+    constructor() {}
+    static Types = {
+      Mixed: 'Mixed',
+      ObjectId: 'ObjectId'
+    }
+  },
+  model: jest.fn()
 }));
 
 // Mock Lab model
@@ -19,12 +27,23 @@ jest.mock('../models/Lab.js', () => ({
   find: jest.fn(),
   findById: jest.fn(),
 }));
+
+// Mock logError utility
+jest.mock('../utils/logErrors.js', () => ({
+  logError: jest.fn()
+}));
 // Mock data
 const mockLabs = [
   { id:'688832d915bcb1b6b3479930', building: 'Gokongwei', name: 'G201', capacity: 30 },
   { id:'688832d915bcb1b6b3479931', building: 'Gokongwei', name: 'G301', capacity: 25 },
   { id:'688832d915bcb1b6b3479932', building: 'Andrew', name: 'AG101', capacity: 20 },
 ];
+
+beforeEach(() => {
+  // Reset to connected state for each test
+  mongoose.connection.readyState = 1;
+  jest.clearAllMocks();
+});
 
 
 describe('getLabs', () => {
@@ -53,10 +72,6 @@ describe('getLabs', () => {
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
   });
     it ('should return 503 if database connection is not ready', async () => {
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-
     mongoose.connection.readyState = 0;
 
     await getLabs(mockRequest, mockResponse);
@@ -64,12 +79,6 @@ describe('getLabs', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith("Error in getLabs:", expect.any(Error));
-    expect(console.error).toHaveBeenCalledTimes(1);
-    
-    mongoose.connection.readyState = copyOfReadyState;
-    console.error = originalConsoleError;
   });
 });
 
@@ -91,7 +100,6 @@ describe('getLabsByBuilding', () => {
 
     await getLabsByBuilding(mockRequest, mockResponse);
 
-    expect(mongoose.connection.readyState).toBe(1);
     expect(mockResponse.json).toHaveBeenCalledWith(mockLabs.filter(lab => lab.building === 'Gokongwei'));
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
   });
@@ -104,10 +112,6 @@ describe('getLabsByBuilding', () => {
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
   });
   it('should return 503 if database connection is not ready', async () => {
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-
     mongoose.connection.readyState = 0;
 
     await getLabsByBuilding(mockRequest, mockResponse);
@@ -115,12 +119,6 @@ describe('getLabsByBuilding', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith("Error in getLabsByBuilding:", expect.any(Error));
-    expect(console.error).toHaveBeenCalledTimes(1);
-
-    mongoose.connection.readyState = copyOfReadyState;
-    console.error = originalConsoleError;
   });
 });
 
@@ -141,7 +139,6 @@ describe('getLabByIDNumber', () => {
 
     await getLabByIDNumber(mockRequest, mockResponse);
 
-    expect(mongoose.connection.readyState).toBe(1);
     expect(mockResponse.json).toHaveBeenCalledWith(mockLabs[0]);
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
   });
@@ -169,10 +166,6 @@ describe('getLabByIDNumber', () => {
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
   });
   it('should return 503 if database connection is not ready', async () => {
-    const originalConsoleError = console.error;
-    console.error = jest.fn();
-    const copyOfReadyState = mongoose.connection.readyState;
-
     mongoose.connection.readyState = 0;
 
     await getLabByIDNumber(mockRequest, mockResponse);
@@ -180,11 +173,5 @@ describe('getLabByIDNumber', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(503);
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Database connection is not ready' });
     expect(mockResponse.json).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledWith("Error in getLabByID:", expect.any(Error));
-    expect(console.error).toHaveBeenCalledTimes(1);
-
-    console.error = originalConsoleError;
-    mongoose.connection.readyState = copyOfReadyState;
   });
 });

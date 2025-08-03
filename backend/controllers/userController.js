@@ -66,8 +66,6 @@ const updateUserProfilePicture = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        console.log("Controller: Updating profile picture for user:", userId);
-
         const numericUserId = parseInt(userId, 10);
 
         const user = await User.findOne({ user_id: numericUserId });
@@ -128,8 +126,6 @@ const updateUserProfilePicture = async (req, res) => {
 const registerUser = async (req, res) => {
     const { email, password, fname, lname, mname = "", role = "Student", status = "Active", profile_pic_path = "", description = "" } = req.body;
 
-    console.log("Registering user with email:", email);
-
     // Ensure default profile picture path if missing or empty
     const finalProfilePicPath =
         !profile_pic_path || profile_pic_path.trim() === ""
@@ -187,8 +183,6 @@ const registerUser = async (req, res) => {
  */
 const loginUser = async (req, res) => {
     const { email, password, rememberMe } = req.body;
-    console.log("Login attempt for email:", email);
-
     try {
         const user = await User.findOne({ email });
 
@@ -211,17 +205,8 @@ const loginUser = async (req, res) => {
         }
 
         // Create JWT token
-        const token = jwt.sign({ user_id: user.user_id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ user_id: user.user_id, role: user.role }, process.env.JWT_SECRET, {
             expiresIn: rememberMe ? "21d" : "1d",
-        });
-
-        // Set token as a httpOnly cookie
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-            maxAge: rememberMe ? 1000 * 60 * 24 * 21 : 1000 * 60 * 60 * 24, // 21 days or 1 day
-            sameSite: "Strict", // Prevent CSRF attacks
-            secure: process.env.NODE_ENV === "production", // Use secure cookies in production
         });
 
         // Transform user data to match frontend expectations
@@ -292,14 +277,11 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
     try {
         const { userId } = req.params;
-        console.log("Backend received userId:", userId, "Type:", typeof userId);
 
         // Convert userId to number for consistent comparison
         const numericUserId = parseInt(userId, 10);
-        console.log("Converted to numeric userId:", numericUserId);
 
         const user = await User.findOne({ user_id: numericUserId }).select("-password").lean();
-        console.log("User found in DB:", user ? "Yes" : "No");
 
         if (!user) {
             await logError({ error: new Error("User not found"), req, route: "getUserById" });
