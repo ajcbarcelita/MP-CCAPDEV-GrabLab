@@ -669,6 +669,34 @@ const reserveSlot = async () => {
 	const isEditing = !!reservationId
 
 	try {
+		// Added validation for double reservations here
+		// Firstly, fetch all reservations for the selected lab
+		await reservationsStore.fetchReservationsByLab(selectedLab.value)
+		const latestReservations = reservationsStore.reservations.filter(
+			(reservation) =>
+				new Date(reservation.reservation_date).toDateString() ===
+				new Date(selectedDate.value).toDateString(),
+		)
+		// Then check for conflicts
+		const hasConflict = selectedSlots.value.some((selectedSlot) =>
+			latestReservations.some((reservation) =>
+				reservation.slots.some(
+					(slot) =>
+						slot.seat_number === selectedSlot.seat &&
+						slot.start_time === selectedSlot.timeSlot.startTime &&
+						slot.end_time === selectedSlot.timeSlot.endTime,
+				),
+			),
+		)
+
+		if (hasConflict) {
+			alert(
+				'One or more of the selected slots have already been reserved. Please refresh and try again.',
+			)
+			return
+		}
+
+		// Changes end here
 		let user_id
 		if (isEditing) {
 			if (currentUser.value?.user_type === 'technician') {
@@ -726,6 +754,10 @@ const reserveSlot = async () => {
 			clearSelection()
 		}
 	} catch (error) {
+		if (error.response?.status === 409) {
+			alert('One or more slots are already taken. Please refresh and try again.')
+			return
+		}
 		console.error('Error in reserveSlot:', error)
 		let message = 'Failed to create reservation. Please try again.'
 		if (error.response && error.response.data && error.response.data.message) {
